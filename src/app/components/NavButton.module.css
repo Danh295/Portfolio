@@ -1,21 +1,42 @@
+.label {
+    position: relative;
+    top: 2px;
+    font-weight: bold;
+    font-size: 24px;
+}
+
 .button {
-    padding: 10px 16px;
-    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 180px;
+    height: fit-content;
+
+    padding: 14px 32px;
+    border-radius: var(--borderRadius-button);
+
     font-size: 1rem;
     font-weight: 600;
     transition: all 0.3s ease;
+
+    border: none;
   }
   
   .active {
-    background-color: #2563eb;
-    color: white;
+    background-color: var(--background2);
+    color: var(--foreground1);
+    box-shadow: inset var(--innerShadow);
+    text-decoration: underline;
   }
   
   .inactive {
-    background-color: #e5e7eb;
-    color: #1f2937;
+    color: var(--foreground1);
+    background-color: var(--background1);
   }
   
   .inactive:hover {
-    background-color: #d1d5db;
+    cursor: pointer;
+    background-color: var(--background2);
+    color: var(--foreground1);
   }
