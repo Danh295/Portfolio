@@ -1,8 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300&display=swap');
 
 :root {
   --primary: #6554AF;
   --secondary: #9575DE;
+  --highlight: #feb47b;
   --foreground1: #F9F9F9;
   --foreground2: #9D9D9D;
   --background1: #242226;
@@ -92,7 +94,7 @@ h3 {
 p {
   font-family: "Jost", sans-serif;
   font-size: 24px;
-  font-weight: 300;
+  font-weight: 500;
   color: var(--foreground)
 }
 
