@@ -9,7 +9,7 @@
   --background2: rgba(79, 79, 79, 0.5);
   --iconBG: rgba(72, 65, 78, 0.5);
 
-  --innerShadow: 0px 4px 8px rgba(0, 0, 0, 0.75);
+  --innerShadow: 0px 1px 6px rgba(0, 0, 0, 0.75);
   --dropShadow1: 0px 4px 8px 3px rgba(0, 0, 0, 0.15);
   --dropShadow2: 0px 1px 3px rgba(0, 0, 0, 0.3);
   --buttonDropShadow:
