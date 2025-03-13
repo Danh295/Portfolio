@@ -1,0 +1,21 @@
+.button {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+  
+  .active {
+    background-color: #2563eb;
+    color: white;
+  }
+  
+  .inactive {
+    background-color: #e5e7eb;
+    color: #1f2937;
+  }
+  
+  .inactive:hover {
+    background-color: #d1d5db;
+  }
