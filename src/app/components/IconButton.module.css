@@ -1,4 +1,3 @@
-
 .iconButton {
     display: flex;
     justify-content: center;
@@ -6,7 +5,7 @@
 
     width: 70px;
     height: 75px;
-    /* transition: background-color 0.3s; */
+    transition: all 0.3s ease-in-out;
 }
 
 .iconButton .icon {
@@ -14,4 +13,23 @@
     height: 44px;
     font-size: 2.2rem;
     color: var(--secondary);
+    transition: all 0.3s ease-in-out;
+}
+
+.iconButton:hover {
+    background-color: var(--primary);
+    scale: 1.05;
+}
+
+.iconButton .icon:hover {
+    color: var(--foreground1);
+}
+
+.iconButton:active {
+    background-color: var(--primary);
+    scale: 0.98;
+}
+
+.iconButton:active .icon {
+    color: var(--highlight);
 }
