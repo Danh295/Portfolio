@@ -1,0 +1,17 @@
+
+.iconButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 70px;
+    height: 70px;
+    /* transition: background-color 0.3s; */
+}
+
+.iconButton .icon {
+    width: 40px;
+    height: 44px;
+    font-size: 2rem;
+    color: var(--secondary);
+}
