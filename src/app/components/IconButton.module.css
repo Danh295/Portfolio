@@ -5,13 +5,13 @@
     align-items: center;
 
     width: 70px;
-    height: 70px;
+    height: 75px;
     /* transition: background-color 0.3s; */
 }
 
 .iconButton .icon {
     width: 40px;
     height: 44px;
-    font-size: 2rem;
+    font-size: 2.2rem;
     color: var(--secondary);
 }
