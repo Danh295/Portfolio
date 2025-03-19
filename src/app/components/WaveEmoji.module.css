@@ -41,4 +41,17 @@
       transform: rotate(0deg);
     }
   }
+
+  /* Media query 768px */
+@media (max-width: 768px) {
+    .waveEmoji {
+      font-size: 2.5rem; 
+    }
+}
+
+@media (max-width: 512px) {
+    .waveEmoji {
+      font-size: 2rem; 
+    }
+}
   
