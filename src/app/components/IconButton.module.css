@@ -10,7 +10,7 @@
 
 .iconButton .icon {
     width: 40px;
-    height: 44px;
+    height: 50px;
     font-size: 2.2rem;
     color: var(--secondary);
     transition: all 0.3s ease-in-out;
@@ -32,4 +32,19 @@
 
 .iconButton:active .icon {
     color: var(--highlight);
+}
+
+/* Media queries */
+@media (max-width: 512px) {
+    .iconButton {
+        width: 10px;
+        height: 45px;
+        padding: 16px 25px;
+    }
+
+    .iconButton .icon {
+        width: 18px;
+        height: 30px;
+        font-size: 1.2rem;
+    }
 }

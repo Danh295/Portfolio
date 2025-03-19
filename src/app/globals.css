@@ -8,8 +8,9 @@
   --foreground1: #F9F9F9;
   --foreground2: #9D9D9D;
   --background1: #242226;
-  --background2: rgba(79, 79, 79, 0.5);
+  --background2: rgba(79, 79, 79, 0.3);
   --iconBG: rgba(72, 65, 78, 0.5);
+  --iconBG2: rgba(49, 49, 49, 0.9);
 
   --innerShadow: 0px 1px 6px rgba(0, 0, 0, 0.75);
   --dropShadow1: 0px 4px 8px 3px rgba(0, 0, 0, 0.15);
@@ -93,7 +94,7 @@ h3 {
 
 p {
   font-family: "Jost", sans-serif;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 500;
   color: var(--foreground)
 }
@@ -103,7 +104,27 @@ a {
   color: var(--foreground)
 }
 
-/* Global scrollbar styling */
+/* Default button */
+button {
+  position: relative;
+  font-family: "Jost", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 16px 40px;
+
+  color: var(--foreground1);
+  background-color: var(--background2);
+
+  border: none;
+  border-radius: var(--borderRadius-button);
+
+  box-shadow: var(--buttonDropShadow);
+  
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Default scrollbar styling */
 ::-webkit-scrollbar {
 	width: 10px;
 	height: 10px;
@@ -128,22 +149,59 @@ a {
     transition: background-color 0.3s ease;
 }
 
-/* Tentative breakpoint */
+/* Responsiveness media queries */
+.NavbarMobile {
+  display: none;
+}
+
+.Navbar {
+  display: block;
+}
+
+@media screen and (max-width: 768px) {
+  .NavbarMobile {
+    display: block;
+  }
+  
+  .Navbar {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 768px) {
+
+  h1 {
+    font-size: 48px;
+  }
+
+  h2 {
+    font-size: 32px;
+  }
+
+  h3 {
+    font-size: 24px;
+  }
+
+  p {
+    font-size: 24px;
+  }
+}
 
 @media screen and (max-width: 512px) {
-	h1 {
-		font-size: 32px;
-	}
+  h1 {
+    font-size: 36px;
+  }
 
-	h2 {
-		font-size: 28px;
-	}
+  h2 {
+    font-size: 28px;
+  }
 
-	h3 {
-		font-size: 20px;
-	}
+  h3 {
+    font-size: 20px;
+  }
 
-	p {
-		font-size: 14px;
-	}
+  p {
+    font-size: 16px;
+  }
 }
+

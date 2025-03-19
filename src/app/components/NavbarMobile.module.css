@@ -24,6 +24,7 @@
     border: none;
     box-shadow: none;
     background-color: transparent;
+    transition: background-color 0.3s ease; /* Smooth transition for background only */
 }
 
 .navButton::after {
@@ -35,6 +36,7 @@
     height: 50%;
     width: 1px;
     background-color: var(--foreground2);
+    transition: all 0.3s ease; /* Add transition for the separator */
 }
 
 .navButton:last-child::after {
@@ -47,11 +49,16 @@
 }
 
 .navButton:hover .icon {
-    color: var(--secondary); 
-    transform: translateY(-5px) scale(1.1); 
+    color: var(--accentColor); 
+    transform: translateY(-5px) scale(1.1);
+}
+
+.navButton.active .icon {
+    transform: translateY(0) scale(1); 
+    color: var(--primary);
 }
 
 .icon {
     font-size: 1.2rem;
-    transition: all 0.3s ease; 
+    transition: all 0.3s ease; /* Smooth transition for icon */
 }
