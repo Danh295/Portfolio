@@ -1,5 +1,6 @@
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import NavbarMobile from "./components/NavbarMobile";
 
 export const metadata = {
   title: "Danny Hu | Portfolio",
@@ -25,8 +26,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Navbar />
+        <div className="Navbar">
+          <Navbar />
+        </div>
         {children}
+        <div className="NavbarMobile">
+          <NavbarMobile />
+        </div>
       </body>
     </html>
   );

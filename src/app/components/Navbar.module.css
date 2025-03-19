@@ -3,6 +3,9 @@
     justify-content: space-evenly;
     align-items: center;
 
-    margin: 40px 70px;
-    padding: 10px 40px;
+    width: 100%;
+    max-width: 1600px;
+
+    margin: 40px auto;
+    padding: 10px 50px;
 }

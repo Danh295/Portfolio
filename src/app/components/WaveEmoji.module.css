@@ -1,0 +1,57 @@
+.waveEmoji {
+    display: inline-block;
+    font-size: 3.5rem; 
+    cursor: pointer; 
+    transform-origin: 70% 70%; 
+  }
+  
+  .wave {
+    animation: wave 1.75s; 
+  }
+  
+  @keyframes wave {
+    0% {
+      transform: rotate(0deg);
+    }
+    10% {
+      transform: rotate(24deg);
+    }
+    20% {
+      transform: rotate(-12deg);
+    }
+    30% {
+      transform: rotate(24deg);
+    }
+    40% {
+      transform: rotate(-8deg);
+    }
+    50% {
+      transform: rotate(24deg);
+    }
+    60% {
+      transform: rotate(-8deg);
+    }
+    70% {
+      transform: rotate(12deg);
+    }
+    80% {
+      transform: rotate(-4deg);
+    }
+    100% {
+      transform: rotate(0deg);
+    }
+  }
+
+  /* Media query 768px */
+@media (max-width: 768px) {
+    .waveEmoji {
+      font-size: 2.5rem; 
+    }
+}
+
+@media (max-width: 512px) {
+    .waveEmoji {
+      font-size: 2rem; 
+    }
+}
+  

@@ -1,0 +1,50 @@
+.iconButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 70px;
+    height: 75px;
+    transition: all 0.3s ease-in-out;
+}
+
+.iconButton .icon {
+    width: 40px;
+    height: 50px;
+    font-size: 2.2rem;
+    color: var(--secondary);
+    transition: all 0.3s ease-in-out;
+}
+
+.iconButton:hover {
+    background-color: var(--primary);
+    scale: 1.05;
+}
+
+.iconButton .icon:hover {
+    color: var(--foreground1);
+}
+
+.iconButton:active {
+    background-color: var(--primary);
+    scale: 0.98;
+}
+
+.iconButton:active .icon {
+    color: var(--highlight);
+}
+
+/* Media queries */
+@media (max-width: 512px) {
+    .iconButton {
+        width: 10px;
+        height: 45px;
+        padding: 16px 25px;
+    }
+
+    .iconButton .icon {
+        width: 18px;
+        height: 30px;
+        font-size: 1.2rem;
+    }
+}
