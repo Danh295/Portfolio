@@ -1,0 +1,64 @@
+.navbarContainer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    margin: 20px auto;
+    padding: 10px 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.navbar {
+    background-color: var(--iconBG2);
+    box-shadow: var(--buttonDropShadow);
+    border-radius: var(--borderRadius-button);
+    opacity: 96%;
+    backdrop-filter: blur(10px) brightness(1.2);
+}
+
+.navButton {
+    position: relative;
+    margin: 0;
+    padding: 12px 17px;
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+    transition: background-color 0.3s ease; /* Smooth transition for background only */
+}
+
+.navButton::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 50%;
+    width: 1px;
+    background-color: var(--foreground2);
+    transition: all 0.3s ease; /* Add transition for the separator */
+}
+
+.navButton:last-child::after {
+    display: none;
+}
+
+.navButton:hover {
+    background-color: var(--iconBG1);
+    border-radius: var(--borderRadius-button);
+}
+
+.navButton:hover .icon {
+    color: var(--accentColor); 
+    transform: translateY(-5px) scale(1.1);
+}
+
+.navButton.active .icon {
+    transform: translateY(0) scale(1); 
+    color: var(--primary);
+}
+
+.icon {
+    font-size: 1.2rem;
+    transition: all 0.3s ease; /* Smooth transition for icon */
+}
