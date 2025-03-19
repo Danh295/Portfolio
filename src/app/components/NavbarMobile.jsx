@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHouse, faDiagramProject, faSuitcase, faWrench } from '@fortawesome/free-solid-svg-icons';
 
@@ -8,6 +8,7 @@ import styles from './NavbarMobile.module.css';
 
 export default function NavbarMobile() {
     const router = useRouter();
+    const pathname = usePathname();
     // const [activePage, setActivePage] = useState('home');
 
     const pages = [
@@ -28,7 +29,7 @@ export default function NavbarMobile() {
             {pages.map((page, index) => (
             <button
                 key={index}
-                className={styles.navButton}
+                className={`${styles.navButton} ${pathname === page.path ? styles.active : ''}`}
                 onClick={() => handleNaviation(page.path, page.name)}
             >
                 <FontAwesomeIcon icon={page.icon} className={styles.icon}/>
