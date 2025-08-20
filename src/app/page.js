@@ -10,7 +10,7 @@ export default function Home() {
       
       <header className={styles.header}>
         <Image 
-          src="/pfp1.jpg" alt="" 
+          src="/Portfolio/pfp1.jpg" alt="" 
           width={350} height={520}
           className={styles.profile} 
         />
