@@ -7,7 +7,6 @@ export default function CareerPage() {
       justifyContent: 'center',
       alignItems: 'center',
     }}>
-      <h1>Career Page</h1>
       <p>Sorry! coming soon...</p>
     </div>
   )

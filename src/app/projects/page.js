@@ -7,7 +7,6 @@ export default function ProjectsPage() {
       justifyContent: 'center',
       alignItems: 'center',
     }}>
-      <h1>Projects Page</h1>
       <p>Sorry! coming soon...</p>
     </div>
   )
