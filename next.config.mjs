@@ -5,8 +5,8 @@ const nextConfig = {
     images: {
         unoptimized: true,
     },
-    assetPrefix: './',
-    basePath: '', // ensure no basePath
+    assetPrefix: '/Portfolio/',
+    basePath: '/Portfolio', 
 };
 
 export default nextConfig;
