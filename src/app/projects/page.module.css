@@ -1,0 +1,19 @@
+/* Base styles */
+.page {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: start;
+  gap: 40px;
+  
+  width: 80%;
+  margin: 40px auto;
+}
+
+.projectsContainer {
+  display: grid;
+  grid-template-columns: 200px 1fr 200px;
+  gap: 20px;
+  
+  width: 100%;
+}
