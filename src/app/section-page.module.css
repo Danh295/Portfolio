@@ -1,0 +1,317 @@
+.page {
+  width: min(1480px, calc(100% - 40px));
+  margin: 0 auto 48px;
+  display: grid;
+  gap: 28px;
+}
+
+.hero {
+  display: grid;
+  gap: 18px;
+  padding: 42px 36px;
+  border-radius: 34px;
+  background: rgba(19, 19, 21, 0.88);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+}
+
+.eyebrow {
+  width: fit-content;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(149, 117, 222, 0.35);
+  background: rgba(149, 117, 222, 0.1);
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--secondary);
+}
+
+.title {
+  max-width: 980px;
+}
+
+.titleAccent {
+  color: var(--secondary);
+}
+
+.lead {
+  max-width: 980px;
+  color: rgba(249, 249, 249, 0.82);
+}
+
+.content {
+  display: grid;
+  gap: 24px;
+}
+
+.featureCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.9fr);
+  gap: 28px;
+  align-items: center;
+  padding: 30px;
+  border-radius: 34px;
+  background: rgba(27, 27, 30, 0.88);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.24);
+}
+
+.featureCopy {
+  display: grid;
+  gap: 18px;
+}
+
+.meta {
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--secondary);
+}
+
+.bulletList,
+.stackList {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+}
+
+.bulletList li,
+.stackBody,
+.cardBody,
+.projectLink,
+.skillBlurb {
+  font-family: "Jost", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.bulletList li {
+  position: relative;
+  padding-left: 18px;
+  color: rgba(249, 249, 249, 0.86);
+}
+
+.bulletList li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.7em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--secondary);
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(249, 249, 249, 0.86);
+}
+
+.visualCard {
+  position: relative;
+  min-height: 300px;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at center, rgba(149, 117, 222, 0.32), transparent 42%),
+    linear-gradient(135deg, rgba(12, 19, 32, 0.96), rgba(22, 28, 44, 0.92));
+}
+
+.visualImage {
+  object-fit: cover;
+}
+
+.twoColumn {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.card {
+  display: grid;
+  gap: 20px;
+  padding: 28px;
+  border-radius: 30px;
+  background: rgba(27, 27, 30, 0.88);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.24);
+}
+
+.cardVisual {
+  position: relative;
+  min-height: 280px;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at center, rgba(149, 117, 222, 0.28), transparent 46%),
+    linear-gradient(135deg, rgba(45, 18, 64, 0.96), rgba(21, 23, 30, 0.92));
+}
+
+.cardImage {
+  object-fit: cover;
+}
+
+.cardHeader {
+  display: grid;
+  gap: 8px;
+}
+
+.cardLink {
+  font-family: "Poppins", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--secondary);
+}
+
+.splitLayout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.72fr) minmax(0, 1.28fr);
+  gap: 24px;
+}
+
+.stack {
+  display: grid;
+  gap: 24px;
+}
+
+.miniCard {
+  display: grid;
+  gap: 16px;
+  padding: 26px 28px;
+  border-radius: 28px;
+  background: rgba(27, 27, 30, 0.88);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.24);
+}
+
+.skillShowcase {
+  display: grid;
+  gap: 22px;
+  padding: 30px;
+  border-radius: 34px;
+  background:
+    linear-gradient(135deg, rgba(101, 84, 175, 0.22), rgba(24, 24, 27, 0.94) 44%),
+    rgba(27, 27, 30, 0.88);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.24);
+}
+
+.skillHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.skillScore {
+  text-align: right;
+}
+
+.scoreValue {
+  font-family: "Poppins", sans-serif;
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 0.94;
+  color: #b2aafc;
+}
+
+.scoreLabel {
+  display: block;
+  margin-top: 10px;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--foreground2);
+}
+
+.skillColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.skillColumn {
+  display: grid;
+  gap: 16px;
+}
+
+.columnTitle {
+  font-family: "Poppins", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--secondary);
+}
+
+.stackItem {
+  display: grid;
+  gap: 6px;
+}
+
+@media (max-width: 1200px) {
+  .featureCard,
+  .splitLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .featureCard {
+    padding: 28px;
+  }
+}
+
+@media (max-width: 920px) {
+  .page {
+    width: calc(100% - 32px);
+    gap: 22px;
+  }
+
+  .hero,
+  .featureCard,
+  .card,
+  .miniCard,
+  .skillShowcase {
+    padding: 24px;
+  }
+
+  .twoColumn,
+  .skillColumns {
+    grid-template-columns: 1fr;
+  }
+
+  .skillHeader {
+    flex-direction: column;
+  }
+
+  .skillScore {
+    text-align: left;
+  }
+
+  .bulletList li,
+  .stackBody,
+  .cardBody,
+  .projectLink,
+  .skillBlurb {
+    font-size: 18px;
+  }
+}
