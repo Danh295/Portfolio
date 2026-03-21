@@ -1,6 +1,4 @@
 "use client"
-import React from 'react'
-
 import styles from './ProjectList.module.css'
 
 export default function ProjectList({ projects, selectedProject, onSelectProject }) {

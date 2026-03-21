@@ -1,5 +1,4 @@
 "use client"
-import React from 'react'
 import ImageCarousel from './ImageCarousel.jsx';
 
 import styles from './ProjectDetails.module.css';
