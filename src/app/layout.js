@@ -1,6 +1,7 @@
 import "./globals.css";
-import Navbar from "./components/Navbar";
-import NavbarMobile from "./components/NavbarMobile";
+import Navbar from "@/components/navigation/Navbar";
+import NavbarMobile from "@/components/navigation/NavbarMobile";
+import Footer from "@/components/layout/Footer";
 
 export const metadata = {
   title: "Danny Hu | Portfolio",
@@ -24,12 +25,13 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
         <div className="Navbar">
           <Navbar />
         </div>
         {children}
+        <Footer />
         <div className="NavbarMobile">
           <NavbarMobile />
         </div>
