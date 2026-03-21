@@ -1,38 +1,50 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap');
-
-/* Base styles */
 .page {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 40px;
-  
-  width: 80%;
-  margin: 40px auto;
+  width: min(1680px, calc(100% - 48px));
+  margin: 0 auto 48px;
+  display: grid;
+  gap: 24px;
 }
 
-/* Header */
 .header {
-  max-width: 1400px;
-  width: 100%;
+  display: block;
+}
 
-  display: flex;
-  flex-direction: row;
+.hero {
+  min-height: calc(100svh - 150px);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 28px;
+  padding: 36px 42px;
+  border-radius: 34px;
+  background: rgba(19, 19, 21, 0.88);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+}
+
+.heroTop {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 36px;
   align-items: center;
-  justify-content: center;
-  gap: 80px;
-  
-  padding: 40px;
-  padding-bottom: 10px;
 }
 
 .profile {
-  width: 100%;
-  max-width: 320px;
-  height: 400px;
-  border-radius: 50px;
+  width: 240px;
+  height: 312px;
+  border-radius: 24px;
   object-fit: cover;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.34);
+}
+
+.header-content,
+.heroLower {
+  display: grid;
+  gap: 18px;
+}
+
+.intro,
+.titleRow {
+  display: grid;
+  gap: 8px;
 }
 
 .name {
@@ -40,7 +52,10 @@
 }
 
 .title {
-  font-weight: bold;
+  max-width: 1100px;
+  font-size: clamp(3.6rem, 4.5vw, 5.8rem);
+  line-height: 0.98;
+  font-weight: 800;
   background: linear-gradient(to right, var(--primary), var(--highlight));
   -webkit-background-clip: text;
   background-clip: text;
@@ -48,123 +63,198 @@
 }
 
 .descr {
-  font-size: 30px;
-  font-style: italic;
+  font-size: 24px;
+  font-style: normal;
+  color: var(--foreground2);
+}
+
+.blurb {
+  display: grid;
+  gap: 12px;
+  max-width: 1380px;
+}
+
+.blurb p {
+  font-size: clamp(1.3rem, 1.5vw, 1.65rem);
+  color: rgba(249, 249, 249, 0.92);
 }
 
 .social-links {
   display: flex;
-  gap: 35px;
-  padding: 40px 0px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: flex-start;
 }
 
-/* Main Content */
-.main {
-  max-width: 1400px;
+.heroBottom {
+  display: grid;
+  gap: 12px;
+  align-content: end;
 }
 
-/* Media query 1300px */
-@media (max-width: 1300px) {
+.scrollCue {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scrollArrow {
+  width: 16px;
+  height: 16px;
+  border-right: 3px solid var(--secondary);
+  border-bottom: 3px solid var(--secondary);
+  transform: translateY(0) rotate(45deg);
+  animation: bounceDown 2.2s ease-in-out infinite;
+}
+
+.panel {
+  display: grid;
+  gap: 18px;
+  padding: 24px 26px;
+  border-radius: 28px;
+  background: rgba(27, 27, 30, 0.88);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.24);
+}
+
+.tagList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.tag {
+  padding: 16px 18px;
+  border-radius: 24px;
+  background: rgba(101, 84, 175, 0.08);
+  border: 1px solid rgba(101, 84, 175, 0.18);
+}
+
+.tagWide {
+  grid-column: 1 / -1;
+}
+
+.tagLabel {
+  display: block;
+  margin-bottom: 8px;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--secondary);
+}
+
+.tagValue {
+  display: block;
+  font-family: "Jost", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--foreground1);
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 24px;
+}
+
+@media (max-width: 1280px) {
   .page {
-    gap: 48px;
-    width: 100%;
-    padding: 0px 100px;
+    width: calc(100% - 40px);
   }
 
-  .header {
-    gap: 60px;
-    padding: 0;
-    transform: scale(0.8);
-    transform-origin: top center;
+  .hero {
+    padding: 30px 30px;
   }
 
-  .main {
-    position: relative;
-    top: -60px;
-  }
-}
-
-/* Mobile Responsive Styles */
-@media (max-width: 920px) {
-  .page {
-    padding: 20px;
-    gap: 32px;
-  }
-
-  .header {
-    transform: scale(1);
-    flex-direction: column;
-    text-align: center;
-    gap: 20px;
-  }
-
-  .header-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .social-links {
-    gap: 40px;
-    padding: 30px 0px;
-    padding-bottom: 10px;
+  .heroTop {
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 26px;
   }
 
   .profile {
-    width: 200px;
-    height: 280px;
-    border-radius: 30px;
+    width: 210px;
+    height: 274px;
+  }
+}
+
+@media (max-width: 920px) {
+  .page {
+    width: calc(100% - 32px);
   }
 
-  .title {
-    font-size: 50px;
+  .hero {
+    min-height: auto;
+    padding: 24px 22px;
   }
 
-  .descr {
-    font-size: 26px;
-  }
-
-  .main {
-    top: 10px;
-    padding: 10px 100px;
+  .heroTop {
+    grid-template-columns: 1fr;
+    justify-items: center;
     text-align: center;
   }
 
-  .footer {
-    flex-direction: column;
-    align-items: center;
+  .header-content,
+  .heroLower {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .profile {
+    width: 180px;
+    height: 235px;
+  }
+
+  .social-links {
+    justify-content: center;
+  }
+
+  .heroBottom {
+    justify-items: center;
+  }
+
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .tagList {
+    grid-template-columns: 1fr;
+  }
+
+  .title {
+    font-size: 54px;
+  }
+
+  .descr,
+  .blurb p,
+  .tagValue {
+    font-size: 18px;
   }
 }
 
 @media (max-width: 480px) {
-  .page {
-    padding: 16px;
-    gap: 24px;
-  }
-
-  .profile {
-    width: 150px;
-    height: 210px;
-    border-radius: 20px;
-  }
-
   .title {
-    font-size: 20px;
+    font-size: 42px;
   }
 
-  .descr {
-    font-size: 18px;
+  .panel {
+    padding: 20px 18px;
   }
+}
 
-  .main {
-    padding: 0 10px;
-  font-size: 14px;
+@keyframes bounceDown {
+  0%,
+  100% {
+    transform: translateY(0) rotate(45deg);
+    opacity: 0.8;
   }
-
-  .social-links {
-    gap: 14px;
-    padding: 20px 0px;
-    padding-bottom: 0px;
+  50% {
+    transform: translateY(6px) rotate(45deg);
+    opacity: 1;
   }
 }
