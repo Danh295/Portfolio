@@ -1,0 +1,26 @@
+.navbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: min(1520px, calc(100% - 40px));
+  margin: 18px auto 26px;
+  padding: 22px 30px;
+  border-radius: 0 0 30px 30px;
+  background: rgba(18, 18, 18, 0.9);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(20px);
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  margin: 0 auto;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}

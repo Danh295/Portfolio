@@ -1,19 +1,20 @@
-import React from 'react';
+import Link from 'next/link';
 import styles from './NavButton.module.css';
 
-export default function NavButton({ label, onClick, isActive }) {
+export default function NavButton({ label, href, isActive }) {
   return (
-    <button 
+    <Link 
+        href={href}
         className={`${styles.button} 
                     ${isActive 
                         ? styles.active 
                         : styles.inactive
                     }`} 
-        onClick={onClick}
+        aria-current={isActive ? 'page' : undefined}
     >
-        <h3 className={styles["label"]}>
+        <span className={styles["label"]}>
             {label}
-        </h3>
-    </button>
+        </span>
+    </Link>
   )
 }
