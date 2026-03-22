@@ -103,11 +103,18 @@
 
 @media (max-width: 512px) {
   .iconButton {
-    width: 52px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
   }
 
   .iconButton .icon {
-    font-size: 1.2rem;
+    font-size: 1.12rem;
+  }
+
+  .tooltip {
+    bottom: calc(100% + 10px);
+    font-size: 11px;
+    padding: 7px 10px;
   }
 }
