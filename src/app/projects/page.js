@@ -32,10 +32,7 @@ const projects = [
     ],
     tags: ["Python", "OpenCV", "OCR", "Image Processing"],
     github: "https://github.com/Danh295",
-    images: [
-      { src: "/temp.jpg", alt: "OCR pipeline preview" },
-      { src: "/pfp2.jpg", alt: "OCR processing output" },
-    ],
+    // TODO: back to the projects page, when there are no images, can you shift the tech stack tags to the bottom of the project card instead of the right side? 
   },
   {
     title: "Personal Portfolio",
@@ -99,9 +96,7 @@ export default function ProjectsPage() {
       <section className={styles.hero}>
         <h1 className={styles.title}>Projects</h1>
         <p className={styles.lead}>
-          A few projects that reflect the work I have been spending the most time on
-          lately, from product-focused full-stack builds to more technical OCR and
-          image-processing work.
+          Recent work including full-stack builds, hackathon submissions, computer vision and OCR pipelines.
         </p>
       </section>
 

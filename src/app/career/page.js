@@ -25,14 +25,11 @@ export default function CareerPage() {
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
-        <span className={styles.eyebrow}>Career</span>
         <h1 className={styles.title}>
-          Building a career through <span className={styles.titleAccent}>range and consistency</span>
+          Career
         </h1>
         <p className={styles.lead}>
-          I&apos;m still early in the journey, so this page focuses less on inflated
-          titles and more on the foundation I&apos;m building: technical growth,
-          product judgment, and a stronger track record of finished work.
+          Technical growth, product judgment, and a growing track record of finished work.
         </p>
       </section>
 

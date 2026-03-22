@@ -7,38 +7,25 @@
 
 .hero {
   display: grid;
-  gap: 18px;
-  padding: 36px 42px;
+  gap: 8px;
+  padding: 28px 42px;
   border-radius: 34px;
   background: rgba(19, 19, 21, 0.88);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
 }
 
-.eyebrow {
-  width: fit-content;
-  padding: 10px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(149, 117, 222, 0.35);
-  background: rgba(149, 117, 222, 0.1);
-  font-family: "Poppins", sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--secondary);
-}
-
 .title {
   max-width: 980px;
-}
-
-.titleAccent {
-  color: var(--secondary);
+  font-size: clamp(3rem, 5vw, 4.2rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--foreground1);
 }
 
 .lead {
-  max-width: 980px;
-  color: rgba(249, 249, 249, 0.82);
+  max-width: 960px;
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  color: rgba(249, 249, 249, 0.6);
 }
 
 .content {
