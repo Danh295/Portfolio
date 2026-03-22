@@ -1,35 +1,95 @@
-import Image from "next/image";
-import styles from "../section-page.module.css";
+import ProjectsTimeline from "./ProjectsTimeline";
+import styles from "./page.module.css";
 
-const featuredProject = {
-  title: "SynthOS Dashboard",
-  meta: "Lead Developer • Nova Systems • San Francisco",
-  summary: [
-    "Engineered a real-time data visualization engine processing 50k+ events/sec.",
-    "Reduced bundle size by 40% through rigorous tree-shaking and lazy loading.",
-    "Implemented a custom component library using Tailwind CSS and Radix UI.",
-  ],
-  stack: ["React", "TypeScript", "Node.js", "D3.js"],
-};
-
-const projectCards = [
+const projects = [
   {
-    title: "VaultKey Auth",
-    meta: "Open Source Project • Global",
-    description:
-      "End-to-end encrypted authentication provider for small business apps with passkey-first sign-in flows.",
-    stack: ["Next.js", "Prisma", "WebAuthn"],
-    link: "View Code →",
-    image: "/pfp2.jpg",
+    title: "AniFriend",
+    role: "Full-stack Developer",
+    context: "Personal Project / Waterloo, ON",
+    timeline: "2025 - Present",
+    bullets: [
+      "Built a social discovery platform around pet matching, onboarding flows, and richer profile interactions.",
+      "Designed and implemented the full-stack application structure with a focus on fast iteration and maintainable UI patterns.",
+      "Integrated authentication, responsive layouts, and cleaner data organization to support future feature growth.",
+    ],
+    tags: ["Next.js", "React", "TypeScript", "Supabase"],
+    github: "https://github.com/Danh295/AniFriend",
+    demo: "https://github.com/Danh295/AniFriend",
+    images: [
+      { src: "/pfp2.jpg", alt: "AniFriend project preview" },
+      { src: "/pfp1.png", alt: "AniFriend matching interface" },
+    ],
   },
   {
-    title: "FlowGrid CMS",
-    meta: "Contract • Studio X • Berlin",
-    description:
-      "Headless CMS backend built for extreme developer flexibility with fast content modeling and clean API ergonomics.",
-    stack: ["Go", "PostgreSQL", "GraphQL"],
-    link: "Live Demo →",
-    image: "/temp.jpg",
+    title: "OCR Document Pipeline",
+    role: "ML / Software Developer",
+    context: "Research + Applied Work / Ontario",
+    timeline: "2024 - Present",
+    bullets: [
+      "Worked on OCR-focused preprocessing flows for noisy documents with an emphasis on extraction quality and consistency.",
+      "Explored computer vision and image processing techniques for denoising, segmentation, and downstream parsing accuracy.",
+      "Structured experiments and utilities so the pipeline could be iterated on more easily across multiple datasets.",
+    ],
+    tags: ["Python", "OpenCV", "OCR", "Image Processing"],
+    github: "https://github.com/Danh295",
+    images: [
+      { src: "/temp.jpg", alt: "OCR pipeline preview" },
+      { src: "/pfp2.jpg", alt: "OCR processing output" },
+    ],
+  },
+  {
+    title: "Personal Portfolio",
+    role: "Designer / Developer",
+    context: "Personal Brand / Web",
+    timeline: "2024 - Present",
+    bullets: [
+      "Designed and built a portfolio that balances direct communication, strong visual hierarchy, and reusable page structure.",
+      "Refined navigation, responsive behavior, and content organization to better present projects, skills, and career growth.",
+      "Used a lightweight static export approach while still supporting dynamic GitHub content on the home page.",
+    ],
+    tags: ["Next.js", "CSS Modules", "Responsive Design", "GitHub API"],
+    github: "https://github.com/Danh295/Portfolio",
+    demo: "https://github.com/Danh295/Portfolio",
+    images: [
+      { src: "/pfp1.png", alt: "Portfolio project preview" },
+      { src: "/pfp2.jpg", alt: "Portfolio home page" },
+      { src: "/temp.jpg", alt: "Portfolio projects page" },
+    ],
+  },
+  {
+    title: "Real-time Chat App",
+    role: "Full-stack Developer",
+    context: "Side Project / Collaborative",
+    timeline: "2024",
+    bullets: [
+      "Built a WebSocket-powered chat application with rooms, typing indicators, and message persistence.",
+      "Implemented JWT-based authentication and role-based access for moderated channels.",
+      "Designed a responsive UI with lazy-loaded message history and optimistic updates for low-latency feel.",
+    ],
+    tags: ["React", "TypeScript", "Supabase"],
+    github: "https://github.com/Danh295",
+    demo: "https://github.com/Danh295",
+    images: [
+      { src: "/pfp2.jpg", alt: "Chat app interface" },
+      { src: "/temp.jpg", alt: "Chat rooms view" },
+    ],
+  },
+  {
+    title: "Budget Tracker CLI",
+    role: "Developer",
+    context: "Utility / Personal Use",
+    timeline: "2023 - 2024",
+    bullets: [
+      "Created a command-line budgeting tool with CSV import, category tagging, and monthly summaries.",
+      "Added interactive prompts for quick entry and a simple SQLite backend for local persistence.",
+      "Built charting output using terminal graphics for at-a-glance spending breakdowns.",
+    ],
+    tags: ["Python", "JavaScript", "HTML"],
+    github: "https://github.com/Danh295",
+    demo: "https://github.com/Danh295",
+    images: [
+      { src: "/temp.jpg", alt: "Budget tracker output" },
+    ],
   },
 ];
 
@@ -37,78 +97,15 @@ export default function ProjectsPage() {
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
-        <span className={styles.eyebrow}>Projects</span>
-        <h1 className={styles.title}>
-          Selected <span className={styles.titleAccent}>Projects</span>
-        </h1>
+        <h1 className={styles.title}>Projects</h1>
         <p className={styles.lead}>
-          A showcase of digital architecture and full-stack execution. From
-          developer tools to immersive user experiences, these projects reflect a
-          commitment to performance, accessibility, and clean code.
+          A few projects that reflect the work I have been spending the most time on
+          lately, from product-focused full-stack builds to more technical OCR and
+          image-processing work.
         </p>
       </section>
 
-      <section className={styles.content}>
-        <article className={styles.featureCard}>
-          <div className={styles.featureCopy}>
-            <div className={styles.cardHeader}>
-              <h2>{featuredProject.title}</h2>
-              <span className={styles.meta}>{featuredProject.meta}</span>
-            </div>
-            <ul className={styles.bulletList}>
-              {featuredProject.summary.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-            <div className={styles.chipRow}>
-              {featuredProject.stack.map((item) => (
-                <span key={item} className={styles.chip}>
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.visualCard}>
-            <Image
-              src="/temp.jpg"
-              alt="Featured project preview"
-              fill
-              className={styles.visualImage}
-            />
-          </div>
-        </article>
-
-        <section className={styles.twoColumn}>
-          {projectCards.map((project) => (
-            <article key={project.title} className={styles.card}>
-              <div className={styles.cardVisual}>
-                <Image
-                  src={project.image}
-                  alt={`${project.title} project preview`}
-                  fill
-                  className={styles.cardImage}
-                />
-              </div>
-              <div className={styles.cardHeader}>
-                <h2>{project.title}</h2>
-                <span className={styles.meta}>{project.meta}</span>
-              </div>
-              <p className={styles.cardBody}>{project.description}</p>
-              <div className={styles.chipRow}>
-                {project.stack.map((item) => (
-                  <span key={item} className={styles.chip}>
-                    {item}
-                  </span>
-                ))}
-              </div>
-              <a href="#" className={styles.cardLink}>
-                {project.link}
-              </a>
-            </article>
-          ))}
-        </section>
-      </section>
+      <ProjectsTimeline projects={projects} />
     </main>
   );
 }
