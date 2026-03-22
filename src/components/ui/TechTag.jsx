@@ -1,49 +1,75 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBolt, faFileLines, faGear, faImage, faMobileScreenButton, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
 import {
-  faCss3Alt,
-  faGithub,
-  faHtml5,
-  faJs,
-  faPython,
-  faReact,
-  faVuejs,
-} from "@fortawesome/free-brands-svg-icons";
-import {
-  faCode,
-  faDatabase,
-  faEye,
-  faFileLines,
-  faGear,
-  faLayerGroup,
-  faMobileScreenButton,
-  faWandMagicSparkles,
-} from "@fortawesome/free-solid-svg-icons";
+  SiC,
+  SiCplusplus,
+  SiCssmodules,
+  SiFastapi,
+  SiGit,
+  SiGithub,
+  SiGnubash,
+  SiHtml5,
+  SiJavascript,
+  SiLinux,
+  SiNextdotjs,
+  SiNumpy,
+  SiOpencv,
+  SiOpenjdk,
+  SiPython,
+  SiReact,
+  SiStrapi,
+  SiSupabase,
+  SiTailwindcss,
+  SiTypescript,
+  SiVuedotjs,
+} from "react-icons/si";
 
 import styles from "./TechTag.module.css";
 
-const iconMap = {
-  "CSS Modules": faCss3Alt,
-  "GitHub API": faGithub,
-  HTML: faHtml5,
+const siMap = {
+  C: SiC,
+  "C++": SiCplusplus,
+  "C/C++": SiC,
+  "CSS Modules": SiCssmodules,
+  Java: SiOpenjdk,
+  JavaScript: SiJavascript,
+  TypeScript: SiTypescript,
+  Python: SiPython,
+  React: SiReact,
+  "Next.js": SiNextdotjs,
+  Tailwind: SiTailwindcss,
+  FastAPI: SiFastapi,
+  OpenCV: SiOpencv,
+  NumPy: SiNumpy,
+  Git: SiGit,
+  Bash: SiGnubash,
+  Linux: SiLinux,
+  Supabase: SiSupabase,
+  Strapi: SiStrapi,
+  "GitHub API": SiGithub,
+  HTML: SiHtml5,
+  Vue: SiVuedotjs,
+};
+
+const faMap = {
   "Image Processing": faWandMagicSparkles,
-  JavaScript: faJs,
-  "Next.js": faLayerGroup,
   OCR: faFileLines,
-  OpenCV: faEye,
-  Python: faPython,
-  React: faReact,
   "Responsive Design": faMobileScreenButton,
-  Supabase: faDatabase,
-  TypeScript: faCode,
-  Vue: faVuejs,
+  Pillow: faImage,
+  Uvicorn: faBolt,
 };
 
 export default function TechTag({ label }) {
-  const icon = iconMap[label] ?? faGear;
+  const SiIcon = siMap[label];
+  const faIcon = faMap[label];
 
   return (
     <span className={styles.tag}>
-      <FontAwesomeIcon icon={icon} className={styles.icon} />
+      {SiIcon ? (
+        <SiIcon className={styles.icon} />
+      ) : (
+        <FontAwesomeIcon icon={faIcon ?? faGear} className={styles.icon} />
+      )}
       <span>{label}</span>
     </span>
   );
