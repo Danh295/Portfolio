@@ -183,18 +183,22 @@
   }
 }
 
-@media (max-width: 920px) {
+@media (max-width: 1024px) {
   .page {
-    width: calc(100% - 32px);
+    width: calc(100% - 36px);
+    gap: 18px;
   }
 
   .hero {
     min-height: auto;
-    padding: 24px 22px;
+    gap: 22px;
+    padding: 26px 24px;
+    border-radius: 28px;
   }
 
   .heroTop {
     grid-template-columns: 1fr;
+    gap: 20px;
     justify-items: center;
     text-align: center;
   }
@@ -206,20 +210,36 @@
   }
 
   .profile {
-    width: 180px;
-    height: 235px;
+    width: 172px;
+    height: 224px;
+    border-radius: 20px;
+  }
+
+  .titleRow,
+  .intro,
+  .blurb {
+    justify-items: center;
+  }
+
+  .blurb {
+    max-width: 760px;
   }
 
   .social-links {
+    width: 100%;
     justify-content: center;
+    gap: 12px;
   }
 
   .heroBottom {
+    width: 100%;
     justify-items: center;
+    gap: 10px;
   }
 
   .detailsGrid {
     grid-template-columns: 1fr;
+    gap: 18px;
   }
 
   .tagList {
@@ -227,7 +247,9 @@
   }
 
   .title {
-    font-size: 54px;
+    max-width: 15ch;
+    font-size: clamp(2.9rem, 6.8vw, 4rem);
+    line-height: 1;
   }
 
   .descr,
@@ -235,15 +257,101 @@
   .tagValue {
     font-size: 18px;
   }
+
+  .panel {
+    padding: 22px 20px;
+    border-radius: 24px;
+  }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
+  .page {
+    width: calc(100% - 24px);
+    gap: 16px;
+  }
+
+  .hero {
+    padding: 20px 18px;
+    gap: 18px;
+  }
+
+  .heroTop {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .header-content,
+  .heroLower {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .profile {
+    width: 150px;
+    height: 196px;
+  }
+
+  .social-links {
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .heroBottom {
+    justify-items: center;
+  }
+
   .title {
-    font-size: 42px;
+    max-width: 11ch;
+    font-size: clamp(2.4rem, 9vw, 3rem);
+  }
+
+  .descr {
+    font-size: 17px;
+  }
+
+  .blurb p,
+  .tagValue {
+    font-size: 17px;
+  }
+
+  .tagList {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .panel {
-    padding: 20px 18px;
+    padding: 18px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 18px 15px;
+    gap: 16px;
+    border-radius: 22px;
+  }
+
+  .title {
+    font-size: 2.25rem;
+  }
+
+  .descr {
+    font-size: 16px;
+  }
+
+  .panel {
+    padding: 16px 14px;
+    border-radius: 20px;
+  }
+
+  .blurb p,
+  .tagValue {
+    font-size: 16px;
+  }
+
+  .tag {
+    padding: 14px 15px;
+    border-radius: 18px;
   }
 }
 

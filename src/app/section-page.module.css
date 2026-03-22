@@ -1,14 +1,14 @@
 .page {
-  width: min(1480px, calc(100% - 40px));
+  width: min(1680px, calc(100% - 48px));
   margin: 0 auto 48px;
   display: grid;
-  gap: 28px;
+  gap: 24px;
 }
 
 .hero {
   display: grid;
   gap: 18px;
-  padding: 42px 36px;
+  padding: 36px 42px;
   border-radius: 34px;
   background: rgba(19, 19, 21, 0.88);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
