@@ -7,21 +7,24 @@
 
 .hero {
   display: grid;
-  gap: 16px;
-  padding: 36px 42px 8px;
+  gap: 24px;
+  padding: 28px 42px;
+  border-radius: 34px;
+  background: rgba(19, 19, 21, 0.88);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
 }
 
 .title {
-  font-size: clamp(4rem, 7vw, 5.8rem);
+  font-size: clamp(3rem, 5vw, 4.2rem);
   font-weight: 800;
-  line-height: 0.96;
+  line-height: 1;
   color: var(--foreground1);
 }
 
 .lead {
-  max-width: 780px;
-  font-size: clamp(1.15rem, 1.8vw, 1.55rem);
-  color: rgba(249, 249, 249, 0.74);
+  max-width: 960px;
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  color: rgba(249, 249, 249, 0.6);
 }
 
 .projectsShell {
@@ -318,8 +321,9 @@
   }
 
   .hero {
-    padding: 22px 4px 0;
+    padding: 24px 22px;
     gap: 12px;
+    border-radius: 24px;
   }
 
   .projectsShell {

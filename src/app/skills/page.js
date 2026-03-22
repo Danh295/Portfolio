@@ -40,14 +40,11 @@ export default function SkillsPage() {
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
-        <span className={styles.eyebrow}>Skills</span>
         <h1 className={styles.title}>
-          Architecting the <span className={styles.titleAccent}>Digital Future</span>
+          Skills
         </h1>
         <p className={styles.lead}>
-          A clearer breakdown of my technical toolkit, product instincts, and
-          engineering strengths. From core languages to modern full-stack
-          architectures, this is the ecosystem I&apos;m growing inside.
+          Core languages, frameworks, and the full-stack ecosystem I work in.
         </p>
       </section>
 
