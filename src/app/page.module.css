@@ -10,7 +10,7 @@
 }
 
 .hero {
-  min-height: calc(100svh - 150px);
+  min-height: calc(100svh - 128px);
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 28px;
@@ -163,6 +163,45 @@
   gap: 24px;
 }
 
+.panelTitle {
+  font-family: "Poppins", sans-serif;
+  font-size: clamp(1.3rem, 1.8vw, 1.55rem);
+  font-weight: 800;
+  color: var(--foreground1);
+}
+
+.stackColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.stackGroups {
+  display: grid;
+  gap: 20px;
+  align-content: start;
+}
+
+.stackGroup {
+  display: grid;
+  gap: 10px;
+}
+
+.stackLabel {
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--secondary);
+}
+
+.stackTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 @media (max-width: 1280px) {
   .page {
     width: calc(100% - 40px);
@@ -240,6 +279,11 @@
   .detailsGrid {
     grid-template-columns: 1fr;
     gap: 18px;
+  }
+
+  .stackColumns {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
 
   .tagList {

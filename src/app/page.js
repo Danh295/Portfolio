@@ -1,5 +1,6 @@
 import Image from "next/image";
 import LatestGithubProject from "@/components/home/LatestGithubProject";
+import TechTag from "@/components/ui/TechTag";
 import WaveEmoji from "@/components/ui/WaveEmoji";
 import IconButton from "@/components/ui/IconButton";
 
@@ -8,7 +9,7 @@ import styles from "./page.module.css";
 const snapshotItems = [
   { label: "Education", value: "Comp Sci & BBA @ UW & WLU" },
   { label: "Work", value: "Software Developer @ City of Waterloo" },
-  { label: "Right Now", value: "Computer vision, image processing, and OCR pipelines" },
+  { label: "Current Focus", value: "Computer vision, image processing, and OCR pipelines" },
 ];
 
 export default function Home() {
@@ -32,12 +33,11 @@ export default function Home() {
                   <h2>
                     
                     <span>Hi! I&apos;m </span>
-                    <span className={styles.name}>Danny</span>
-                    <span>,</span>
+                    <span className={styles.name}>Danny!</span>
                     <span>  </span>
                     <WaveEmoji />
                   </h2>
-                  <h1 className={styles.title}>Student and Software Developer</h1>
+                  <h1 className={styles.title}>Student and Developer</h1>
                 </div>
                 <h3 className={styles.descr}>Ontario, Canada</h3>
               </div>
@@ -74,7 +74,7 @@ export default function Home() {
                 />
               </div>
 
-              <a href="#home-details" className={styles.scrollCue} aria-label="Scroll to details">
+              <a href="#tech-stack" className={styles.scrollCue} aria-label="Scroll to details">
                 <span className={styles.scrollArrow} />
               </a>
             </div>
@@ -82,13 +82,60 @@ export default function Home() {
         </div>
       </header>
 
+      <article id="tech-stack" className={styles.panel}>
+        <h2 className={styles.panelTitle}>Core Tech Stack</h2>
+        <div className={styles.stackColumns}>
+          <div className={styles.stackGroups}>
+            <div className={styles.stackGroup}>
+              <span className={styles.stackLabel}>Languages</span>
+              <div className={styles.stackTags}>
+                <TechTag label="C" />
+                <TechTag label="C++" />
+                <TechTag label="Python" />
+                <TechTag label="JavaScript" />
+                <TechTag label="TypeScript" />
+              </div>
+            </div>
+            <div className={styles.stackGroup}>
+              <span className={styles.stackLabel}>Frameworks</span>
+              <div className={styles.stackTags}>
+                <TechTag label="React" />
+                <TechTag label="Next.js" />
+                <TechTag label="Tailwind" />
+                <TechTag label="FastAPI" />
+              </div>
+            </div>
+          </div>
+          <div className={styles.stackGroups}>
+            <div className={styles.stackGroup}>
+              <span className={styles.stackLabel}>Libraries</span>
+              <div className={styles.stackTags}>
+                <TechTag label="OpenCV" />
+                <TechTag label="NumPy" />
+                <TechTag label="Pillow" />
+              </div>
+            </div>
+            <div className={styles.stackGroup}>
+              <span className={styles.stackLabel}>Tools & Services</span>
+              <div className={styles.stackTags}>
+                <TechTag label="Git" />
+                <TechTag label="Bash" />
+                <TechTag label="Linux" />
+                <TechTag label="Uvicorn" />
+                <TechTag label="Supabase" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
       <div id="home-details" className={styles.detailsGrid}>
         <article className={styles.panel}>
           <div className={styles.tagList}>
             {snapshotItems.map((item) => (
               <div
                 key={item.label}
-                className={`${styles.tag} ${item.label === "Right Now" ? styles.tagWide : ""}`}
+                className={`${styles.tag} ${item.label === "Current Focus" ? styles.tagWide : ""}`}
               >
                 <span className={styles.tagLabel}>{item.label}</span>
                 <span className={styles.tagValue}>{item.value}</span>
@@ -99,6 +146,8 @@ export default function Home() {
 
         <LatestGithubProject />
       </div>
+
+      
     </section>
   );
 }
