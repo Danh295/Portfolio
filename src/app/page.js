@@ -30,11 +30,14 @@ export default function Home() {
               <div className={styles.intro}>
                 <div className={styles.titleRow}>
                   <h2>
+                    
                     <span>Hi! I&apos;m </span>
                     <span className={styles.name}>Danny</span>
+                    <span>,</span>
+                    <span>  </span>
                     <WaveEmoji />
                   </h2>
-                  <h1 className={styles.title}>A Student and Full-stack Developer</h1>
+                  <h1 className={styles.title}>Student and Software Developer</h1>
                 </div>
                 <h3 className={styles.descr}>Ontario, Canada</h3>
               </div>
@@ -47,7 +50,7 @@ export default function Home() {
                 As a student and developer, I&apos;m passionate about building software solutions and continuously learning in the ever-evolving tech landscape.
               </p>
               <p>
-                With a passion for software development, most of my experiences are in web development, but lately I&apos;ve been focusing more on ML with image processing, computer vision, and OCR pipelines.
+                With a passion for software development and simply building things, my experiences so far have been mainly in web and app development, but I&apos;ve also been exploring and working with AI, ML, image processing, computer vision, and OCR pipelines.
               </p>
             </div>
 
