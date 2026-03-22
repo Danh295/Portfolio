@@ -21,6 +21,8 @@ export default function Navbar() {
 
   return (
     <nav className={styles.navbar}>
+      <div className={styles.sideSlot} aria-hidden="true" />
+
       <div className={styles.links}>
         {navigationItems.map((page) => (
           <NavButton
@@ -32,13 +34,17 @@ export default function Navbar() {
         ))}
       </div>
 
-      {showActions ? (
-        <div className={styles.actions}>
+      <div className={styles.actions} data-visible={showActions}>
+        {showActions ? (
           <IconButton compact icon="email" label="Email Danny Hu" href="mailto:hudanny295@gmail.com" />
+        ) : null}
+        {showActions ? (
           <IconButton compact icon="github" label="GitHub" href="https://github.com/Danh295" />
+        ) : null}
+        {showActions ? (
           <IconButton compact icon="resume" label="Open resume" href="/Danny_s_Resume.pdf" />
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </nav>
   );
 }
