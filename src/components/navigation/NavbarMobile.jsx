@@ -34,7 +34,7 @@ export default function NavbarMobile() {
         ? faHouse
         : page.path === "/projects/"
           ? faFolderOpen
-          : page.path === "/career/"
+          : page.path === "/experience/"
             ? faBriefcase
             : faCode,
   }));

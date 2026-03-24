@@ -5,7 +5,7 @@ import Footer from "@/components/layout/Footer";
 
 export const metadata = {
   title: "Danny Hu | Portfolio",
-  description: "Welcome to my personal portfolio! I'm a student and developer with experience in full stack web development. Feel free to explore my projects, skills, and career journey here!",
+  description: "Welcome to my personal portfolio! I'm a student and developer with experience in full stack web development. Feel free to explore my projects, skills, and experience here!",
   keywords: [
     "portfolio",
     "student",
@@ -19,7 +19,7 @@ export const metadata = {
     "Danny Hu", 
     "projects",
     "skills",
-    "career",
+    "experience",
   ],
 };
 
