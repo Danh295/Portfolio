@@ -3,12 +3,19 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   width: min(1680px, calc(100% - 48px));
-  margin: 18px auto 26px;
+  margin: 0 auto;
   padding: 22px 30px;
   border-radius: 0 0 30px 30px;
-  background: rgba(18, 18, 18, 0.9);
+  background: rgba(18, 18, 18, 0.92);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  transition: padding 0.3s ease, border-radius 0.3s ease, box-shadow 0.3s ease;
+}
+
+.navbarCompact {
+  padding: 14px 28px;
+  border-radius: 0 0 22px 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
 }
 
 .sideSlot {
