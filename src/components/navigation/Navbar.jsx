@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import IconButton from "@/components/ui/IconButton";
 import NavButton from "./NavButton";
@@ -18,9 +19,17 @@ export default function Navbar() {
   const pathname = usePathname();
   const currentPath = normalizePath(pathname);
   const showActions = currentPath !== "/";
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <nav className={styles.navbar}>
+    <nav className={`${styles.navbar} ${scrolled ? styles.navbarCompact : ""}`}>
       <div className={styles.sideSlot} aria-hidden="true" />
 
       <div className={styles.links}>

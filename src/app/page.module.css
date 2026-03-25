@@ -10,7 +10,7 @@
 }
 
 .hero {
-  min-height: calc(100svh - 128px);
+  min-height: calc(100svh - 90px);
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 28px;

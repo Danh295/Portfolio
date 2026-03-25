@@ -37,7 +37,7 @@
 html,
 body {
   scroll-behavior: smooth;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -140,6 +140,9 @@ button {
 
 .Navbar {
   display: block;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 @media screen and (max-width: 920px) {

@@ -39,7 +39,7 @@ export default function Home() {
                   </h2>
                   <h1 className={styles.title}>Student and Developer</h1>
                 </div>
-                <h3 className={styles.descr}>Ontario, Canada</h3>
+                <h3 className={styles.descr}>from Ontario, Canada</h3>
               </div>
             </div>
           </div>
@@ -47,10 +47,10 @@ export default function Home() {
           <div className={styles.heroLower}>
             <div className={styles.blurb}>
               <p>
-                As a student and developer, I&apos;m passionate about building software solutions and continuously learning in the ever-evolving tech landscape.
+                Since building my first project in highschool, I&apos;ve known I wanted to keep building software, learning, and growing alongside this ever-evolving tech landscape.
               </p>
               <p>
-                With a passion for software development and simply building things, my experiences so far have been mainly in web and app development, but I&apos;ve also been exploring and working with AI, ML, image processing, computer vision, and OCR pipelines.
+                With a passion for software development and simply building things, most of my experiences lie in web and app development, but I&apos;ve also been exploring and working with AI, ML, image processing, computer vision, and OCR pipelines.
               </p>
             </div>
 
