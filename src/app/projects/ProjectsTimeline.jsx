@@ -108,6 +108,7 @@ export default function ProjectsTimeline({ projects }) {
   const viewportRef = useRef(null);
   const cardRefs = useRef([]);
   const [progress, setProgress] = useState(0);
+  const [hoveredDot, setHoveredDot] = useState(null);
   const [dotPositions, setDotPositions] = useState(
     projects.map((_, index) => (projects.length > 1 ? (index / (projects.length - 1)) * 100 : 0)),
   );
@@ -133,17 +134,23 @@ export default function ProjectsTimeline({ projects }) {
         positions.map((position) => Math.min(100, Math.max(0, (position / maxScroll) * 100))),
       );
 
+      // Subtract scroll-padding-block-start (12px) so that progress reaches
+      // an exact integer when a card is snapped into view, keeping the fill
+      // bar and dot activation in perfect sync.
+      const scrollPadding = 12;
+      const snapPositions = positions.map((p) => Math.max(0, p - scrollPadding));
+
       const scrollTop = viewport.scrollTop;
       let nextProgress = 0;
 
-      if (positions.length === 1 || scrollTop <= positions[0]) {
+      if (snapPositions.length === 1 || scrollTop <= snapPositions[0]) {
         nextProgress = 0;
-      } else if (scrollTop >= positions[positions.length - 1]) {
-        nextProgress = positions.length - 1;
+      } else if (scrollTop >= snapPositions[snapPositions.length - 1]) {
+        nextProgress = snapPositions.length - 1;
       } else {
-        for (let index = 0; index < positions.length - 1; index += 1) {
-          const start = positions[index];
-          const end = positions[index + 1];
+        for (let index = 0; index < snapPositions.length - 1; index += 1) {
+          const start = snapPositions[index];
+          const end = snapPositions[index + 1];
 
           if (scrollTop >= start && scrollTop <= end) {
             const span = Math.max(end - start, 1);
@@ -172,6 +179,14 @@ export default function ProjectsTimeline({ projects }) {
     };
   }, [projects.length]);
 
+  const scrollToCard = useCallback((index) => {
+    const card = cardRefs.current[index];
+    const viewport = viewportRef.current;
+    if (card && viewport) {
+      viewport.scrollTo({ top: card.offsetTop, behavior: "smooth" });
+    }
+  }, []);
+
   const progressStart = dotPositions[0] ?? 0;
   const segmentIndex = Math.min(Math.floor(progress), Math.max(projects.length - 2, 0));
   const segmentProgress = progress - segmentIndex;
@@ -182,7 +197,7 @@ export default function ProjectsTimeline({ projects }) {
 
   return (
     <section className={styles.projectsShell}>
-      <div className={styles.progressNav} aria-hidden="true">
+      <div className={styles.progressNav}>
         <div className={styles.progressDots}>
           <span
             className={styles.progressFill}
@@ -192,12 +207,38 @@ export default function ProjectsTimeline({ projects }) {
             }}
           />
           {projects.map((project, index) => (
-            <span
+            <button
               key={project.title}
-              className={`${styles.progressDot} ${progress >= index - 0.05 ? styles.progressDotActive : ""}`}
+              type="button"
+              aria-label={project.title}
+              className={`${styles.progressDot} ${interpolatedEnd >= (dotPositions[index] ?? 0) ? styles.progressDotActive : ""}`}
               style={{ top: `${dotPositions[index] ?? 0}%` }}
+              onClick={() => scrollToCard(index)}
+              onMouseEnter={() => setHoveredDot(index)}
+              onMouseLeave={() => setHoveredDot(null)}
             />
           ))}
+          {hoveredDot !== null && (
+            <div
+              className={styles.dotPreview}
+              style={{ top: `${dotPositions[hoveredDot] ?? 0}%` }}
+            >
+              {projects[hoveredDot].images?.[0] && (
+                <div className={styles.dotPreviewThumb}>
+                  <Image
+                    src={projects[hoveredDot].images[0].src}
+                    alt=""
+                    fill
+                    style={{ objectFit: "cover" }}
+                  />
+                </div>
+              )}
+              <span className={styles.dotPreviewTitle}>{projects[hoveredDot].title}</span>
+              <span className={styles.dotPreviewMeta}>
+                {projects[hoveredDot].role} / {projects[hoveredDot].context}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -210,16 +251,25 @@ export default function ProjectsTimeline({ projects }) {
               ref={(node) => {
                 cardRefs.current[index] = node;
               }}
-              className={styles.projectCard}
+              className={`${styles.projectCard} ${!project.images?.length ? styles.projectCardCompact : ""}`}
               data-project-card
             >
               <div className={styles.copyColumn}>
-                <div className={styles.copyIntro}>
-                  <h2 className={styles.projectTitle}>{project.title}</h2>
-                  <p className={styles.projectMeta}>
-                    {project.role} / {project.context}
-                  </p>
-                  <p className={styles.projectTimeline}>{project.timeline}</p>
+                <div className={styles.copyHeader}>
+                  <div className={styles.copyIntro}>
+                    <h2 className={styles.projectTitle}>{project.title}</h2>
+                    <p className={styles.projectMeta}>
+                      {project.role} / {project.context}
+                    </p>
+                    <p className={styles.projectTimeline}>{project.timeline}</p>
+                  </div>
+
+                  {!project.images?.length && (project.github || project.demo) && (
+                    <div className={styles.actions}>
+                      {project.github && <ActionLink href={project.github} label="GitHub" icon={faCodeBranch} />}
+                      {project.demo && <ActionLink href={project.demo} label="Open Project" icon={faArrowUpRightFromSquare} />}
+                    </div>
+                  )}
                 </div>
 
                 <ul className={styles.bulletList}>
@@ -229,26 +279,37 @@ export default function ProjectsTimeline({ projects }) {
                 </ul>
               </div>
 
-              <div className={styles.visualColumn}>
-                {(project.github || project.demo) && (
-                  <div className={styles.actions}>
-                    {project.github && <ActionLink href={project.github} label="GitHub" icon={faCodeBranch} />}
-                    {project.demo && <ActionLink href={project.demo} label="Open Project" icon={faArrowUpRightFromSquare} />}
+              {project.images?.length > 0 && (
+                <div className={styles.visualColumn}>
+                  {(project.github || project.demo) && (
+                    <div className={styles.actions}>
+                      {project.github && <ActionLink href={project.github} label="GitHub" icon={faCodeBranch} />}
+                      {project.demo && <ActionLink href={project.demo} label="Open Project" icon={faArrowUpRightFromSquare} />}
+                    </div>
+                  )}
+
+                  <MediaCarousel images={project.images} />
+
+                  <div className={styles.tagRow}>
+                    {project.tags.map((tag) => (
+                      <TechTag key={tag} label={tag} />
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
 
-                {project.images?.length > 0 && <MediaCarousel images={project.images} />}
-
+              {!project.images?.length && (
                 <div className={styles.tagRow}>
                   {project.tags.map((tag) => (
                     <TechTag key={tag} label={tag} />
                   ))}
                 </div>
-              </div>
+              )}
             </article>
           ))}
           </div>
         </div>
+
       </div>
     </section>
   );
