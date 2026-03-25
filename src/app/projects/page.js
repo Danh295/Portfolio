@@ -32,7 +32,6 @@ const projects = [
     ],
     tags: ["Python", "OpenCV", "OCR", "Image Processing"],
     github: "https://github.com/Danh295",
-    // TODO: back to the projects page, when there are no images, can you shift the tech stack tags to the bottom of the project card instead of the right side? 
   },
   {
     title: "Personal Portfolio",
