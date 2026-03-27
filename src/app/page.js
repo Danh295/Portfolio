@@ -65,53 +65,6 @@ export default function Home() {
         </div>
       </header>
 
-      <article id="tech-stack" className={styles.panel}>
-        <h2 className={styles.panelTitle}>Core Tech Stack</h2>
-        <div className={styles.stackColumns}>
-          <div className={styles.stackGroups}>
-            <div className={styles.stackGroup}>
-              <span className={styles.stackLabel}>Languages</span>
-              <div className={styles.stackTags}>
-                <TechTag label="C" />
-                <TechTag label="C++" />
-                <TechTag label="Python" />
-                <TechTag label="JavaScript" />
-                <TechTag label="TypeScript" />
-              </div>
-            </div>
-            <div className={styles.stackGroup}>
-              <span className={styles.stackLabel}>Frameworks</span>
-              <div className={styles.stackTags}>
-                <TechTag label="React" />
-                <TechTag label="Next.js" />
-                <TechTag label="Tailwind" />
-                <TechTag label="FastAPI" />
-              </div>
-            </div>
-          </div>
-          <div className={styles.stackGroups}>
-            <div className={styles.stackGroup}>
-              <span className={styles.stackLabel}>Libraries</span>
-              <div className={styles.stackTags}>
-                <TechTag label="OpenCV" />
-                <TechTag label="NumPy" />
-                <TechTag label="Pillow" />
-              </div>
-            </div>
-            <div className={styles.stackGroup}>
-              <span className={styles.stackLabel}>Tools & Services</span>
-              <div className={styles.stackTags}>
-                <TechTag label="Git" />
-                <TechTag label="Bash" />
-                <TechTag label="Linux" />
-                <TechTag label="Uvicorn" />
-                <TechTag label="Supabase" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </article>
-
       <div id="home-details" className={styles.detailsGrid}>
         <article className={styles.panel}>
           <div className={styles.tagList}>
@@ -130,7 +83,27 @@ export default function Home() {
         <LatestGithubProject />
       </div>
 
-      
+      <article id="tech-stack" className={styles.panel}>
+        <h2 className={styles.panelTitle}>Core Tech Stack</h2>
+        <div className={styles.stackColumns}>
+          {[0, 1].map((columnIndex) => (
+            <div key={columnIndex} className={styles.stackGroups}>
+              {homeContent.coreTechStack
+                .filter((_, index) => index % 2 === columnIndex)
+                .map((group) => (
+                  <div key={group.label} className={styles.stackGroup}>
+                    <span className={styles.stackLabel}>{group.label}</span>
+                    <div className={styles.stackTags}>
+                      {group.items.map((item) => (
+                        <TechTag key={item} label={item} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ))}
+        </div>
+      </article>
     </section>
   );
 }
