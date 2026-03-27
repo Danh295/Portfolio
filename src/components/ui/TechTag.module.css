@@ -17,3 +17,14 @@
   color: var(--secondary);
   font-size: 0.95rem;
 }
+
+.compact {
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 13px;
+  font-size: 0.78rem;
+}
+
+.iconCompact {
+  font-size: 0.8rem;
+}
