@@ -62,16 +62,16 @@ const faMap = {
   Uvicorn: faBolt,
 };
 
-export default function TechTag({ label }) {
+export default function TechTag({ label, compact = false }) {
   const SiIcon = siMap[label];
   const faIcon = faMap[label];
 
   return (
-    <span className={styles.tag}>
+    <span className={`${styles.tag} ${compact ? styles.compact : ""}`}>
       {SiIcon ? (
-        <SiIcon className={styles.icon} />
+        <SiIcon className={`${styles.icon} ${compact ? styles.iconCompact : ""}`} />
       ) : (
-        <FontAwesomeIcon icon={faIcon ?? faGear} className={styles.icon} />
+        <FontAwesomeIcon icon={faIcon ?? faGear} className={`${styles.icon} ${compact ? styles.iconCompact : ""}`} />
       )}
       <span>{label}</span>
     </span>
