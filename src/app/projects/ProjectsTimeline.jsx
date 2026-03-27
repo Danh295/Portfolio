@@ -7,12 +7,15 @@ import {
   faArrowUpRightFromSquare,
   faCodeBranch,
 } from "@fortawesome/free-solid-svg-icons";
+import { SiDevpost } from "react-icons/si";
 import TechTag from "@/components/ui/TechTag";
 import styles from "./page.module.css";
 
 const CYCLE_MS = 3500;
 
 function ActionLink({ href, label, icon }) {
+  const isDevpost = icon === "devpost";
+
   return (
     <a
       href={href}
@@ -21,7 +24,11 @@ function ActionLink({ href, label, icon }) {
       className={styles.actionLink}
     >
       <span>{label}</span>
-      <FontAwesomeIcon icon={icon} className={styles.actionIcon} />
+      {isDevpost ? (
+        <SiDevpost className={styles.actionIcon} />
+      ) : (
+        <FontAwesomeIcon icon={icon} className={styles.actionIcon} />
+      )}
     </a>
   );
 }
@@ -264,10 +271,11 @@ export default function ProjectsTimeline({ projects }) {
                     <p className={styles.projectTimeline}>{project.timeline}</p>
                   </div>
 
-                  {!project.images?.length && (project.github || project.demo) && (
+                  {!project.images?.length && (project.github || project.demo || project.devpost) && (
                     <div className={styles.actions}>
                       {project.github && <ActionLink href={project.github} label="GitHub" icon={faCodeBranch} />}
                       {project.demo && <ActionLink href={project.demo} label="Open Project" icon={faArrowUpRightFromSquare} />}
+                      {project.devpost && <ActionLink href={project.devpost} label="Devpost" icon="devpost" />}
                     </div>
                   )}
                 </div>
@@ -281,10 +289,11 @@ export default function ProjectsTimeline({ projects }) {
 
               {project.images?.length > 0 && (
                 <div className={styles.visualColumn}>
-                  {(project.github || project.demo) && (
+                  {(project.github || project.demo || project.devpost) && (
                     <div className={styles.actions}>
                       {project.github && <ActionLink href={project.github} label="GitHub" icon={faCodeBranch} />}
                       {project.demo && <ActionLink href={project.demo} label="Open Project" icon={faArrowUpRightFromSquare} />}
+                      {project.devpost && <ActionLink href={project.devpost} label="Devpost" icon="devpost" />}
                     </div>
                   )}
 
