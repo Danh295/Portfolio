@@ -462,8 +462,13 @@
   }
 
   .skillNode {
-    width: 100%;
-    justify-content: space-between;
+    animation: none;
+    transform: none;
+  }
+
+  .skillNode:hover,
+  .skillNode:focus-visible {
+    transform: translateY(-1px);
   }
 
   .panelTitle,
