@@ -3,14 +3,9 @@ import LatestGithubProject from "@/components/home/LatestGithubProject";
 import TechTag from "@/components/ui/TechTag";
 import WaveEmoji from "@/components/ui/WaveEmoji";
 import IconButton from "@/components/ui/IconButton";
+import { homeContent } from "@/data/home";
 
 import styles from "./page.module.css";
-
-const snapshotItems = [
-  { label: "Education", value: "Comp Sci & BBA @ UW & WLU" },
-  { label: "Work", value: "Software Developer @ City of Waterloo" },
-  { label: "Current Focus", value: "Computer vision, image processing, and OCR pipelines" },
-];
 
 export default function Home() {
   return (
@@ -19,10 +14,10 @@ export default function Home() {
         <div className={styles.hero}>
           <div className={styles.heroTop}>
             <Image
-              src="/pfp.jpg"
-              alt="Portrait of Danny Hu"
-              width={350}
-              height={520}
+              src={homeContent.portrait.src}
+              alt={homeContent.portrait.alt}
+              width={homeContent.portrait.width}
+              height={homeContent.portrait.height}
               className={styles.profile}
               priority
             />
@@ -31,47 +26,35 @@ export default function Home() {
               <div className={styles.intro}>
                 <div className={styles.titleRow}>
                   <h2>
-                    
-                    <span>Hi! I&apos;m </span>
-                    <span className={styles.name}>Danny!</span>
+                    <span>{homeContent.intro.greeting} </span>
+                    <span className={styles.name}>{homeContent.intro.name}</span>
                     <span>  </span>
                     <WaveEmoji />
                   </h2>
-                  <h1 className={styles.title}>Student and Developer</h1>
+                  <h1 className={styles.title}>{homeContent.intro.title}</h1>
                 </div>
-                <h3 className={styles.descr}>from Ontario, Canada</h3>
+                <h3 className={styles.descr}>{homeContent.intro.subtitle}</h3>
               </div>
             </div>
           </div>
 
           <div className={styles.heroLower}>
             <div className={styles.blurb}>
-              <p>
-                Since building my first project in highschool, I&apos;ve known I wanted to keep building software, learning, and growing alongside this ever-evolving tech landscape.
-              </p>
-              <p>
-                With a passion for software development and simply building things, most of my experiences lie in web and app development, but I&apos;ve also been exploring and working with AI, ML, image processing, computer vision, and OCR pipelines.
-              </p>
+              {homeContent.intro.blurb.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
             </div>
 
             <div className={styles.heroBottom}>
               <div className={styles["social-links"]}>
-                <IconButton
-                  icon="linkedin"
-                  label="LinkedIn"
-                  href="https://www.linkedin.com/in/danny-hu-395380225/"
-                />
-                <IconButton icon="github" label="GitHub" href="https://github.com/Danh295" />
-                <IconButton
-                  icon="email"
-                  label="Email Danny Hu"
-                  href="mailto:hudanny295@gmail.com"
-                />
-                <IconButton
-                  icon="resume"
-                  label="Check out my resume!"
-                  href="/Danny_s_Resume.pdf"
-                />
+                {homeContent.socialLinks.map((link) => (
+                  <IconButton
+                    key={link.icon}
+                    icon={link.icon}
+                    label={link.label}
+                    href={link.href}
+                  />
+                ))}
               </div>
 
               <a href="#tech-stack" className={styles.scrollCue} aria-label="Scroll to details">
@@ -132,7 +115,7 @@ export default function Home() {
       <div id="home-details" className={styles.detailsGrid}>
         <article className={styles.panel}>
           <div className={styles.tagList}>
-            {snapshotItems.map((item) => (
+            {homeContent.snapshotItems.map((item) => (
               <div
                 key={item.label}
                 className={`${styles.tag} ${item.label === "Current Focus" ? styles.tagWide : ""}`}
