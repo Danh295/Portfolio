@@ -225,6 +225,12 @@ export default function ProjectsTimeline({ projects }) {
   const interpolatedEnd = segmentStart + (segmentEnd - segmentStart) * Math.max(0, Math.min(segmentProgress, 1));
   const progressHeight = `${Math.max(0, interpolatedEnd - progressStart)}%`;
 
+  const formatMetaLine = (project) => {
+    return [project.role, project.company, project.location]
+      .filter(Boolean)
+      .join(" • ");
+  };
+
   return (
     <section className={styles.projectsShell}>
       <div className={styles.progressNav}>
@@ -264,9 +270,8 @@ export default function ProjectsTimeline({ projects }) {
                 </div>
               )}
               <span className={styles.dotPreviewTitle}>{projects[hoveredDot].title}</span>
-              <span className={styles.dotPreviewMeta}>
-                {projects[hoveredDot].role} / {projects[hoveredDot].context}
-              </span>
+              <span className={styles.dotPreviewMeta}>{formatMetaLine(projects[hoveredDot])}</span>
+              <span className={styles.dotPreviewContext}>{projects[hoveredDot].context}</span>
             </div>
           )}
         </div>
@@ -288,10 +293,13 @@ export default function ProjectsTimeline({ projects }) {
               <div className={styles.copyColumn}>
                 <div className={styles.copyHeader}>
                   <div className={styles.copyIntro}>
-                    <h2 className={styles.projectTitle}>{project.title}</h2>
-                    <p className={styles.projectMeta}>
-                      {project.role} / {project.context}
-                    </p>
+                    <div className={styles.titleRow}>
+                      <h2 className={styles.projectTitle}>{project.title}</h2>
+                      {project.category && (
+                        <span className={styles.projectCategory}>{project.category}</span>
+                      )}
+                    </div>
+                    <p className={styles.projectMeta}>{formatMetaLine(project)}</p>
                     <p className={styles.projectTimeline}>{project.timeline}</p>
                   </div>
 
@@ -303,6 +311,8 @@ export default function ProjectsTimeline({ projects }) {
                     </div>
                   )}
                 </div>
+
+                <p className={styles.projectContext}>{project.context}</p>
 
                 <ul className={styles.bulletList}>
                   {project.bullets.map((bullet) => (

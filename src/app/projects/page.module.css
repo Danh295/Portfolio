@@ -145,8 +145,17 @@
 .dotPreviewMeta {
   font-family: "Poppins", sans-serif;
   font-size: 0.72rem;
-  font-weight: 600;
-  color: rgba(249, 249, 249, 0.5);
+  font-weight: 700;
+  color: rgba(249, 249, 249, 0.72);
+  line-height: 1.2;
+}
+
+.dotPreviewContext {
+  font-family: "Poppins", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--secondary);
   line-height: 1.2;
 }
 
@@ -209,7 +218,14 @@
 
 .copyIntro {
   display: grid;
-  gap: 4px;
+  gap: 5px;
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
 }
 
 .projectTitle {
@@ -219,11 +235,32 @@
   color: var(--foreground1);
 }
 
+.projectCategory {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(157, 156, 247, 0.3);
+  background: rgba(101, 84, 175, 0.14);
+  font-family: "Poppins", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(232, 229, 255, 0.92);
+}
+
 .projectMeta {
   font-family: "Poppins", sans-serif;
-  font-size: clamp(0.94rem, 1.18vw, 1.15rem);
+  font-size: clamp(0.88rem, 1.02vw, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: rgba(249, 249, 249, 0.86);
+}
+
+.projectContext {
+  font-family: "Poppins", sans-serif;
+  font-size: clamp(0.95rem, 1.12vw, 1.08rem);
   font-style: italic;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--secondary);
 }
 
