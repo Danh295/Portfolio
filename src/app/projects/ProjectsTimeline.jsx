@@ -116,8 +116,8 @@ export default function ProjectsTimeline({ projects }) {
   const cardRefs = useRef([]);
   const [progress, setProgress] = useState(0);
   const [hoveredDot, setHoveredDot] = useState(null);
-  const [dotPositions, setDotPositions] = useState(
-    projects.map((_, index) => (projects.length > 1 ? (index / (projects.length - 1)) * 100 : 0)),
+  const dotPositions = projects.map((_, index) =>
+    projects.length > 1 ? (index / (projects.length - 1)) * 100 : 0,
   );
 
   useEffect(() => {
@@ -136,10 +136,6 @@ export default function ProjectsTimeline({ projects }) {
       if (positions.length === 0) {
         return;
       }
-
-      setDotPositions(
-        positions.map((position) => Math.min(100, Math.max(0, (position / maxScroll) * 100))),
-      );
 
       // Subtract scroll-padding-block-start (12px) so that progress reaches
       // an exact integer when a card is snapped into view, keeping the fill

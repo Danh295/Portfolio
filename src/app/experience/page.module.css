@@ -29,7 +29,7 @@
   border-radius: 30px;
   background: rgba(24, 24, 28, 0.54);
   border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
   padding: 14px;
 }
 
@@ -65,7 +65,7 @@
   border-radius: 26px;
   background: rgba(19, 19, 22, 0.76);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.24);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
   scroll-snap-align: start;
   scroll-snap-stop: always;
   transition: opacity 0.22s ease, transform 0.22s ease;
