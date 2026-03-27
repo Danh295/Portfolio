@@ -186,13 +186,36 @@ export default function ProjectsTimeline({ projects }) {
     };
   }, [projects.length]);
 
-  const scrollToCard = useCallback((index) => {
+  const scrollToCard = useCallback((index, behavior = "smooth") => {
     const card = cardRefs.current[index];
     const viewport = viewportRef.current;
     if (card && viewport) {
-      viewport.scrollTo({ top: card.offsetTop, behavior: "smooth" });
+      viewport.scrollTo({ top: card.offsetTop, behavior });
     }
   }, []);
+
+  useEffect(() => {
+    const syncHashToCard = () => {
+      const slug = window.location.hash.replace("#", "");
+      if (!slug) {
+        return;
+      }
+
+      const index = projects.findIndex((project) => project.slug === slug);
+      if (index >= 0) {
+        requestAnimationFrame(() => {
+          scrollToCard(index);
+        });
+      }
+    };
+
+    syncHashToCard();
+    window.addEventListener("hashchange", syncHashToCard);
+
+    return () => {
+      window.removeEventListener("hashchange", syncHashToCard);
+    };
+  }, [projects, scrollToCard]);
 
   const progressStart = dotPositions[0] ?? 0;
   const segmentIndex = Math.min(Math.floor(progress), Math.max(projects.length - 2, 0));
@@ -255,6 +278,7 @@ export default function ProjectsTimeline({ projects }) {
           {projects.map((project, index) => (
             <article
               key={project.title}
+              id={project.slug}
               ref={(node) => {
                 cardRefs.current[index] = node;
               }}
