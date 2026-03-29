@@ -7,7 +7,7 @@
 
 .hero {
   display: grid;
-  gap: 24px;
+  gap: 12px;
   padding: 28px 42px;
   border-radius: 34px;
   background: rgba(19, 19, 21, 0.88);
@@ -15,6 +15,8 @@
 }
 
 .title {
+  margin: 0;
+  max-width: 980px;
   font-size: clamp(3rem, 5vw, 4.2rem);
   font-weight: 800;
   line-height: 1;
@@ -22,8 +24,12 @@
 }
 
 .lead {
+  margin: 0;
   max-width: 960px;
+  font-family: "Jost", sans-serif;
   font-size: clamp(1rem, 1.4vw, 1.15rem);
+  font-weight: 600;
+  line-height: 1.5;
   color: rgba(249, 249, 249, 0.6);
 }
 
@@ -238,14 +244,29 @@
 .projectCategory {
   padding: 5px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(157, 156, 247, 0.3);
-  background: rgba(101, 84, 175, 0.14);
   font-family: "Poppins", sans-serif;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(232, 229, 255, 0.92);
+}
+
+.projectCategoryProfessional {
+  color: #e8e5ff;
+  background: rgba(101, 84, 175, 0.18);
+  border: 1px solid rgba(157, 156, 247, 0.26);
+}
+
+.projectCategoryHackathon {
+  color: #ffecc5;
+  background: rgba(212, 149, 67, 0.16);
+  border: 1px solid rgba(255, 191, 103, 0.22);
+}
+
+.projectCategoryPersonal {
+  color: #ccf7eb;
+  background: rgba(47, 160, 122, 0.16);
+  border: 1px solid rgba(119, 224, 189, 0.18);
 }
 
 .projectMeta {

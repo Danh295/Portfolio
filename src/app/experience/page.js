@@ -8,6 +8,9 @@ export default function ExperiencePage() {
     <main className={styles.page}>
       <section className={styles.hero}>
         <h1 className={styles.title}>Experience</h1>
+        <p className={styles.lead}>
+          Roles, leadership work, and team experience across frontend delivery and shipping polished web experiences.
+        </p>
       </section>
 
       <ExperienceTimeline entries={experienceEntries} />

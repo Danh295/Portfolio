@@ -13,6 +13,18 @@ import styles from "./page.module.css";
 
 const CYCLE_MS = 3500;
 
+function getProjectCategoryClass(category) {
+  if (category === "Professional") {
+    return styles.projectCategoryProfessional;
+  }
+
+  if (category === "Personal") {
+    return styles.projectCategoryPersonal;
+  }
+
+  return styles.projectCategoryHackathon;
+}
+
 function ActionLink({ href, label, icon }) {
   const isDevpost = icon === "devpost";
 
@@ -292,7 +304,11 @@ export default function ProjectsTimeline({ projects }) {
                     <div className={styles.titleRow}>
                       <h2 className={styles.projectTitle}>{project.title}</h2>
                       {project.category && (
-                        <span className={styles.projectCategory}>{project.category}</span>
+                        <span
+                          className={`${styles.projectCategory} ${getProjectCategoryClass(project.category)}`}
+                        >
+                          {project.category}
+                        </span>
                       )}
                     </div>
                     <p className={styles.projectMeta}>{formatMetaLine(project)}</p>
