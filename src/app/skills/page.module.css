@@ -7,7 +7,7 @@
 
 .hero {
   display: grid;
-  gap: 8px;
+  gap: 12px;
   padding: 28px 42px;
   border-radius: 34px;
   background: rgba(19, 19, 21, 0.88);
@@ -15,6 +15,7 @@
 }
 
 .title {
+  margin: 0;
   max-width: 980px;
   font-size: clamp(3rem, 5vw, 4.2rem);
   font-weight: 800;
@@ -23,53 +24,39 @@
 }
 
 .lead {
+  margin: 0;
   max-width: 960px;
+  font-family: "Jost", sans-serif;
   font-size: clamp(1rem, 1.4vw, 1.15rem);
+  font-weight: 600;
+  line-height: 1.5;
   color: rgba(249, 249, 249, 0.6);
 }
 
 .explorerShell {
-  display: grid;
-  grid-template-columns: minmax(0, 1.18fr) minmax(350px, 0.82fr);
-  gap: 24px;
-  align-items: start;
+  display: block;
 }
 
-.mapPanel,
-.detailPanel {
+.explorerPanel {
   position: relative;
   display: grid;
-  gap: 22px;
+  gap: 24px;
   padding: 28px;
-  border-radius: 32px;
+  border-radius: 34px;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(22, 22, 26, 0.88);
+  background:
+    radial-gradient(circle at top right, rgba(157, 156, 247, 0.12), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(101, 84, 175, 0.14), transparent 28%),
+    rgba(22, 22, 26, 0.9);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
   overflow: hidden;
 }
 
-.mapPanel::before,
-.detailPanel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at top right, rgba(157, 156, 247, 0.18), transparent 28%),
-    linear-gradient(transparent 95%, rgba(255, 255, 255, 0.03) 95%),
-    linear-gradient(90deg, transparent 95%, rgba(255, 255, 255, 0.03) 95%);
-  background-size: auto, 28px 28px, 28px 28px;
-  pointer-events: none;
-  opacity: 0.6;
-}
-
-.detailPanel {
-  position: sticky;
-  top: 92px;
-}
-
 .panelHeader,
-.detailHeader,
-.relatedSection {
+.summaryRow,
+.explorerContent,
+.orbitScene,
+.mobileExplorer {
   position: relative;
   z-index: 1;
 }
@@ -83,9 +70,8 @@
   color: var(--secondary);
 }
 
-.panelTitle,
-.detailTitle {
-  margin-top: 8px;
+.panelTitle {
+  margin: 8px 0 0;
   font-size: clamp(2rem, 2.8vw, 2.7rem);
   font-weight: 800;
   line-height: 1;
@@ -93,7 +79,8 @@
 }
 
 .panelCopy {
-  max-width: 44rem;
+  max-width: 48rem;
+  margin: 12px 0 0;
   font-family: "Jost", sans-serif;
   font-size: clamp(1rem, 1.15vw, 1.08rem);
   font-weight: 600;
@@ -102,15 +89,13 @@
 }
 
 .summaryRow {
-  position: relative;
-  z-index: 1;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
 .summaryCard,
-.detailStatCard {
+.focusStatCard {
   display: grid;
   gap: 6px;
   padding: 16px 18px;
@@ -120,7 +105,7 @@
 }
 
 .summaryValue,
-.detailStatValue {
+.focusStatValue {
   font-family: "Poppins", sans-serif;
   font-size: clamp(1.35rem, 2vw, 1.8rem);
   font-weight: 800;
@@ -129,9 +114,9 @@
 }
 
 .summaryLabel,
-.detailStatLabel,
+.focusStatLabel,
 .relatedMeta,
-.clusterMeta {
+.mobileGroupMeta {
   font-family: "Poppins", sans-serif;
   font-size: 0.8rem;
   font-weight: 700;
@@ -140,135 +125,434 @@
   color: rgba(249, 249, 249, 0.48);
 }
 
-.clusterGrid {
+.explorerContent {
+  display: grid;
+  grid-template-columns: minmax(0, 1.28fr) minmax(330px, 0.72fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.orbitScene {
   position: relative;
-  z-index: 1;
+  min-height: 760px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.clusterCard {
-  display: grid;
-  gap: 16px;
-  padding: 18px;
-  border-radius: 24px;
-  background: rgba(17, 17, 20, 0.72);
+  place-items: center;
+  padding: 30px;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at center, rgba(55, 43, 92, 0.18), transparent 32%),
+    linear-gradient(180deg, rgba(17, 17, 20, 0.82), rgba(12, 12, 15, 0.92));
   border: 1px solid rgba(255, 255, 255, 0.04);
+  perspective: 1200px;
+  perspective-origin: center center;
 }
 
-.clusterHeader {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: baseline;
+.focusSidebar {
+  position: sticky;
+  top: 92px;
 }
 
-.clusterTitle,
-.relatedTitle {
+.orbitPlane {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tilt, 25deg));
+}
+
+.sceneGlow {
+  position: absolute;
+  inset: 11%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, rgba(157, 156, 247, 0.18), transparent 44%),
+    radial-gradient(circle at center, rgba(255, 184, 122, 0.08), transparent 62%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+.orbitField {
+  position: absolute;
+  inset: 0;
+  transform: rotate(var(--orbit-angle, 0deg));
+  pointer-events: none;
+}
+
+.orbitRing {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  border: 1px solid rgba(157, 156, 247, 0.08);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.orbitRingOuter {
+  width: 72%;
+  height: 72%;
+}
+
+.orbitRingMid {
+  width: 48%;
+  height: 48%;
+}
+
+.orbitRingInner {
+  width: 24%;
+  height: 24%;
+}
+
+.orbitLines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.orbitLine {
+  stroke: rgba(157, 156, 247, 0.08);
+  stroke-width: 0.18;
+}
+
+.orbitLineDot {
+  fill: rgba(157, 156, 247, 0.22);
+}
+
+.miniOrbitRing {
+  position: absolute;
+  left: var(--ring-x, 50%);
+  top: var(--ring-y, 50%);
+  width: var(--ring-size, 0px);
+  height: var(--ring-size, 0px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(157, 156, 247, 0.1);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease 0.4s;
+}
+
+.sceneReady .miniOrbitRing {
+  opacity: 1;
+}
+
+.miniOrbitRing::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid rgba(157, 156, 247, 0.04);
+}
+
+.categoryLabel {
+  display: inline-grid;
+  place-items: center;
   font-family: "Poppins", sans-serif;
-  font-size: 1.08rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(239, 236, 255, 0.48);
+  white-space: nowrap;
+}
+
+.categoryLabelAnchor {
+  position: absolute;
+  left: var(--label-x);
+  top: var(--label-y);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sceneReady .categoryLabelAnchor {
+  opacity: 1;
+  transition-delay: 0.6s;
+}
+
+.coreLabel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 24px 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(157, 156, 247, 0.12);
+  background: rgba(15, 15, 18, 0.64);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity 0.5s ease 0.3s,
+    border-color 0.3s ease;
+}
+
+.sceneReady .coreLabel {
+  opacity: 1;
+}
+
+.coreLabelLocked {
+  border-color: rgba(157, 156, 247, 0.24);
+}
+
+.coreSlot {
+  position: relative;
+  width: var(--slot-size, 48px);
+  height: var(--slot-size, 48px);
+  border-radius: 50%;
+  border: 2px dashed rgba(157, 156, 247, 0.18);
+  background: rgba(101, 84, 175, 0.05);
+  flex-shrink: 0;
+  overflow: hidden;
+  transition:
+    transform 0.22s ease,
+    border-color 0.3s ease,
+    border-style 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.slotRings {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.slotRing {
+  fill: none;
+  stroke: rgba(157, 156, 247, 0.14);
+  stroke-width: 0.8;
+  stroke-dasharray: 4 5;
+}
+
+.coreSlotFilled {
+  border-style: solid;
+  border-color: rgba(157, 156, 247, 0.4);
+  background: rgba(101, 84, 175, 0.08);
+  box-shadow:
+    0 0 0 3px rgba(157, 156, 247, 0.08),
+    0 0 20px rgba(157, 156, 247, 0.1);
+}
+
+.coreSlotFilled .slotRing {
+  stroke: rgba(157, 156, 247, 0.22);
+}
+
+/* expand slot + glow when hovering the locked icon */
+.orbitNodeCentered:hover ~ .coreLabel .coreSlot {
+  transform: scale(1.08);
+  border-color: rgba(157, 156, 247, 0.52);
+  box-shadow:
+    0 0 0 3px rgba(157, 156, 247, 0.12),
+    0 0 24px rgba(157, 156, 247, 0.14);
+}
+
+/* disable lift/scale on icon when docked at center */
+.orbitNodeCentered .orbitNode:hover,
+.orbitNodeCentered .orbitNode:focus-visible {
+  transform: scale(var(--node-scale));
+}
+
+.orbitNodeCentered .orbitNode:active {
+  transform: scale(var(--node-scale));
+}
+
+.coreName {
+  font-family: "Poppins", sans-serif;
+  font-size: 1rem;
   font-weight: 800;
+  line-height: 1;
   color: var(--foreground1);
 }
 
-.skillCloud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  align-items: center;
-}
-
-.skillNode {
-  --base-scale: calc(0.94 + (var(--weight) * 0.32));
-  --float-distance: calc(5px + (var(--weight) * 4px));
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(157, 156, 247, 0.24);
-  background: linear-gradient(180deg, rgba(101, 84, 175, 0.18), rgba(101, 84, 175, 0.08));
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+.coreCategory {
   font-family: "Poppins", sans-serif;
-  color: var(--foreground1);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(249, 249, 249, 0.46);
+}
+
+.orbitNodeShell {
+  position: absolute;
+  left: var(--node-x);
+  top: var(--node-y);
+  transform: translate(-50%, -50%) scale(0.88);
+  z-index: 2;
+  will-change: left, top;
+  opacity: 0;
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
+  transition-delay: calc(var(--reveal-index, 0) * 28ms);
+}
+
+.sceneReady .orbitNodeShell {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.orbitNode {
   cursor: pointer;
-  transform: translateY(0) scale(var(--base-scale));
+  transform: scale(var(--node-scale));
   transform-origin: center;
   transition:
     transform 0.22s ease,
+    box-shadow 0.22s ease,
     border-color 0.22s ease,
-    background 0.22s ease,
-    box-shadow 0.22s ease;
-  animation: skillFloat var(--float-duration) ease-in-out infinite;
-  animation-delay: var(--float-delay);
+    background 0.22s ease;
 }
 
-.skillNode:hover,
-.skillNode:focus-visible {
-  border-color: rgba(157, 156, 247, 0.46);
-  background: linear-gradient(180deg, rgba(101, 84, 175, 0.26), rgba(101, 84, 175, 0.14));
-  transform: translateY(-2px) scale(calc(var(--base-scale) + 0.02));
+.orbitNode:hover,
+.orbitNode:focus-visible {
+  transform: translateY(-2px) scale(calc(var(--node-scale) + 0.03));
   outline: none;
 }
 
-.skillNodeActive {
-  border-color: rgba(157, 156, 247, 0.54);
-  background: linear-gradient(180deg, rgba(101, 84, 175, 0.34), rgba(101, 84, 175, 0.16));
-  box-shadow: 0 0 0 1px rgba(157, 156, 247, 0.16), 0 16px 28px rgba(0, 0, 0, 0.2);
+.orbitNode:active {
+  transform: translateY(0) scale(calc(var(--node-scale) - 0.04));
 }
 
-.nodeLabel {
-  font-size: clamp(0.88rem, 0.96vw, 1rem);
+.orbitNodeLocked {
+  box-shadow:
+    0 0 0 1px rgba(157, 156, 247, 0.16),
+    0 14px 26px rgba(0, 0, 0, 0.2);
+}
+
+.orbitNodeCentered {
+  z-index: 10;
+}
+
+.orbitNodeShell:hover {
+  z-index: 8;
+}
+
+.orbitTooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 5px 11px;
+  border-radius: 10px;
+  background: rgba(15, 15, 18, 0.92);
+  border: 1px solid rgba(157, 156, 247, 0.22);
+  backdrop-filter: blur(6px);
+  font-family: "Poppins", sans-serif;
+  font-size: 0.74rem;
   font-weight: 700;
-  line-height: 1;
+  color: var(--foreground1);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  z-index: 20;
 }
 
-.nodeCount {
-  min-width: 1.8rem;
-  padding: 5px 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  font-size: 0.76rem;
-  font-weight: 800;
-  line-height: 1;
-  color: rgba(249, 249, 249, 0.88);
+.orbitNodeShell:hover .orbitTooltip,
+.orbitNodeShell:focus-within .orbitTooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
-@keyframes skillFloat {
-  0%,
-  100% {
-    transform: translateY(0) scale(var(--base-scale));
-  }
-
-  50% {
-    transform: translateY(calc(-1 * var(--float-distance))) scale(var(--base-scale));
-  }
+/* flip tooltip below when near top edge */
+.orbitNodeShell[data-edge="top"] .orbitTooltip {
+  bottom: auto;
+  top: calc(100% + 8px);
 }
 
-.detailHeader {
+.focusCard {
+  display: grid;
+  gap: 18px;
+  padding: 24px 24px 22px;
+  border-radius: 28px;
+  border: 1px solid rgba(157, 156, 247, 0.16);
+  background:
+    radial-gradient(circle at top right, rgba(157, 156, 247, 0.14), transparent 26%),
+    rgba(17, 17, 20, 0.9);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.focusCardCompact {
+  box-shadow: none;
+}
+
+.focusHeader {
+  display: grid;
+}
+
+.focusHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.focusTitleGroup {
   display: grid;
   gap: 8px;
 }
 
-.detailSubhead {
+.unlockButton {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(157, 156, 247, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  font-family: "Poppins", sans-serif;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: rgba(249, 249, 249, 0.82);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.unlockButton:hover,
+.unlockButton:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(157, 156, 247, 0.36);
+  background: rgba(101, 84, 175, 0.16);
+  outline: none;
+}
+
+.focusTitle {
+  margin: 0;
+  font-size: clamp(1.9rem, 2.4vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--foreground1);
+}
+
+.focusSubhead {
+  margin: 0;
   font-family: "Poppins", sans-serif;
   font-size: 1rem;
   font-weight: 700;
   color: rgba(249, 249, 249, 0.74);
 }
 
-.detailStats {
-  position: relative;
-  z-index: 1;
+.focusStats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
 
 .breakdownRow {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -304,17 +588,30 @@
   align-items: baseline;
 }
 
+.relatedTitle {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  font-size: 1.08rem;
+  font-weight: 800;
+  color: var(--foreground1);
+}
+
 .relatedList {
   display: grid;
   gap: 12px;
+  max-height: 248px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(157, 156, 247, 0.28) transparent;
 }
 
 .relatedProject {
   display: grid;
   gap: 8px;
-  padding: 16px 18px;
-  border-radius: 20px;
-  background: rgba(16, 16, 19, 0.8);
+  padding: 15px 16px;
+  border-radius: 18px;
+  background: rgba(16, 16, 19, 0.84);
   border: 1px solid rgba(255, 255, 255, 0.05);
   transition:
     transform 0.22s ease,
@@ -338,6 +635,7 @@
 }
 
 .relatedProjectTitle {
+  margin: 0;
   font-family: "Poppins", sans-serif;
   font-size: 1rem;
   font-weight: 800;
@@ -373,6 +671,7 @@
 }
 
 .relatedContext {
+  margin: 0;
   font-family: "Jost", sans-serif;
   font-size: 1rem;
   font-weight: 600;
@@ -381,21 +680,118 @@
 }
 
 .relatedTimeline {
+  margin: 0;
   font-family: "Poppins", sans-serif;
   font-size: 0.84rem;
   font-weight: 700;
   color: rgba(249, 249, 249, 0.5);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .skillNode {
-    animation: none;
-  }
+.mobileExplorer {
+  display: none;
+}
 
-  .skillNode,
+.mobileHub {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(157, 156, 247, 0.14);
+  background:
+    radial-gradient(circle at left, rgba(101, 84, 175, 0.12), transparent 60%),
+    rgba(17, 17, 20, 0.84);
+}
+
+.mobileSlot {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px dashed rgba(157, 156, 247, 0.18);
+  background: rgba(101, 84, 175, 0.05);
+  display: grid;
+  place-items: center;
+  transition:
+    border-color 0.3s ease,
+    border-style 0.3s ease,
+    background 0.3s ease;
+}
+
+.mobileSlotFilled {
+  border-style: solid;
+  border-color: rgba(157, 156, 247, 0.36);
+  background: rgba(101, 84, 175, 0.1);
+}
+
+.mobileHubText {
+  display: grid;
+  gap: 3px;
+}
+
+.mobileHubName {
+  font-family: "Poppins", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--foreground1);
+}
+
+.mobileHubCategory {
+  font-family: "Poppins", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(249, 249, 249, 0.46);
+}
+
+.mobileHubCount {
+  font-family: "Poppins", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--secondary);
+}
+
+.mobileGroups {
+  display: grid;
+  gap: 14px;
+}
+
+.mobileGroup {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(17, 17, 20, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.mobileGroupHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.mobileGroupTitle {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--foreground1);
+}
+
+.mobileNodeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbitNode,
   .relatedProject,
-  .summaryCard,
-  .detailStatCard {
+  .unlockButton {
     transition: none;
   }
 }
@@ -406,24 +802,36 @@
   }
 
   .hero,
-  .mapPanel,
-  .detailPanel {
+  .explorerPanel {
     padding: 24px 26px;
+  }
+
+  .explorerContent {
+    grid-template-columns: minmax(0, 1.18fr) minmax(310px, 0.82fr);
+  }
+
+  .orbitScene {
+    min-height: 700px;
   }
 }
 
 @media (max-width: 1080px) {
-  .explorerShell {
+  .explorerContent {
     grid-template-columns: 1fr;
+    gap: 18px;
   }
 
-  .detailPanel {
+  .focusSidebar {
     position: relative;
     top: auto;
   }
 
-  .clusterGrid {
-    grid-template-columns: 1fr;
+  .orbitScene {
+    min-height: 660px;
+  }
+
+  .mobileExplorer {
+    display: none;
   }
 }
 
@@ -433,46 +841,54 @@
     gap: 18px;
   }
 
-  .hero {
-    padding: 24px 22px;
-    border-radius: 24px;
-  }
-
-  .mapPanel,
-  .detailPanel {
+  .hero,
+  .explorerPanel {
     padding: 20px 18px;
     border-radius: 24px;
   }
 
+  .explorerContent {
+    display: none;
+  }
+
+  .mobileExplorer {
+    display: grid;
+    gap: 18px;
+  }
+
   .summaryRow,
-  .detailStats {
+  .focusStats {
     grid-template-columns: 1fr;
   }
 
+  .summaryCard,
+  .focusStatCard,
+  .mobileGroup,
+  .focusCard {
+    border-radius: 20px;
+  }
+
+  .focusHeaderRow,
   .relatedHeader,
-  .relatedTop,
-  .clusterHeader {
-    grid-template-columns: 1fr;
+  .relatedTop {
     display: grid;
     gap: 8px;
   }
 
-  .skillCloud {
-    gap: 12px;
+  .unlockButton {
+    justify-self: start;
   }
 
-  .skillNode {
-    animation: none;
-    transform: none;
+  .relatedList {
+    max-height: none;
+    overflow: visible;
   }
 
-  .skillNode:hover,
-  .skillNode:focus-visible {
-    transform: translateY(-1px);
+  .mobileHub {
+    border-radius: 20px;
   }
 
-  .panelTitle,
-  .detailTitle {
-    font-size: clamp(1.7rem, 8vw, 2.2rem);
+  .mobileGroup {
+    border-radius: 18px;
   }
 }
