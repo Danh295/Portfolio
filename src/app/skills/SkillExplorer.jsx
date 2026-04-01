@@ -51,10 +51,13 @@ const MAIN_ORBIT_SPEED = 90;
 const MAIN_ORBIT_LOCKED_SPEED = 140;
 const LERP_SPEED = 0.1;
 
-/* 3D tilt */
-const TILT_BASE = 25;
-const TILT_AMPLITUDE = 5;
-const TILT_PERIOD = 40;
+/* 3D tilt — dual-axis wobble */
+const TILT_X_BASE = 18;
+const TILT_X_AMP = 10;
+const TILT_X_PERIOD = 28;
+const TILT_Y_BASE = 0;
+const TILT_Y_AMP = 8;
+const TILT_Y_PERIOD = 36;
 
 /* ── math helpers ───────────────────────────────────────────────── */
 
@@ -232,7 +235,6 @@ export default function SkillExplorer({
   const sceneRef = useRef(null);
   const orbitPlaneRef = useRef(null);
   const orbitFieldRef = useRef(null);
-  const coreLabelRef = useRef(null);
   const coreSlotRef = useRef(null);
   const nodeShellRefs = useRef(new Map());
   const labelRefs = useRef(new Map());
@@ -391,24 +393,21 @@ export default function SkillExplorer({
       const lockedName = lockedSkillNameRef.current;
       const hoveredName = hoveredSkillNameRef.current;
 
-      /* 3D tilt — slowly oscillating, driven by CSS perspective */
-      const tiltAngle =
-        TILT_BASE +
-        Math.sin((timestamp * 2 * Math.PI) / (TILT_PERIOD * 1000)) *
-          TILT_AMPLITUDE;
+      /* 3D tilt — dual-axis wobble for oval orbit effect */
+      const tiltX =
+        TILT_X_BASE +
+        Math.sin((timestamp * 2 * Math.PI) / (TILT_X_PERIOD * 1000)) *
+          TILT_X_AMP;
+      const tiltY =
+        TILT_Y_BASE +
+        Math.sin((timestamp * 2 * Math.PI) / (TILT_Y_PERIOD * 1000)) *
+          TILT_Y_AMP;
 
       if (orbitPlaneRef.current) {
-        orbitPlaneRef.current.style.setProperty(
-          "--tilt",
-          `${tiltAngle}deg`,
-        );
+        orbitPlaneRef.current.style.transform =
+          `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
       }
 
-      /* counter-rotate center hub so it stays flat */
-      if (coreLabelRef.current) {
-        coreLabelRef.current.style.transform =
-          `translate(-50%, -50%) rotateX(${-tiltAngle}deg)`;
-      }
 
       /* phase 1: compute orbital target positions (flat 2D — CSS 3D handles tilt) */
       const targets = new Map();
@@ -503,15 +502,6 @@ export default function SkillExplorer({
         if (el) {
           el.style.setProperty("--node-x", `${pos.x}px`);
           el.style.setProperty("--node-y", `${pos.y}px`);
-
-          /* counter-rotate centered node so it stays flat above the tilted plane */
-          const isCentered = el.classList.contains(styles.orbitNodeCentered);
-
-          if (isCentered) {
-            el.style.transform = `translate(-50%, -50%) rotateX(${-tiltAngle}deg)`;
-          } else {
-            el.style.transform = "";
-          }
 
           const nearTop = pos.y < 55;
           const nearSide = pos.x < 60 || pos.x > sceneW - 60;
@@ -715,10 +705,13 @@ export default function SkillExplorer({
                 />
               ))}
 
-              {/* skill icons — positioned by JS in screen space */}
+              {/* skill icons in orbit (non-locked) — positioned by JS */}
               {allNodes.map((skill) => {
+                if (skill.name === lockedSkillName) {
+                  return null;
+                }
+
                 const isSelected = skill.name === activeSkill?.name;
-                const isLocked = skill.name === lockedSkillName;
                 const nodeIndex = revealIndex++;
 
                 return (
@@ -731,9 +724,7 @@ export default function SkillExplorer({
                         nodeShellRefs.current.delete(skill.name);
                       }
                     }}
-                    className={`${styles.orbitNodeShell} ${
-                      isLocked ? styles.orbitNodeCentered : ""
-                    }`}
+                    className={styles.orbitNodeShell}
                     style={{ "--reveal-index": nodeIndex }}
                   >
                     <TechTag
@@ -743,8 +734,6 @@ export default function SkillExplorer({
                       iconOnly
                       orbit
                       active={isSelected}
-                      locked={isLocked}
-                      onClose={isLocked ? unlockSelection : undefined}
                       className={styles.orbitNode}
                       style={{
                         "--node-scale": `${skill.scale}`,
@@ -754,7 +743,6 @@ export default function SkillExplorer({
                       onMouseLeave={() => clearPreview()}
                       onFocus={() => previewSkill(skill.name)}
                       onClick={() => toggleSkillLock(skill.name)}
-                      aria-pressed={isLocked}
                     />
                     <span className={styles.orbitTooltip} role="tooltip">
                       {skill.name}
@@ -782,59 +770,96 @@ export default function SkillExplorer({
                 </div>
               ))}
 
-              {/* center hub with icon slot — counter-rotated to stay flat */}
-              <div
-                ref={coreLabelRef}
-                className={`${styles.coreLabel} ${
-                  lockedSkillName ? styles.coreLabelLocked : ""
-                }`}
-                style={{
-                  "--slot-size": lockedNode
-                    ? `${ICON_BASE_SIZE * lockedNode.scale + 6}px`
-                    : `${ICON_BASE_SIZE + 4}px`,
-                }}
-              >
-                <div
-                  ref={coreSlotRef}
-                  className={`${styles.coreSlot} ${
-                    lockedSkillName ? styles.coreSlotFilled : ""
-                  }`}
-                >
-                  <svg
-                    className={styles.slotRings}
-                    viewBox="0 0 100 100"
-                    aria-hidden="true"
-                  >
-                    {Array.from(
-                      { length: activeSkill.projectCount },
-                      (_, i) => {
-                        const r =
-                          activeSkill.projectCount === 1
-                            ? 30
-                            : 12 +
-                              (i * 30) /
-                                (activeSkill.projectCount - 1);
+            </div>
 
-                        return (
-                          <circle
-                            key={i}
-                            cx="50"
-                            cy="50"
-                            r={r}
-                            className={styles.slotRing}
-                          />
-                        );
-                      },
-                    )}
-                  </svg>
-                </div>
-                <strong className={styles.coreName}>
-                  {activeSkill.name}
-                </strong>
-                <span className={styles.coreCategory}>
-                  {activeSkill.category}
+            {/* locked node — rendered outside orbitPlane so it stays flat */}
+            {lockedNode && (
+              <div
+                ref={(el) => {
+                  if (el) {
+                    nodeShellRefs.current.set(lockedNode.name, el);
+                  } else {
+                    nodeShellRefs.current.delete(lockedNode.name);
+                  }
+                }}
+                className={`${styles.orbitNodeShell} ${styles.orbitNodeCentered}`}
+              >
+                <TechTag
+                  as="button"
+                  type="button"
+                  label={lockedNode.name}
+                  iconOnly
+                  orbit
+                  active
+                  locked
+                  onClose={unlockSelection}
+                  className={styles.orbitNode}
+                  style={{
+                    "--node-scale": `${lockedNode.scale}`,
+                    "--icon-size": `${ICON_BASE_SIZE}px`,
+                  }}
+                  onMouseEnter={() => previewSkill(lockedNode.name)}
+                  onMouseLeave={() => clearPreview()}
+                  onClick={() => toggleSkillLock(lockedNode.name)}
+                  aria-pressed
+                />
+                <span className={styles.orbitTooltip} role="tooltip">
+                  {lockedNode.name}
                 </span>
               </div>
+            )}
+
+            {/* center hub with icon slot — counter-rotated to stay flat */}
+            <div
+              className={`${styles.coreLabel} ${
+                lockedSkillName ? styles.coreLabelLocked : ""
+              }`}
+              style={{
+                "--slot-size": lockedNode
+                  ? `${ICON_BASE_SIZE * lockedNode.scale + 6}px`
+                  : `${ICON_BASE_SIZE + 4}px`,
+              }}
+            >
+              <div
+                ref={coreSlotRef}
+                className={`${styles.coreSlot} ${
+                  lockedSkillName ? styles.coreSlotFilled : ""
+                }`}
+              >
+                <svg
+                  className={styles.slotRings}
+                  viewBox="0 0 100 100"
+                  aria-hidden="true"
+                >
+                  {Array.from(
+                    { length: activeSkill.projectCount },
+                    (_, i) => {
+                      const r =
+                        activeSkill.projectCount === 1
+                          ? 30
+                          : 12 +
+                            (i * 30) /
+                              (activeSkill.projectCount - 1);
+
+                      return (
+                        <circle
+                          key={i}
+                          cx="50"
+                          cy="50"
+                          r={r}
+                          className={styles.slotRing}
+                        />
+                      );
+                    },
+                  )}
+                </svg>
+              </div>
+              <strong className={styles.coreName}>
+                {activeSkill.name}
+              </strong>
+              <span className={styles.coreCategory}>
+                {activeSkill.category}
+              </span>
             </div>
           </div>
 
