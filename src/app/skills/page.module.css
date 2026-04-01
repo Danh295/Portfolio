@@ -156,7 +156,6 @@
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
-  transform: rotateX(var(--tilt, 25deg));
 }
 
 .sceneGlow {
