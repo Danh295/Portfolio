@@ -61,7 +61,7 @@ export const projects = [
       "A desktop AI memory system that captures digital context across screen activity and connected sources, then exposes searchable memory through MCP.",
     bullets: [
       "Collaboratively built a desktop-first AI memory prototype that captures context and makes it searchable for agent workflows.",
-      "Worked across the Electron frontend and Python backend to support capture, indexing, and retrieval flows.",
+      "Designed an architecture across the Electron frontend and Python backend to support capture, indexing, and retrieval flows.",
       "Integrated local memory infrastructure with OCR, vector search, and MCP-style agent access to improve context-aware assistance.",
     ],
     tags: [
