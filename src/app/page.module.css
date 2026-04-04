@@ -13,8 +13,8 @@
   min-height: calc(100svh - 90px);
   display: grid;
   grid-template-rows: auto 1fr;
-  gap: 28px;
-  padding: 36px 42px;
+  gap: 20px;
+  padding: 24px 42px;
   border-radius: 34px;
   background: rgba(19, 19, 21, 0.88);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
@@ -94,12 +94,16 @@
 }
 
 .scrollCue {
-  width: 100%;
+  width: fit-content;
+  margin: 0 auto;
   min-height: 44px;
   padding: 10px 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 .scrollArrow {
@@ -223,6 +227,17 @@
 }
 
 @media (max-width: 1024px) {
+  .sectionPage {
+    width: calc(100% - 36px);
+    gap: 18px;
+    scroll-margin-top: 70px;
+  }
+
+  .sectionHero {
+    padding: 22px 24px;
+    border-radius: 28px;
+  }
+
   .page {
     width: calc(100% - 36px);
     gap: 18px;
@@ -309,6 +324,17 @@
 }
 
 @media (max-width: 640px) {
+  .sectionPage {
+    width: calc(100% - 24px);
+    gap: 16px;
+    scroll-margin-top: 60px;
+  }
+
+  .sectionHero {
+    padding: 18px 18px;
+    border-radius: 24px;
+  }
+
   .page {
     width: calc(100% - 24px);
     gap: 16px;
@@ -397,6 +423,58 @@
     padding: 14px 15px;
     border-radius: 18px;
   }
+}
+
+/* ── section pages (projects, experience, skills) ── */
+
+.sectionPage {
+  width: min(1680px, calc(100% - 48px));
+  margin: 0 auto;
+  display: grid;
+  gap: 24px;
+  padding: 12px 0 32px;
+  scroll-margin-top: 80px;
+}
+
+.sectionHero {
+  display: grid;
+  gap: 12px;
+  padding: 28px 42px;
+  border-radius: 34px;
+  background: rgba(19, 19, 21, 0.88);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+}
+
+.sectionTitle {
+  margin: 0;
+  max-width: 980px;
+  font-size: clamp(3rem, 5vw, 4.2rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--foreground1);
+}
+
+.sectionLead {
+  margin: 0;
+  max-width: 960px;
+  font-family: "Jost", sans-serif;
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  font-weight: 600;
+  line-height: 1.5;
+  color: rgba(249, 249, 249, 0.6);
+}
+
+.divider {
+  width: min(800px, 60%);
+  height: 1px;
+  margin: 8px auto;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(157, 156, 247, 0.18) 30%,
+    rgba(157, 156, 247, 0.18) 70%,
+    transparent
+  );
 }
 
 @keyframes bounceDown {
