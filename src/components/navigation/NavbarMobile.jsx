@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBriefcase,
@@ -14,30 +12,40 @@ import { navigationItems } from "@/config/navigation";
 
 import styles from "./NavbarMobile.module.css";
 
-function normalizePath(path) {
-  if (!path || path === "/") {
-    return "/";
-  }
-
-  return path.replace(/\/+$/, "");
-}
+const iconForSection = {
+  home: faHouse,
+  projects: faFolderOpen,
+  experience: faBriefcase,
+  skills: faCode,
+};
 
 export default function NavbarMobile() {
-  const pathname = usePathname();
-  const currentPath = normalizePath(pathname);
+  const [activeSection, setActiveSection] = useState("home");
   const [isOpen, setIsOpen] = useState(false);
 
-  const pages = navigationItems.map((page) => ({
-    ...page,
-    icon:
-      page.path === "/"
-        ? faHouse
-        : page.path === "/projects/"
-          ? faFolderOpen
-          : page.path === "/experience/"
-            ? faBriefcase
-            : faCode,
-  }));
+  useEffect(() => {
+    const ids = ["home", "projects", "experience", "skills"];
+    const observers = [];
+
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setActiveSection(id);
+          }
+        },
+        { rootMargin: "-50% 0px -50% 0px" },
+      );
+
+      obs.observe(el);
+      observers.push(obs);
+    });
+
+    return () => observers.forEach((o) => o.disconnect());
+  }, []);
 
   return (
     <div className={styles.wrapper}>
@@ -64,22 +72,22 @@ export default function NavbarMobile() {
           aria-label="Mobile navigation"
           aria-hidden={!isOpen}
         >
-          {pages.map((page, index) => {
-            const isActive = currentPath === normalizePath(page.path);
+          {navigationItems.map((item, index) => {
+            const isActive = activeSection === item.id;
 
             return (
-              <Link
-                href={page.path}
-                key={page.path}
+              <a
+                href={`/#${item.id}`}
+                key={item.id}
                 className={`${styles.navIconButton} ${isActive ? styles.active : ""}`}
                 aria-current={isActive ? "page" : undefined}
-                aria-label={page.name}
+                aria-label={item.name}
                 onClick={() => setIsOpen(false)}
                 style={{ transitionDelay: isOpen ? `${index * 40}ms` : "0ms" }}
               >
-                <FontAwesomeIcon icon={page.icon} className={styles.icon} />
-                <span className={styles.tooltip}>{page.name}</span>
-              </Link>
+                <FontAwesomeIcon icon={iconForSection[item.id]} className={styles.icon} />
+                <span className={styles.tooltip}>{item.name}</span>
+              </a>
             );
           })}
         </nav>

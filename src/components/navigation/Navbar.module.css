@@ -35,9 +35,14 @@
   gap: 12px;
   justify-self: end;
   min-width: 144px;
+  transition: opacity 0.3s ease;
 }
 
-.actions[data-visible="false"] {
-  visibility: hidden;
+.actionsHidden {
+  opacity: 0;
   pointer-events: none;
+}
+
+.actionsVisible {
+  opacity: 1;
 }
