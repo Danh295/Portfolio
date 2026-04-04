@@ -54,7 +54,6 @@
   overflow-y: hidden;
   padding: 8px;
   scroll-snap-type: x mandatory;
-  overscroll-behavior: contain;
   scrollbar-width: none;
   scroll-padding-inline: 8px;
   outline: none;
