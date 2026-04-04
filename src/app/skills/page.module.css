@@ -41,7 +41,7 @@
   position: relative;
   display: grid;
   gap: 24px;
-  padding: 28px;
+  padding: 22px 20px;
   border-radius: 34px;
   border: 1px solid rgba(255, 255, 255, 0.05);
   background:
@@ -127,17 +127,17 @@
 
 .explorerContent {
   display: grid;
-  grid-template-columns: minmax(0, 1.28fr) minmax(330px, 0.72fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
   gap: 20px;
   align-items: start;
 }
 
 .orbitScene {
   position: relative;
-  min-height: 760px;
+  min-height: 700px;
   display: grid;
   place-items: center;
-  padding: 30px;
+  padding: 20px;
   border-radius: 30px;
   background:
     radial-gradient(circle at center, rgba(55, 43, 92, 0.18), transparent 32%),
