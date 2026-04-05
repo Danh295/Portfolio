@@ -90,11 +90,16 @@ export default function ExperienceTimeline({ entries }) {
         Math.min(entries.length - 1, activeIndexRef.current + direction),
       );
 
+      const atStart = activeIndexRef.current === 0 && direction === -1;
+      const atEnd = activeIndexRef.current === entries.length - 1 && direction === 1;
+
+      if (!atStart && !atEnd) {
+        event.preventDefault();
+      }
+
       if (nextIndex === activeIndexRef.current) {
         return;
       }
-
-      event.preventDefault();
 
       if (wheelLockRef.current) {
         return;
