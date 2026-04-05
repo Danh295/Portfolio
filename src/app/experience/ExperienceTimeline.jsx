@@ -69,7 +69,7 @@ export default function ExperienceTimeline({ entries }) {
       window.clearTimeout(releaseTimeout);
       releaseTimeout = window.setTimeout(() => {
         wheelLockRef.current = false;
-      }, 420);
+      }, 520);
     };
 
     const onWheel = (event) => {
