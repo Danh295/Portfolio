@@ -77,12 +77,18 @@ export default function NavbarMobile() {
 
             return (
               <a
-                href={`/#${item.id}`}
+                href={item.id === "home" ? "#" : `/#${item.id}`}
                 key={item.id}
                 className={`${styles.navIconButton} ${isActive ? styles.active : ""}`}
                 aria-current={isActive ? "page" : undefined}
                 aria-label={item.name}
-                onClick={() => setIsOpen(false)}
+                onClick={(e) => {
+                  setIsOpen(false);
+                  if (item.id === "home") {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
                 style={{ transitionDelay: isOpen ? `${index * 40}ms` : "0ms" }}
               >
                 <FontAwesomeIcon icon={iconForSection[item.id]} className={styles.icon} />

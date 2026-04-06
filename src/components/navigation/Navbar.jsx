@@ -64,13 +64,18 @@ export default function Navbar() {
           <NavButton
             key={item.id}
             label={item.name}
-            href={`/#${item.id}`}
+            href={item.id === "home" ? "#" : `/#${item.id}`}
             isActive={activeSection === item.id}
+            onClick={item.id === "home" ? (e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              window.history.replaceState(null, "", "/#home");
+            } : undefined}
           />
         ))}
       </div>
 
-      <div className={`${styles.actions} ${scrolled ? styles.actionsVisible : styles.actionsHidden}`}>
+      <div className={`${styles.actions} ${showActions ? styles.actionsVisible : styles.actionsHidden}`}>
         <IconButton compact icon="email" label="Email Danny Hu" href="mailto:hudanny295@gmail.com" />
         <IconButton compact icon="github" label="GitHub" href="https://github.com/Danh295" />
         <IconButton compact icon="linkedin" label="LinkedIn" href="https://www.linkedin.com/in/danny-hu-395380225/" />
