@@ -9,12 +9,25 @@ import styles from "./Navbar.module.css";
 export default function Navbar() {
   const [activeSection, setActiveSection] = useState("home");
   const [scrolled, setScrolled] = useState(false);
+  const [showActions, setShowActions] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const heroSocial = document.querySelector("[data-hero-social]");
+    if (!heroSocial) return;
+
+    const obs = new IntersectionObserver(
+      ([entry]) => setShowActions(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    obs.observe(heroSocial);
+    return () => obs.disconnect();
   }, []);
 
   useEffect(() => {
