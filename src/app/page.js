@@ -68,7 +68,7 @@ export default function Home() {
                   ))}
                 </div>
 
-                <a href="#tech-stack" className={styles.scrollCue} aria-label="Scroll to details">
+                <a href="#home-details" className={styles.scrollCue} aria-label="Scroll to details">
                   <span className={styles.scrollArrow} />
                 </a>
               </div>

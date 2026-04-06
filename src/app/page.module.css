@@ -165,6 +165,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
   gap: 24px;
+  scroll-margin-top: 80px;
 }
 
 .panelTitle {
