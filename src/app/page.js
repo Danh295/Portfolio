@@ -57,7 +57,7 @@ export default function Home() {
               </div>
 
               <div className={styles.heroBottom}>
-                <div className={styles["social-links"]}>
+                <div className={styles["social-links"]} data-hero-social>
                   {homeContent.socialLinks.map((link) => (
                     <IconButton
                       key={link.icon}
