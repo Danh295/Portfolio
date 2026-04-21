@@ -9,6 +9,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { SiDevpost } from "react-icons/si";
 import TechTag from "@/components/ui/TechTag";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 import styles from "./page.module.css";
 
 const CYCLE_MS = 3500;
@@ -50,14 +51,15 @@ function MediaCarousel({ images }) {
   const count = images.length;
   const timerRef = useRef(null);
   const frameRef = useRef(null);
+  const reducedMotion = useReducedMotion();
 
   const resetTimer = useCallback(() => {
-    if (count <= 1) return;
     clearInterval(timerRef.current);
+    if (count <= 1 || reducedMotion) return;
     timerRef.current = setInterval(() => {
       setActive((prev) => (prev + 1) % count);
     }, CYCLE_MS);
-  }, [count]);
+  }, [count, reducedMotion]);
 
   useEffect(() => {
     resetTimer();
@@ -76,7 +78,7 @@ function MediaCarousel({ images }) {
 
   useEffect(() => {
     const el = frameRef.current;
-    if (!el || count <= 1) return undefined;
+    if (!el || count <= 1 || reducedMotion) return undefined;
 
     let accumulated = 0;
     const threshold = 40;
@@ -94,7 +96,7 @@ function MediaCarousel({ images }) {
 
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [count, navigate]);
+  }, [count, navigate, reducedMotion]);
 
   return (
     <div ref={frameRef} className={styles.previewFrame}>
@@ -128,6 +130,7 @@ export default function ProjectsTimeline({ projects }) {
   const cardRefs = useRef([]);
   const [progress, setProgress] = useState(0);
   const [hoveredDot, setHoveredDot] = useState(null);
+  const reducedMotion = useReducedMotion();
   const dotPositions = projects.map((_, index) =>
     projects.length > 1 ? (index / (projects.length - 1)) * 100 : 0,
   );
@@ -194,13 +197,16 @@ export default function ProjectsTimeline({ projects }) {
     };
   }, [projects.length]);
 
-  const scrollToCard = useCallback((index, behavior = "smooth") => {
+  const scrollToCard = useCallback((index, behavior) => {
     const card = cardRefs.current[index];
     const viewport = viewportRef.current;
     if (card && viewport) {
-      viewport.scrollTo({ top: card.offsetTop, behavior });
+      viewport.scrollTo({
+        top: card.offsetTop,
+        behavior: behavior ?? (reducedMotion ? "auto" : "smooth"),
+      });
     }
-  }, []);
+  }, [reducedMotion]);
 
   useEffect(() => {
     const syncHashToCard = () => {
