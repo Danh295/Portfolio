@@ -6,6 +6,8 @@ import { faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons";
 import styles from "./LatestGithubProject.module.css";
 
 const STORAGE_KEY = "latest-github-project";
+const GITHUB_API_URL =
+  "https://api.github.com/users/Danh295/repos?sort=created&per_page=1&type=owner";
 const HARDCODED_FALLBACK_REPO = {
   name: "Portfolio",
   description:
@@ -55,7 +57,6 @@ function writeCachedRepo(repo) {
 
 export default function LatestGithubProject() {
   const [repo, setRepo] = useState(HARDCODED_FALLBACK_REPO);
-  const [status, setStatus] = useState("loading");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -67,30 +68,24 @@ export default function LatestGithubProject() {
       }
 
       try {
-        const response = await fetch(
-          "https://api.github.com/users/Danh295/repos?sort=created&per_page=1&type=owner",
-          { signal: controller.signal }
-        );
+        const response = await fetch(GITHUB_API_URL, { signal: controller.signal });
 
         if (!response.ok) {
           throw new Error("Failed to load latest repository");
         }
 
         const repos = await response.json();
-        const latestRepo = repos[0]
-          ? { ...repos[0], fetchedAt: new Date().toISOString() }
-          : HARDCODED_FALLBACK_REPO;
+        if (!repos[0]) {
+          return;
+        }
 
+        const latestRepo = { ...repos[0], fetchedAt: new Date().toISOString() };
         setRepo(latestRepo);
         writeCachedRepo(latestRepo);
-        setStatus("ready");
       } catch (error) {
         if (error.name === "AbortError") {
           return;
         }
-
-        setRepo(cachedRepo ?? HARDCODED_FALLBACK_REPO);
-        setStatus("ready");
       }
     }
 
@@ -98,20 +93,6 @@ export default function LatestGithubProject() {
 
     return () => controller.abort();
   }, []);
-
-  if (status === "loading" && !repo) {
-    return (
-      <article className={styles.card}>
-        <div className={styles.copy}>
-          <span className={styles.label}>Latest on GitHub</span>
-          <h2 className={styles.title}>Loading latest public repo...</h2>
-          <p className={styles.description}>
-            Pulling the newest public repository directly from GitHub.
-          </p>
-        </div>
-      </article>
-    );
-  }
 
   return (
     <article className={styles.card}>
