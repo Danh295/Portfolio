@@ -3,17 +3,17 @@
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons";
+import { site } from "@/config/site";
 import styles from "./LatestGithubProject.module.css";
 
 const STORAGE_KEY = "latest-github-project";
-const GITHUB_API_URL =
-  "https://api.github.com/users/Danh295/repos?sort=created&per_page=1&type=owner";
+const GITHUB_API_URL = `https://api.github.com/users/${site.github.username}/repos?sort=created&per_page=1&type=owner`;
 const HARDCODED_FALLBACK_REPO = {
   name: "Portfolio",
   description:
     "Personal portfolio site showcasing projects, experience, and current work across software development and ML.",
   language: "Next.js",
-  html_url: "https://github.com/Danh295/Portfolio",
+  html_url: `${site.github.profile}/Portfolio`,
   created_at: "2025-01-01T00:00:00.000Z",
   fetchedAt: null,
 };

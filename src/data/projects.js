@@ -1,3 +1,7 @@
+import { site } from "@/config/site";
+
+const repoUrl = (name) => `${site.github.profile}/${name}`;
+
 export const projects = [
   {
     slug: "ppeo-scan",
@@ -46,7 +50,7 @@ export const projects = [
       "CSS Modules",
       "GitHub Pages",
     ],
-    github: "https://github.com/Danh295/Portfolio",
+    github: repoUrl("Portfolio"),
     demo: "https://danh295.github.io/Portfolio/",
   },
   {
@@ -130,7 +134,7 @@ export const projects = [
       "Live2D",
       "Framer Motion",
     ],
-    github: "https://github.com/Danh295/AniFriend",
+    github: repoUrl("AniFriend"),
     devpost: "https://devpost.com/software/mybbg",
     demo: "https://anifriend.vercel.app/",
   },
@@ -160,7 +164,7 @@ export const projects = [
       "Supabase",
       "Tavily",
     ],
-    github: "https://github.com/Danh295/MoneyBird",
+    github: repoUrl("MoneyBird"),
     devpost: "https://devpost.com/software/mind-money",
   },
   {
@@ -188,7 +192,7 @@ export const projects = [
     "ElevenLabs",
     "Supabase",
   ],
-  github: "https://github.com/Danh295/OperAid",
+  github: repoUrl("OperAid"),
   demo: "https://generous-cogwheel-353742.framer.app/",
   },
   {
@@ -216,7 +220,7 @@ export const projects = [
     "MongoDB",
     "OpenAI API",
   ],
-  github: "https://github.com/Danh295/SunLifeCampus",
+  github: repoUrl("SunLifeCampus"),
 }
 
 
