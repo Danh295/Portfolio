@@ -2,18 +2,14 @@ import "./globals.css";
 import Navbar from "@/components/navigation/Navbar";
 import NavbarMobile from "@/components/navigation/NavbarMobile";
 import Footer from "@/components/layout/Footer";
+import { site } from "@/config/site";
 
-const SITE_URL = "https://danh295.github.io/Portfolio";
-const SITE_NAME = "Danny Hu";
-const SITE_TITLE = "Danny Hu | Portfolio";
-const SITE_DESCRIPTION =
-  "Welcome to my personal portfolio! I'm a student and developer with experience in full stack web development. Feel free to explore my projects, skills, and experience here!";
-const OG_IMAGE = `${SITE_URL}/pfp.jpg`;
+const OG_IMAGE = `${site.url}/pfp.jpg`;
 
 export const metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: SITE_TITLE,
-  description: SITE_DESCRIPTION,
+  metadataBase: new URL(site.url),
+  title: site.title,
+  description: site.description,
   keywords: [
     "portfolio",
     "student",
@@ -24,29 +20,29 @@ export const metadata = {
     "software developer",
     "web developer",
     "UI/UX designer",
-    SITE_NAME,
+    site.name,
     "projects",
     "skills",
     "experience",
   ],
-  authors: [{ name: SITE_NAME, url: SITE_URL }],
-  creator: SITE_NAME,
+  authors: [{ name: site.name, url: site.url }],
+  creator: site.name,
   alternates: {
-    canonical: `${SITE_URL}/`,
+    canonical: `${site.url}/`,
   },
   openGraph: {
     type: "website",
-    url: `${SITE_URL}/`,
-    siteName: SITE_TITLE,
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
+    url: `${site.url}/`,
+    siteName: site.title,
+    title: site.title,
+    description: site.description,
     locale: "en_US",
-    images: [{ url: OG_IMAGE, alt: SITE_NAME }],
+    images: [{ url: OG_IMAGE, alt: site.name }],
   },
   twitter: {
     card: "summary_large_image",
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
+    title: site.title,
+    description: site.description,
     images: [OG_IMAGE],
   },
   robots: {

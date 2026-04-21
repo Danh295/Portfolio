@@ -1,4 +1,4 @@
-const SITE_URL = "https://danh295.github.io/Portfolio";
+import { site } from "@/config/site";
 
 export const dynamic = "force-static";
 
@@ -7,7 +7,7 @@ export default function sitemap() {
   const routes = ["/", "/projects/", "/experience/", "/skills/"];
 
   return routes.map((path) => ({
-    url: `${SITE_URL}${path}`,
+    url: `${site.url}${path}`,
     lastModified,
     changeFrequency: "monthly",
     priority: path === "/" ? 1 : 0.8,

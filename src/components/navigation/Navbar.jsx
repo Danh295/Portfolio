@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import IconButton from "@/components/ui/IconButton";
 import NavButton from "./NavButton";
 import { navigationItems } from "@/config/navigation";
+import { site } from "@/config/site";
 import styles from "./Navbar.module.css";
 
 export default function Navbar() {
@@ -31,18 +32,17 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const ids = ["home", "projects", "experience", "skills"];
     const observers = [];
 
-    ids.forEach((id) => {
-      const el = document.getElementById(id);
+    navigationItems.forEach((item) => {
+      const el = document.getElementById(item.id);
       if (!el) return;
 
       const obs = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
-            setActiveSection(id);
-            window.history.replaceState(null, "", `/#${id}`);
+            setActiveSection(item.id);
+            window.history.replaceState(null, "", `/#${item.id}`);
           }
         },
         { rootMargin: "-50% 0px -50% 0px" },
@@ -76,10 +76,10 @@ export default function Navbar() {
       </div>
 
       <div className={`${styles.actions} ${showActions ? styles.actionsVisible : styles.actionsHidden}`}>
-        <IconButton compact icon="email" label="Email Danny Hu" href="mailto:hudanny295@gmail.com" />
-        <IconButton compact icon="github" label="GitHub" href="https://github.com/Danh295" />
-        <IconButton compact icon="linkedin" label="LinkedIn" href="https://www.linkedin.com/in/danny-hu-395380225/" />
-        <IconButton compact icon="resume" label="Open resume" href="/Danny_s_Resume.pdf" />
+        <IconButton compact icon="email" label={`Email ${site.name}`} href={`mailto:${site.email}`} />
+        <IconButton compact icon="github" label="GitHub" href={site.github.profile} />
+        <IconButton compact icon="linkedin" label="LinkedIn" href={site.linkedin} />
+        <IconButton compact icon="resume" label="Open resume" href={site.resume} />
       </div>
     </nav>
   );

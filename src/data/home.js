@@ -1,3 +1,5 @@
+import { site } from "@/config/site";
+
 export const homeContent = {
   portrait: {
     src: "/pfp.jpg",
@@ -16,26 +18,10 @@ export const homeContent = {
     ],
   },
   socialLinks: [
-    {
-      icon: "linkedin",
-      label: "LinkedIn",
-      href: "https://www.linkedin.com/in/danny-hu-395380225/",
-    },
-    {
-      icon: "github",
-      label: "GitHub",
-      href: "https://github.com/Danh295",
-    },
-    {
-      icon: "email",
-      label: "Email me!",
-      href: "mailto:hudanny295@gmail.com",
-    },
-    {
-      icon: "resume",
-      label: "Check out my resume!",
-      href: "/Danny_s_Resume.pdf",
-    },
+    { icon: "linkedin", label: "LinkedIn", href: site.linkedin },
+    { icon: "github", label: "GitHub", href: site.github.profile },
+    { icon: "email", label: "Email me!", href: `mailto:${site.email}` },
+    { icon: "resume", label: "Check out my resume!", href: site.resume },
   ],
   snapshotItems: [
     { label: "Education", value: "Comp Sci & BBA @ UW & WLU" },
