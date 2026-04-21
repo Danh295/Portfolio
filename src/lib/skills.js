@@ -15,7 +15,6 @@ const SKILL_CATEGORY_MAP = {
   JavaScript: "Frontend",
   "Tailwind CSS": "Frontend",
   "CSS Modules": "Frontend",
-  "Font Awesome": "Frontend",
   PixiJS: "Frontend",
   Live2D: "Frontend",
   "Framer Motion": "Frontend",
