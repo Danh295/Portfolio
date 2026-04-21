@@ -158,25 +158,17 @@ const TechTag = forwardRef(function TechTag(
         </span>
       )}
       {locked && onClose && (
-        <span
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           className={styles.closeBadge}
           onClick={(e) => {
             e.stopPropagation();
             onClose();
           }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.stopPropagation();
-              e.preventDefault();
-              onClose();
-            }
-          }}
           aria-label={`Deselect ${label}`}
         >
           ×
-        </span>
+        </button>
       )}
     </Component>
   );

@@ -61,11 +61,13 @@
   right: -5px;
   width: 15px;
   height: 15px;
+  padding: 0;
   display: grid;
   place-items: center;
   border-radius: 50%;
   background: rgba(55, 43, 92, 0.9);
   border: 1px solid rgba(157, 156, 247, 0.4);
+  font-family: inherit;
   font-size: 0.55rem;
   font-weight: 700;
   line-height: 1;
