@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBriefcase,
@@ -20,21 +20,22 @@ const iconForSection = {
 };
 
 export default function NavbarMobile() {
-  const [activeSection, setActiveSection] = useState("home");
   const [isOpen, setIsOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("home");
+  const menuButtonRef = useRef(null);
+  const itemRefs = useRef([]);
 
   useEffect(() => {
-    const ids = ["home", "projects", "experience", "skills"];
     const observers = [];
 
-    ids.forEach((id) => {
-      const el = document.getElementById(id);
+    navigationItems.forEach((item) => {
+      const el = document.getElementById(item.id);
       if (!el) return;
 
       const obs = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
-            setActiveSection(id);
+            setActiveSection(item.id);
           }
         },
         { rootMargin: "-50% 0px -50% 0px" },
@@ -47,10 +48,62 @@ export default function NavbarMobile() {
     return () => observers.forEach((o) => o.disconnect());
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const firstItem = itemRefs.current.find(Boolean);
+    firstItem?.focus();
+
+    const focusables = () => [menuButtonRef.current, ...itemRefs.current].filter(Boolean);
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setIsOpen(false);
+        menuButtonRef.current?.focus();
+        return;
+      }
+
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const nodes = focusables();
+      if (nodes.length === 0) {
+        return;
+      }
+
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.menuCluster}>
         <button
+          ref={menuButtonRef}
           type="button"
           className={`${styles.menuButton} ${isOpen ? styles.menuButtonOpen : ""}`}
           onClick={() => setIsOpen((open) => !open)}
@@ -71,12 +124,16 @@ export default function NavbarMobile() {
           className={`${styles.dropdown} ${isOpen ? styles.dropdownOpen : ""}`}
           aria-label="Mobile navigation"
           aria-hidden={!isOpen}
+          inert={!isOpen}
         >
           {navigationItems.map((item, index) => {
             const isActive = activeSection === item.id;
 
             return (
               <a
+                ref={(node) => {
+                  itemRefs.current[index] = node;
+                }}
                 href={item.id === "home" ? "#" : `/#${item.id}`}
                 key={item.id}
                 className={`${styles.navIconButton} ${isActive ? styles.active : ""}`}
