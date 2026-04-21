@@ -9,6 +9,7 @@ import {
   faHouse,
 } from "@fortawesome/free-solid-svg-icons";
 import { navigationItems } from "@/config/navigation";
+import { useActiveSection } from "@/lib/useActiveSection";
 
 import styles from "./NavbarMobile.module.css";
 
@@ -19,34 +20,13 @@ const iconForSection = {
   skills: faCode,
 };
 
+const SECTION_IDS = navigationItems.map((item) => item.id);
+
 export default function NavbarMobile() {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("home");
   const menuButtonRef = useRef(null);
   const itemRefs = useRef([]);
-
-  useEffect(() => {
-    const observers = [];
-
-    navigationItems.forEach((item) => {
-      const el = document.getElementById(item.id);
-      if (!el) return;
-
-      const obs = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            setActiveSection(item.id);
-          }
-        },
-        { rootMargin: "-50% 0px -50% 0px" },
-      );
-
-      obs.observe(el);
-      observers.push(obs);
-    });
-
-    return () => observers.forEach((o) => o.disconnect());
-  }, []);
+  const activeSection = useActiveSection(SECTION_IDS);
 
   useEffect(() => {
     if (!isOpen) {

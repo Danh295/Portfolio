@@ -5,12 +5,15 @@ import IconButton from "@/components/ui/IconButton";
 import NavButton from "./NavButton";
 import { navigationItems } from "@/config/navigation";
 import { site } from "@/config/site";
+import { useActiveSection } from "@/lib/useActiveSection";
 import styles from "./Navbar.module.css";
 
+const SECTION_IDS = navigationItems.map((item) => item.id);
+
 export default function Navbar() {
-  const [activeSection, setActiveSection] = useState("home");
   const [scrolled, setScrolled] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  const activeSection = useActiveSection(SECTION_IDS);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -32,28 +35,10 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const observers = [];
-
-    navigationItems.forEach((item) => {
-      const el = document.getElementById(item.id);
-      if (!el) return;
-
-      const obs = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            setActiveSection(item.id);
-            window.history.replaceState(null, "", `/#${item.id}`);
-          }
-        },
-        { rootMargin: "-50% 0px -50% 0px" },
-      );
-
-      obs.observe(el);
-      observers.push(obs);
-    });
-
-    return () => observers.forEach((o) => o.disconnect());
-  }, []);
+    if (activeSection) {
+      window.history.replaceState(null, "", `/#${activeSection}`);
+    }
+  }, [activeSection]);
 
   return (
     <nav className={`${styles.navbar} ${scrolled ? styles.navbarCompact : ""}`}>
