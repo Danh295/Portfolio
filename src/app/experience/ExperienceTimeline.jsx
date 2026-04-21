@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import TechTag from "@/components/ui/TechTag";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 import styles from "./page.module.css";
 
 function MediaPlaceholder({ label }) {
@@ -22,6 +23,7 @@ export default function ExperienceTimeline({ entries }) {
   const [hoveredStop, setHoveredStop] = useState(null);
   const activeIndexRef = useRef(0);
   const wheelLockRef = useRef(false);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     activeIndexRef.current = activeIndex;
@@ -73,6 +75,10 @@ export default function ExperienceTimeline({ entries }) {
     };
 
     const onWheel = (event) => {
+      if (reducedMotion) {
+        return;
+      }
+
       if (window.matchMedia("(max-width: 920px)").matches) {
         return;
       }
@@ -111,7 +117,7 @@ export default function ExperienceTimeline({ entries }) {
       if (nextCard) {
         viewport.scrollTo({
           left: nextCard.offsetLeft,
-          behavior: "smooth",
+          behavior: reducedMotion ? "auto" : "smooth",
         });
       }
 
@@ -142,7 +148,7 @@ export default function ExperienceTimeline({ entries }) {
       if (nextCard) {
         viewport.scrollTo({
           left: nextCard.offsetLeft,
-          behavior: "smooth",
+          behavior: reducedMotion ? "auto" : "smooth",
         });
       }
     };
@@ -163,15 +169,18 @@ export default function ExperienceTimeline({ entries }) {
       viewport.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("resize", onScroll);
     };
-  }, [entries.length]);
+  }, [entries.length, reducedMotion]);
 
   const scrollToEntry = useCallback((index) => {
     const card = cardRefs.current[index];
     const viewport = viewportRef.current;
     if (card && viewport) {
-      viewport.scrollTo({ left: card.offsetLeft, behavior: "smooth" });
+      viewport.scrollTo({
+        left: card.offsetLeft,
+        behavior: reducedMotion ? "auto" : "smooth",
+      });
     }
-  }, []);
+  }, [reducedMotion]);
 
   const progressWidth = `${(activeIndex / Math.max(entries.length - 1, 1)) * 100}%`;
 
