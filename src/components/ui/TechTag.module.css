@@ -84,7 +84,7 @@
 .orbit {
   gap: 7px;
   padding: 8px 12px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   border-color: rgba(157, 156, 247, 0.22);
   background: linear-gradient(180deg, rgba(101, 84, 175, 0.16), rgba(101, 84, 175, 0.08));
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);

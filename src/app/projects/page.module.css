@@ -114,7 +114,7 @@
   transform: translateY(-50%);
   width: 190px;
   padding: 10px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(157, 156, 247, 0.22);
   background: rgba(22, 22, 26, 0.96);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.36);
@@ -405,7 +405,7 @@
 }
 
 .carouselFrame {
-  border-radius: 30px;
+  border-radius: var(--radius-lg);
   background: rgba(24, 24, 28, 0.54);
   border: 1px solid rgba(255, 255, 255, 0.04);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);

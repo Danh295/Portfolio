@@ -399,7 +399,7 @@
   .hero {
     padding: 18px 15px;
     gap: 16px;
-    border-radius: 22px;
+    border-radius: var(--radius-md);
   }
 
   .title {
