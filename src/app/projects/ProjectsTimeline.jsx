@@ -353,7 +353,7 @@ export default function ProjectsTimeline({ projects }) {
 
                   <div className={styles.tagRow}>
                     {project.tags.map((tag) => (
-                      <TechTag key={tag} label={tag} compact />
+                      <TechTag key={tag} label={tag} />
                     ))}
                   </div>
                 </div>
@@ -362,7 +362,7 @@ export default function ProjectsTimeline({ projects }) {
               {!project.images?.length && (
                 <div className={styles.tagRow}>
                   {project.tags.map((tag) => (
-                    <TechTag key={tag} label={tag} compact />
+                    <TechTag key={tag} label={tag} />
                   ))}
                 </div>
               )}
