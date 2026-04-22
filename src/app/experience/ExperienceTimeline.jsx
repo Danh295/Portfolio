@@ -208,7 +208,7 @@ export default function ExperienceTimeline({ entries }) {
 
                   <div className={styles.tagRow}>
                     {entry.tags.map((tag) => (
-                      <TechTag key={tag} label={tag} compact />
+                      <TechTag key={tag} label={tag} />
                     ))}
                   </div>
 
