@@ -73,8 +73,8 @@ function polarToPercent(angle, radius) {
   const rad = degreesToRadians(angle);
 
   return {
-    x: 50 + Math.cos(rad) * radius,
-    y: 50 + Math.sin(rad) * radius,
+    x: Number((50 + Math.cos(rad) * radius).toFixed(4)),
+    y: Number((50 + Math.sin(rad) * radius).toFixed(4)),
   };
 }
 
