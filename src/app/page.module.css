@@ -204,7 +204,8 @@
 .stackTags {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  row-gap: 6px;
+  column-gap: 8px;
 }
 
 @media (max-width: 1280px) {
