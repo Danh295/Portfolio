@@ -31,7 +31,7 @@
   bottom: calc(100% + 12px);
   transform: translateX(-50%) translateY(4px);
   padding: 8px 12px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(157, 156, 247, 0.32);
   background: rgba(23, 23, 28, 0.96);
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.24);
@@ -105,7 +105,7 @@
   .iconButton {
     width: 48px;
     height: 48px;
-    border-radius: 14px;
+    border-radius: var(--radius-sm);
   }
 
   .iconButton .icon {

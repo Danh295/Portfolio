@@ -136,7 +136,7 @@
   display: grid;
   gap: 20px;
   padding: 28px;
-  border-radius: 30px;
+  border-radius: var(--radius-lg);
   background: rgba(27, 27, 30, 0.88);
   box-shadow: 0 20px 44px rgba(0, 0, 0, 0.24);
 }
