@@ -15,9 +15,6 @@
   grid-template-rows: auto 1fr;
   gap: 20px;
   padding: 24px 42px;
-  border-radius: 34px;
-  background: rgba(19, 19, 21, 0.88);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
 }
 
 .heroTop {
@@ -249,7 +246,6 @@
     min-height: auto;
     gap: 22px;
     padding: 26px 24px;
-    border-radius: 28px;
   }
 
   .heroTop {
@@ -400,7 +396,6 @@
   .hero {
     padding: 18px 15px;
     gap: 16px;
-    border-radius: var(--radius-md);
   }
 
   .title {
@@ -469,7 +464,7 @@
 .divider {
   width: min(800px, 60%);
   height: 1px;
-  margin: 8px auto;
+  margin: 56px auto;
   background: linear-gradient(
     90deg,
     transparent,
