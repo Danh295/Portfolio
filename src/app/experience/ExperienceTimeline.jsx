@@ -208,12 +208,6 @@ export default function ExperienceTimeline({ entries }) {
                     <p className={styles.entryDate}>{entry.date}</p>
                   </div>
 
-                  <div className={styles.tagRow}>
-                    {entry.tags.map((tag) => (
-                      <TechTag key={tag} label={tag} />
-                    ))}
-                  </div>
-
                   <div className={styles.entryBody}>
                     <p className={styles.entrySummary}>{entry.summary}</p>
                     <ul className={styles.entryList}>
@@ -221,6 +215,12 @@ export default function ExperienceTimeline({ entries }) {
                         <li key={item}>{item}</li>
                       ))}
                     </ul>
+                  </div>
+
+                  <div className={styles.tagRow}>
+                    {entry.tags.map((tag) => (
+                      <TechTag key={tag} label={tag} />
+                    ))}
                   </div>
                 </div>
 
