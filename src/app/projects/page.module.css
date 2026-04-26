@@ -402,8 +402,8 @@
 .tagRow {
   display: flex;
   flex-wrap: wrap;
-  row-gap: 6px;
-  column-gap: 8px;
+  row-gap: var(--tag-row-gap);
+  column-gap: var(--tag-col-gap);
 }
 
 .carouselFrame {
