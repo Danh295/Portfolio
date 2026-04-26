@@ -78,7 +78,7 @@
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(224, 224, 232, 0.72));
   box-shadow: 0 0 16px rgba(255, 255, 255, 0.18);
   transform: translateX(-50%);
-  transition: top 0.22s ease, height 0.22s ease;
+  transition: height 0.18s ease;
   z-index: 1;
 }
 

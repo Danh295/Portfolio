@@ -128,7 +128,7 @@ function MediaCarousel({ images }) {
 export default function ProjectsTimeline({ projects }) {
   const viewportRef = useRef(null);
   const cardRefs = useRef([]);
-  const [progress, setProgress] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [hoveredDot, setHoveredDot] = useState(null);
   const reducedMotion = useReducedMotion();
   const dotPositions = projects.map((_, index) =>
@@ -143,50 +143,33 @@ export default function ProjectsTimeline({ projects }) {
 
     let frame = 0;
 
-    const updateFromScroll = () => {
-      const rawPositions = cardRefs.current.map((card) => card?.offsetTop ?? 0);
-      const maxScroll = Math.max(viewport.scrollHeight - viewport.clientHeight, 1);
-      const positions = rawPositions.map((p) => Math.min(p, maxScroll));
-
+    const updateActiveCard = () => {
+      const positions = cardRefs.current.map((card) => card?.offsetTop ?? 0);
       if (positions.length === 0) {
         return;
       }
 
-      // Subtract scroll-padding-block-start (12px) so that progress reaches
-      // an exact integer when a card is snapped into view, keeping the fill
-      // bar and dot activation in perfect sync.
-      const scrollPadding = 12;
-      const snapPositions = positions.map((p) => Math.max(0, p - scrollPadding));
-
       const scrollTop = viewport.scrollTop;
-      let nextProgress = 0;
+      let nextActive = 0;
+      let smallestDistance = Number.POSITIVE_INFINITY;
 
-      if (snapPositions.length === 1 || scrollTop <= snapPositions[0]) {
-        nextProgress = 0;
-      } else if (scrollTop >= snapPositions[snapPositions.length - 1]) {
-        nextProgress = snapPositions.length - 1;
-      } else {
-        for (let index = 0; index < snapPositions.length - 1; index += 1) {
-          const start = snapPositions[index];
-          const end = snapPositions[index + 1];
-
-          if (scrollTop >= start && scrollTop <= end) {
-            const span = Math.max(end - start, 1);
-            nextProgress = index + (scrollTop - start) / span;
-            break;
-          }
+      positions.forEach((position, index) => {
+        const distance = Math.abs(scrollTop - position);
+        if (distance < smallestDistance) {
+          smallestDistance = distance;
+          nextActive = index;
         }
-      }
+      });
 
-      setProgress(nextProgress);
+      setActiveIndex((current) => (current === nextActive ? current : nextActive));
     };
 
     const onScroll = () => {
       cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(updateFromScroll);
+      frame = requestAnimationFrame(updateActiveCard);
     };
 
-    updateFromScroll();
+    updateActiveCard();
     viewport.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
 
@@ -232,12 +215,9 @@ export default function ProjectsTimeline({ projects }) {
   }, [projects, scrollToCard]);
 
   const progressStart = dotPositions[0] ?? 0;
-  const segmentIndex = Math.min(Math.floor(progress), Math.max(projects.length - 2, 0));
-  const segmentProgress = progress - segmentIndex;
-  const segmentStart = dotPositions[segmentIndex] ?? progressStart;
-  const segmentEnd = dotPositions[Math.min(segmentIndex + 1, dotPositions.length - 1)] ?? segmentStart;
-  const interpolatedEnd = segmentStart + (segmentEnd - segmentStart) * Math.max(0, Math.min(segmentProgress, 1));
-  const progressHeight = `${Math.max(0, interpolatedEnd - progressStart)}%`;
+  const progressHeight = `${
+    projects.length > 1 ? (activeIndex / (projects.length - 1)) * 100 : 0
+  }%`;
 
   const formatMetaLine = (project) => {
     return [project.role, project.company, project.location]
@@ -261,7 +241,7 @@ export default function ProjectsTimeline({ projects }) {
               key={project.title}
               type="button"
               aria-label={project.title}
-              className={`${styles.progressDot} ${interpolatedEnd >= (dotPositions[index] ?? 0) ? styles.progressDotActive : ""}`}
+              className={`${styles.progressDot} ${index <= activeIndex ? styles.progressDotActive : ""}`}
               style={{ top: `${dotPositions[index] ?? 0}%` }}
               onClick={() => scrollToCard(index)}
               onMouseEnter={() => setHoveredDot(index)}
