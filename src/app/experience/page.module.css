@@ -57,6 +57,8 @@
   scrollbar-width: none;
   scroll-padding-inline: 8px;
   outline: none;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
 }
 
 .timelineViewport::-webkit-scrollbar {

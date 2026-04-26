@@ -86,28 +86,30 @@ export default function ExperienceTimeline({ entries }) {
       const dominantDelta =
         Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
 
-      if (Math.abs(dominantDelta) < 12) {
+      if (dominantDelta === 0) {
         return;
       }
 
       const direction = dominantDelta > 0 ? 1 : -1;
-      const nextIndex = Math.max(
-        0,
-        Math.min(entries.length - 1, activeIndexRef.current + direction),
-      );
-
       const atStart = activeIndexRef.current === 0 && direction === -1;
       const atEnd = activeIndexRef.current === entries.length - 1 && direction === 1;
 
+      // Prevent vertical page scroll whenever the carousel can still consume
+      // the wheel input. Only let the page take over at the carousel's edges.
       if (!atStart && !atEnd) {
         event.preventDefault();
       }
 
-      if (nextIndex === activeIndexRef.current) {
+      if (Math.abs(dominantDelta) < 12) {
         return;
       }
 
       if (wheelLockRef.current) {
+        return;
+      }
+
+      const nextIndex = activeIndexRef.current + direction;
+      if (nextIndex < 0 || nextIndex >= entries.length) {
         return;
       }
 
