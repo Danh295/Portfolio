@@ -193,11 +193,11 @@
 
 .projectCard {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.95fr);
-  gap: 24px;
+  grid-template-columns: minmax(0, 1.05fr) minmax(380px, 0.95fr);
+  gap: var(--space-card-column-gap);
   align-items: start;
   min-height: calc(min(580px, calc(100svh - 370px)) - 46px);
-  padding: 24px 28px;
+  padding: var(--space-card-padding-y) var(--space-card-padding-x);
   border-radius: 26px;
   background: rgba(19, 19, 22, 0.76);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -214,24 +214,24 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
+  gap: var(--space-card-section-gap);
 }
 
 .copyColumn {
   display: grid;
-  gap: 16px;
+  gap: var(--space-card-section-gap);
 }
 
 .copyIntro {
   display: grid;
-  gap: 5px;
+  gap: var(--space-card-tight-gap);
 }
 
 .titleRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-card-stack-gap);
 }
 
 .projectTitle {
@@ -294,7 +294,7 @@
 
 .bulletList {
   display: grid;
-  gap: 12px;
+  gap: var(--space-card-stack-gap);
   padding-left: 22px;
 }
 
@@ -308,7 +308,7 @@
 
 .visualColumn {
   display: grid;
-  gap: 16px;
+  gap: var(--space-card-section-gap);
   align-content: start;
 }
 
@@ -316,7 +316,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 12px;
+  gap: var(--space-card-stack-gap);
 }
 
 .actionLink {

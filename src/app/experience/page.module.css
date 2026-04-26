@@ -71,11 +71,11 @@
 
 .entryCard {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 240px;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.55fr);
+  gap: var(--space-card-column-gap);
   align-items: stretch;
   min-height: calc(var(--experience-carousel-height) - 16px);
-  padding: 22px 24px;
+  padding: var(--space-card-padding-y) var(--space-card-padding-x);
   border-radius: 26px;
   background: rgba(19, 19, 22, 0.76);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -90,13 +90,13 @@
 
 .entryContent {
   display: grid;
-  gap: 16px;
+  gap: var(--space-card-section-gap);
   min-width: 0;
 }
 
 .entryHeader {
   display: grid;
-  gap: 4px;
+  gap: var(--space-card-tight-gap);
 }
 
 .entryTitle {
@@ -134,7 +134,7 @@
 
 .entryBody {
   display: grid;
-  gap: 12px;
+  gap: var(--space-card-stack-gap);
   width: 100%;
 }
 
@@ -149,7 +149,7 @@
 
 .entryList {
   display: grid;
-  gap: 8px;
+  gap: var(--space-card-stack-gap);
   padding-left: 22px;
 }
 
