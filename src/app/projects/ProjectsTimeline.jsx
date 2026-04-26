@@ -84,19 +84,32 @@ function MediaCarousel({ images }) {
     const threshold = 40;
 
     const onWheel = (e) => {
-      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      accumulated += delta;
+      // Only intercept wheel for sideways navigation when input is dominantly
+      // horizontal. Vertical wheel must always pass through to the page so
+      // hovering an image at the last project card doesn't trap scroll.
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) {
+        accumulated = 0;
+        return;
+      }
+
+      accumulated += e.deltaX;
 
       if (Math.abs(accumulated) >= threshold) {
-        navigate(accumulated > 0 ? 1 : -1);
+        const direction = accumulated > 0 ? 1 : -1;
+        const atBound =
+          (direction === 1 && active === count - 1) ||
+          (direction === -1 && active === 0);
+        if (!atBound) {
+          navigate(direction);
+          e.preventDefault();
+        }
         accumulated = 0;
-        e.preventDefault();
       }
     };
 
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [count, navigate, reducedMotion]);
+  }, [active, count, navigate, reducedMotion]);
 
   return (
     <div ref={frameRef} className={styles.previewFrame}>

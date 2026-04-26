@@ -179,6 +179,7 @@
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
   scroll-padding-block-start: 12px;
+  overscroll-behavior-y: auto;
 }
 
 .scrollViewport::-webkit-scrollbar {
