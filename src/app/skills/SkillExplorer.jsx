@@ -207,8 +207,17 @@ function FocusCard({
           {activeSkill.projects.map((project) => (
             <Link
               key={`${activeSkill.name}-${project.slug}`}
-              href={`/projects#${project.slug}`}
+              href={`/#${project.slug}`}
               className={styles.relatedProject}
+              onClick={(e) => {
+                e.preventDefault();
+                const section = document.getElementById("projects");
+                if (section) {
+                  section.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+                window.history.pushState(null, "", `/#${project.slug}`);
+                window.dispatchEvent(new HashChangeEvent("hashchange"));
+              }}
             >
               <div className={styles.relatedTop}>
                 <h4 className={styles.relatedProjectTitle}>{project.title}</h4>
