@@ -202,7 +202,7 @@
   position: relative;
   display: grid;
   gap: 10px;
-  padding: 2px 14px 6px;
+  padding: 2px clamp(40px, 6vw, 80px) 6px;
 }
 
 .bottomLabels {

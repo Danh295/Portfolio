@@ -238,15 +238,17 @@ export default function ExperienceTimeline({ entries }) {
               const pct = (index / Math.max(entries.length - 1, 1)) * 100;
               const isFirst = index === 0;
               const isLast = index === entries.length - 1;
+              const positionStyle = isFirst
+                ? { left: 0, transform: "none" }
+                : isLast
+                ? { right: 0, left: "auto", transform: "none" }
+                : { left: `${pct}%`, transform: "translateX(-50%)" };
               return (
                 <button
                   key={`${entry.date}-${index}`}
                   type="button"
                   className={`${styles.bottomLabel} ${index === activeIndex ? styles.bottomLabelActive : ""}`}
-                  style={{
-                    left: `${pct}%`,
-                    transform: isFirst ? "translateX(0%)" : isLast ? "translateX(-100%)" : "translateX(-50%)",
-                  }}
+                  style={positionStyle}
                   onClick={() => scrollToEntry(index)}
                   onMouseEnter={() => setHoveredStop(index)}
                   onMouseLeave={() => setHoveredStop(null)}
