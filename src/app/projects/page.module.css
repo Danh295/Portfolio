@@ -407,11 +407,8 @@
 }
 
 .carouselFrame {
-  border-radius: var(--radius-lg);
-  background: rgba(24, 24, 28, 0.54);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
-  padding: 14px;
+  padding: 0;
+  background: transparent;
 }
 
 @media (max-width: 1120px) {
