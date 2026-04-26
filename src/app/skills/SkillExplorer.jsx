@@ -618,29 +618,8 @@ export default function SkillExplorer({
     <section className={styles.explorerShell}>
       <article className={styles.explorerPanel}>
         <div className={styles.panelHeader}>
-          <div>
-            <span className={styles.eyebrow}>Project-Driven Skill Map</span>
-            <h2 className={styles.panelTitle}>Orbiting around shipped work</h2>
-          </div>
-          <p className={styles.panelCopy}>
-            The orbit maps how the stack clusters across real builds. Select a
-            skill to inspect where it shows up and how often it appears.
-          </p>
-        </div>
-
-        <div className={styles.summaryRow}>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryValue}>{stats.skillCount}</span>
-            <span className={styles.summaryLabel}>Mapped skills</span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryValue}>{stats.projectCount}</span>
-            <span className={styles.summaryLabel}>Linked projects</span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryValue}>{stats.topSkill}</span>
-            <span className={styles.summaryLabel}>Most used right now</span>
-          </div>
+          <span className={styles.eyebrow}>Project-Driven Skill Map</span>
+          <h2 className={styles.panelTitle}>Orbiting around shipped work</h2>
         </div>
 
         <div className={styles.explorerContent}>
@@ -863,14 +842,16 @@ export default function SkillExplorer({
             </div>
           </div>
 
-          <aside className={styles.focusSidebar}>
-            <FocusCard
-              activeSkill={activeSkill}
-              projectTypeOrder={projectTypeOrder}
-              isLocked={Boolean(lockedSkillName)}
-              onUnlock={unlockSelection}
-            />
-          </aside>
+          {lockedSkillName && (
+            <aside className={styles.focusFloating}>
+              <FocusCard
+                activeSkill={activeSkill}
+                projectTypeOrder={projectTypeOrder}
+                isLocked
+                onUnlock={unlockSelection}
+              />
+            </aside>
+          )}
         </div>
 
         {/* mobile layout */}
