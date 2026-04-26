@@ -49,6 +49,7 @@ const CLUSTER_LAYOUT = {
 const ICON_BASE_SIZE = 50;
 const MAIN_ORBIT_SPEED = 90;
 const MAIN_ORBIT_LOCKED_SPEED = 140;
+const MAIN_ORBIT_HOVER_SPEED = 900;
 const LERP_SPEED = 0.1;
 
 /* 3D tilt — dual-axis wobble */
@@ -287,7 +288,9 @@ export default function SkillExplorer({
 
   durationRef.current = lockedSkillName
     ? MAIN_ORBIT_LOCKED_SPEED
-    : MAIN_ORBIT_SPEED;
+    : hoveredSkillName
+      ? MAIN_ORBIT_HOVER_SPEED
+      : MAIN_ORBIT_SPEED;
   lockedSkillNameRef.current = lockedSkillName;
 
   /* ── scene measurement ──────────────────────────────────────── */
@@ -371,6 +374,20 @@ export default function SkillExplorer({
         return;
       }
 
+      /* freeze all motion while hovering (and not locked) so the icon
+         can't drift out from under the cursor — wobble + orbit + mini-orbit
+         all otherwise shift hit-test positions and cause hover thrash */
+      const hoveredName = hoveredSkillNameRef.current;
+      const lockedName = lockedSkillNameRef.current;
+      const isFrozen = hoveredName && !lockedName;
+
+      if (isFrozen) {
+        lastTimestampRef.current = timestamp;
+        rafId = requestAnimationFrame(tick);
+
+        return;
+      }
+
       const deltaMs = timestamp - lastTimestampRef.current;
 
       lastTimestampRef.current = timestamp;
@@ -399,8 +416,6 @@ export default function SkillExplorer({
       const centerX = sceneW / 2;
       const centerY = sceneH / 2;
       const minDim = Math.min(sceneW, sceneH);
-      const lockedName = lockedSkillNameRef.current;
-      const hoveredName = hoveredSkillNameRef.current;
 
       /* 3D tilt — dual-axis wobble for oval orbit effect */
       const tiltX =
@@ -593,7 +608,9 @@ export default function SkillExplorer({
 
   function toggleSkillLock(skillName) {
     if (lockedSkillName === skillName) {
+      hoveredSkillNameRef.current = null;
       setLockedSkillName(null);
+      setHoveredSkillName(null);
 
       return;
     }
@@ -635,6 +652,7 @@ export default function SkillExplorer({
           <div
             ref={sceneRef}
             className={`${styles.orbitScene} ${sceneReady ? styles.sceneReady : ""}`}
+            onMouseLeave={() => clearPreview()}
           >
             {/* 3D-tilted orbit plane — CSS perspective handles depth */}
             <div ref={orbitPlaneRef} className={styles.orbitPlane}>
@@ -714,6 +732,7 @@ export default function SkillExplorer({
                     }}
                     className={styles.orbitNodeShell}
                     style={{ "--reveal-index": nodeIndex }}
+                    onMouseEnter={() => previewSkill(skill.name)}
                   >
                     <TechTag
                       as="button"
@@ -727,8 +746,6 @@ export default function SkillExplorer({
                         "--node-scale": `${skill.scale}`,
                         "--icon-size": `${ICON_BASE_SIZE}px`,
                       }}
-                      onMouseEnter={() => previewSkill(skill.name)}
-                      onMouseLeave={() => clearPreview()}
                       onFocus={() => previewSkill(skill.name)}
                       onClick={() => toggleSkillLock(skill.name)}
                     />
@@ -771,6 +788,7 @@ export default function SkillExplorer({
                   }
                 }}
                 className={`${styles.orbitNodeShell} ${styles.orbitNodeCentered}`}
+                onMouseEnter={() => previewSkill(lockedNode.name)}
               >
                 <TechTag
                   as="button"
@@ -786,8 +804,6 @@ export default function SkillExplorer({
                     "--node-scale": `${lockedNode.scale}`,
                     "--icon-size": `${ICON_BASE_SIZE}px`,
                   }}
-                  onMouseEnter={() => previewSkill(lockedNode.name)}
-                  onMouseLeave={() => clearPreview()}
                   onClick={() => toggleSkillLock(lockedNode.name)}
                   aria-pressed
                 />

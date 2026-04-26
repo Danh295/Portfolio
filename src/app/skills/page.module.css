@@ -296,6 +296,7 @@
   background: rgba(15, 15, 18, 0.64);
   backdrop-filter: blur(8px);
   opacity: 0;
+  pointer-events: none;
   transform: translate(-50%, -50%);
   transition:
     opacity 0.5s ease 0.3s,
@@ -394,10 +395,12 @@
   position: absolute;
   left: var(--node-x);
   top: var(--node-y);
+  padding: 10px;
   transform: translate(-50%, -50%) scale(0.88);
   z-index: 2;
   will-change: left, top;
   opacity: 0;
+  cursor: pointer;
   transition:
     opacity 0.5s ease,
     transform 0.5s ease;
@@ -421,7 +424,8 @@
 }
 
 .orbitNode:hover,
-.orbitNode:focus-visible {
+.orbitNode:focus-visible,
+.orbitNodeShell:hover .orbitNode {
   transform: translateY(-2px) scale(calc(var(--node-scale) + 0.03));
   outline: none;
 }
