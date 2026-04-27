@@ -20,7 +20,7 @@ export default function Home() {
   return (
     <>
       {/* ── Home ── */}
-      <section id="home" className={styles.page}>
+      <section id="home" className={styles.sectionPage}>
         <header className={styles.header}>
           <div className={styles.hero}>
             <div className={styles.heroTop}>
