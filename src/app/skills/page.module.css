@@ -72,6 +72,16 @@
   color: var(--foreground1);
 }
 
+.panelIntro {
+  margin: 12px 0 0;
+  max-width: 680px;
+  font-family: "Jost", sans-serif;
+  font-size: clamp(1rem, 1vw, 1.15rem);
+  font-weight: 600;
+  line-height: 1.5;
+  color: rgba(249, 249, 249, 0.74);
+}
+
 .panelCopy {
   max-width: 48rem;
   margin: 12px 0 0;

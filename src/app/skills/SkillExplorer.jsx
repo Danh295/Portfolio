@@ -644,8 +644,12 @@ export default function SkillExplorer({
     <section className={styles.explorerShell}>
       <article className={styles.explorerPanel}>
         <div className={styles.panelHeader}>
-          <span className={styles.eyebrow}>Project-Driven Skill Map</span>
-          <h2 className={styles.panelTitle}>Orbiting around shipped work</h2>
+          <span className={styles.eyebrow}>A Project-Driven Skill Map</span>
+          <h2 className={styles.panelTitle}>My Tech Stack</h2>
+          <p className={styles.panelIntro}>
+            Click on any skill to see related projects
+            and stats.
+          </p>
         </div>
 
         <div className={styles.explorerContent}>
