@@ -36,7 +36,9 @@
 .timelineShell {
   display: grid;
   gap: 16px;
-  padding: 0 6px;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 24px;
 }
 
 .timelineFrame {
