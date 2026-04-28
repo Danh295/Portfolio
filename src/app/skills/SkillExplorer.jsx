@@ -146,7 +146,7 @@ function FocusCard({
         <div className={styles.focusHeaderRow}>
           <div className={styles.focusTitleGroup}>
             <span className={styles.eyebrow}>
-              {isLocked ? "Locked selection" : "Focused skill"}
+              {isLocked ? "Selected Skill" : "Focused skill"}
             </span>
             <h2 className={styles.focusTitle}>{activeSkill.name}</h2>
             <p className={styles.focusSubhead}>{activeSkill.category}</p>
