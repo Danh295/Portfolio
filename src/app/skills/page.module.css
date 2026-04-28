@@ -149,6 +149,7 @@
   border: 1px solid rgba(255, 255, 255, 0.04);
   perspective: 1200px;
   perspective-origin: center center;
+  overflow: hidden;
   cursor: pointer;
 }
 
