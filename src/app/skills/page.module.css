@@ -419,6 +419,17 @@
   transition-delay: calc(var(--reveal-index, 0) * 28ms);
 }
 
+/* Invisible halo extends the clickable hit area beyond the icon so selection
+   is forgiving even when the cursor isn't dead-on. Hover/click events on the
+   pseudo-element propagate to the parent shell, which already has the JS
+   handlers and CSS :hover styling. */
+.orbitNodeShell::before {
+  content: "";
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+}
+
 .sceneReady .orbitNodeShell {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
