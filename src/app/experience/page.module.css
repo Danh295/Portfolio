@@ -73,7 +73,7 @@
 
 .entryCard {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.55fr);
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.4fr);
   gap: var(--space-card-section-gap) var(--space-card-column-gap);
   align-items: stretch;
   min-height: calc(var(--experience-carousel-height) - 16px);
@@ -330,19 +330,7 @@
   border-color: rgba(255, 255, 255, 0.96);
 }
 
-@media (max-width: 1180px) {
-  .entryCard {
-    grid-template-columns: 1fr;
-    min-height: auto;
-  }
-
-  .mediaColumn {
-    max-width: 320px;
-    justify-self: start;
-  }
-}
-
-@media (max-width: 920px) {
+@media (max-width: 640px) {
   .page {
     width: calc(100% - 32px);
     gap: 22px;
@@ -381,9 +369,15 @@
   }
 
   .entryCard {
+    grid-template-columns: 1fr;
+    min-height: auto;
     gap: 20px;
     padding: 22px 20px;
     border-radius: 24px;
+  }
+
+  .mediaColumn {
+    max-width: none;
   }
 
   .bottomTimeline {
