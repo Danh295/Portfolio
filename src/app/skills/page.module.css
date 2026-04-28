@@ -149,6 +149,7 @@
   border: 1px solid rgba(255, 255, 255, 0.04);
   perspective: 1200px;
   perspective-origin: center center;
+  cursor: pointer;
 }
 
 .focusFloating {
@@ -427,21 +428,17 @@
   transform: scale(var(--node-scale));
   transform-origin: center;
   transition:
-    transform 0.22s ease,
     box-shadow 0.22s ease,
     border-color 0.22s ease,
     background 0.22s ease;
 }
 
-.orbitNode:hover,
-.orbitNode:focus-visible,
-.orbitNodeShell:hover .orbitNode {
-  transform: translateY(-2px) scale(calc(var(--node-scale) + 0.03));
+.orbitNode:focus-visible {
   outline: none;
 }
 
 .orbitNode:active {
-  transform: translateY(0) scale(calc(var(--node-scale) - 0.04));
+  transform: scale(calc(var(--node-scale) - 0.04));
 }
 
 .orbitNodeLocked {
