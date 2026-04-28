@@ -1,7 +1,7 @@
 .footer {
   width: min(1480px, calc(100% - 40px));
-  margin: 24px auto 36px;
-  padding: 26px 0 0;
+  margin: 16px auto 24px;
+  padding: 12px 0 0;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   justify-content: center;
@@ -20,8 +20,8 @@
 @media (max-width: 920px) {
   .footer {
     width: min(100%, calc(100% - 32px));
-    margin: 0 auto 98px;
-    padding-top: 22px;
+    margin: 8px auto 88px;
+    padding-top: 10px;
   }
 
   .copy {
