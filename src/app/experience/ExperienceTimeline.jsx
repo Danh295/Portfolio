@@ -216,16 +216,16 @@ export default function ExperienceTimeline({ entries }) {
                       ))}
                     </ul>
                   </div>
-
-                  <div className={styles.tagRow}>
-                    {entry.tags.map((tag) => (
-                      <TechTag key={tag} label={tag} />
-                    ))}
-                  </div>
                 </div>
 
                 <div className={styles.mediaColumn}>
                   <MediaPlaceholder label={entry.mediaLabel} />
+                </div>
+
+                <div className={styles.tagRow}>
+                  {entry.tags.map((tag) => (
+                    <TechTag key={tag} label={tag} />
+                  ))}
                 </div>
               </article>
             ))}

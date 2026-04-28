@@ -343,22 +343,14 @@ export default function ProjectsTimeline({ projects }) {
                   )}
 
                   <MediaCarousel images={project.images} />
-
-                  <div className={styles.tagRow}>
-                    {project.tags.map((tag) => (
-                      <TechTag key={tag} label={tag} />
-                    ))}
-                  </div>
                 </div>
               )}
 
-              {!project.images?.length && (
-                <div className={styles.tagRow}>
-                  {project.tags.map((tag) => (
-                    <TechTag key={tag} label={tag} />
-                  ))}
-                </div>
-              )}
+              <div className={styles.tagRow}>
+                {project.tags.map((tag) => (
+                  <TechTag key={tag} label={tag} />
+                ))}
+              </div>
             </article>
           ))}
           </div>

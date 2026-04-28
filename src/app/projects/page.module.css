@@ -194,7 +194,7 @@
 .projectCard {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(380px, 0.95fr);
-  gap: var(--space-card-column-gap);
+  gap: var(--space-card-section-gap) var(--space-card-column-gap);
   align-items: start;
   min-height: calc(min(580px, calc(100svh - 370px)) - 46px);
   padding: var(--space-card-padding-y) var(--space-card-padding-x);
@@ -400,10 +400,13 @@
 }
 
 .tagRow {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   row-gap: var(--tag-row-gap);
   column-gap: var(--tag-col-gap);
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .carouselFrame {
