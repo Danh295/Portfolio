@@ -72,7 +72,7 @@
 .entryCard {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 0.55fr);
-  gap: var(--space-card-column-gap);
+  gap: var(--space-card-section-gap) var(--space-card-column-gap);
   align-items: stretch;
   min-height: calc(var(--experience-carousel-height) - 16px);
   padding: var(--space-card-padding-y) var(--space-card-padding-x);
@@ -126,10 +126,13 @@
 }
 
 .tagRow {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   row-gap: var(--tag-row-gap);
   column-gap: var(--tag-col-gap);
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .entryBody {
