@@ -464,7 +464,7 @@
 .divider {
   width: min(800px, 60%);
   height: 1px;
-  margin: 56px auto;
+  margin: 72px auto;
   background: linear-gradient(
     90deg,
     transparent,
