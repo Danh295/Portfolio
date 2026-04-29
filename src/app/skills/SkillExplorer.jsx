@@ -722,6 +722,7 @@ export default function SkillExplorer({
                 }
 
                 const isSelected = skill.name === activeSkill?.name;
+                const isHovered = skill.name === hoveredSkillName;
                 const nodeIndex = revealIndex++;
 
                 return (
@@ -734,7 +735,7 @@ export default function SkillExplorer({
                         nodeShellRefs.current.delete(skill.name);
                       }
                     }}
-                    className={styles.orbitNodeShell}
+                    className={`${styles.orbitNodeShell} ${isHovered ? styles.orbitNodeShellHovered : ""}`}
                     style={{ "--reveal-index": nodeIndex }}
                     onMouseEnter={() => previewSkill(skill.name)}
                   >
@@ -753,7 +754,10 @@ export default function SkillExplorer({
                       onFocus={() => previewSkill(skill.name)}
                       onClick={() => toggleSkillLock(skill.name)}
                     />
-                    <span className={styles.orbitTooltip} role="tooltip">
+                    <span
+                      className={`${styles.orbitTooltip} ${isHovered ? styles.orbitTooltipVisible : ""}`}
+                      role="tooltip"
+                    >
                       {skill.name}
                     </span>
                   </div>
@@ -791,7 +795,7 @@ export default function SkillExplorer({
                     nodeShellRefs.current.delete(lockedNode.name);
                   }
                 }}
-                className={`${styles.orbitNodeShell} ${styles.orbitNodeCentered}`}
+                className={`${styles.orbitNodeShell} ${styles.orbitNodeCentered} ${hoveredSkillName === lockedNode.name ? styles.orbitNodeShellHovered : ""}`}
                 onMouseEnter={() => previewSkill(lockedNode.name)}
               >
                 <TechTag
@@ -811,7 +815,10 @@ export default function SkillExplorer({
                   onClick={() => toggleSkillLock(lockedNode.name)}
                   aria-pressed
                 />
-                <span className={styles.orbitTooltip} role="tooltip">
+                <span
+                  className={`${styles.orbitTooltip} ${hoveredSkillName === lockedNode.name ? styles.orbitTooltipVisible : ""}`}
+                  role="tooltip"
+                >
                   {lockedNode.name}
                 </span>
               </div>
