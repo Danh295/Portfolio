@@ -173,16 +173,19 @@ export default function ExperienceTimeline({ entries }) {
     };
   }, [entries.length, reducedMotion]);
 
-  const scrollToEntry = useCallback((index) => {
-    const card = cardRefs.current[index];
-    const viewport = viewportRef.current;
-    if (card && viewport) {
-      viewport.scrollTo({
-        left: card.offsetLeft,
-        behavior: reducedMotion ? "auto" : "smooth",
-      });
-    }
-  }, [reducedMotion]);
+  const scrollToEntry = useCallback(
+    (index) => {
+      const card = cardRefs.current[index];
+      const viewport = viewportRef.current;
+      if (card && viewport) {
+        viewport.scrollTo({
+          left: card.offsetLeft,
+          behavior: reducedMotion ? "auto" : "smooth",
+        });
+      }
+    },
+    [reducedMotion],
+  );
 
   const progressWidth = `${(activeIndex / Math.max(entries.length - 1, 1)) * 100}%`;
 
@@ -203,7 +206,8 @@ export default function ExperienceTimeline({ entries }) {
                   <div className={styles.entryHeader}>
                     <h2 className={styles.entryTitle}>{entry.title}</h2>
                     <p className={styles.entryCompany}>
-                      <span className={styles.companyAccent}>{entry.company}</span>, {entry.location}
+                      <span className={styles.companyAccent}>{entry.company}</span>,{" "}
+                      {entry.location}
                     </p>
                     <p className={styles.entryDate}>{entry.date}</p>
                   </div>
@@ -241,8 +245,8 @@ export default function ExperienceTimeline({ entries }) {
               const positionStyle = isFirst
                 ? { left: 0, transform: "none" }
                 : isLast
-                ? { right: 0, left: "auto", transform: "none" }
-                : { left: `${pct}%`, transform: "translateX(-50%)" };
+                  ? { right: 0, left: "auto", transform: "none" }
+                  : { left: `${pct}%`, transform: "translateX(-50%)" };
               return (
                 <button
                   key={`${entry.date}-${index}`}
@@ -281,7 +285,9 @@ export default function ExperienceTimeline({ entries }) {
           {hoveredStop !== null && (
             <div
               className={styles.stopPreview}
-              style={{ left: `${Math.min(Math.max((hoveredStop / Math.max(entries.length - 1, 1)) * 100, 5), 95)}%` }}
+              style={{
+                left: `${Math.min(Math.max((hoveredStop / Math.max(entries.length - 1, 1)) * 100, 5), 95)}%`,
+              }}
             >
               <span className={styles.stopPreviewTitle}>{entries[hoveredStop].title}</span>
               <span className={styles.stopPreviewCompany}>{entries[hoveredStop].company}</span>

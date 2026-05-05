@@ -2,12 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faBriefcase,
-  faCode,
-  faFolderOpen,
-  faHouse,
-} from "@fortawesome/free-solid-svg-icons";
+import { faBriefcase, faCode, faFolderOpen, faHouse } from "@fortawesome/free-solid-svg-icons";
 import { navigationItems } from "@/config/navigation";
 import { useActiveSection } from "@/lib/useActiveSection";
 

@@ -146,10 +146,7 @@ const TechTag = forwardRef(function TechTag(
       {SiIcon ? (
         <SiIcon className={iconClass} />
       ) : (
-        <FontAwesomeIcon
-          icon={faIcon ?? faGear}
-          className={iconClass}
-        />
+        <FontAwesomeIcon icon={faIcon ?? faGear} className={iconClass} />
       )}
       {!iconOnly && <span className={styles.label}>{label}</span>}
       {!iconOnly && count !== null && (

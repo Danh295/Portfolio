@@ -26,10 +26,9 @@ export default function Navbar() {
     const heroSocial = document.querySelector("[data-hero-social]");
     if (!heroSocial) return;
 
-    const obs = new IntersectionObserver(
-      ([entry]) => setShowActions(!entry.isIntersecting),
-      { threshold: 0 },
-    );
+    const obs = new IntersectionObserver(([entry]) => setShowActions(!entry.isIntersecting), {
+      threshold: 0,
+    });
     obs.observe(heroSocial);
     return () => obs.disconnect();
   }, []);
@@ -51,17 +50,28 @@ export default function Navbar() {
             label={item.name}
             href={item.id === "home" ? "#" : `/#${item.id}`}
             isActive={activeSection === item.id}
-            onClick={item.id === "home" ? (e) => {
-              e.preventDefault();
-              window.scrollTo({ top: 0, behavior: "smooth" });
-              window.history.replaceState(null, "", "/#home");
-            } : undefined}
+            onClick={
+              item.id === "home"
+                ? (e) => {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    window.history.replaceState(null, "", "/#home");
+                  }
+                : undefined
+            }
           />
         ))}
       </div>
 
-      <div className={`${styles.actions} ${showActions ? styles.actionsVisible : styles.actionsHidden}`}>
-        <IconButton compact icon="email" label={`Email ${site.name}`} href={`mailto:${site.email}`} />
+      <div
+        className={`${styles.actions} ${showActions ? styles.actionsVisible : styles.actionsHidden}`}
+      >
+        <IconButton
+          compact
+          icon="email"
+          label={`Email ${site.name}`}
+          href={`mailto:${site.email}`}
+        />
         <IconButton compact icon="github" label="GitHub" href={site.github.profile} />
         <IconButton compact icon="linkedin" label="LinkedIn" href={site.linkedin} />
         <IconButton compact icon="resume" label="Open resume" href={site.resume} />

@@ -9,7 +9,10 @@
   background: rgba(18, 18, 18, 0.92);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(24px);
-  transition: padding 0.3s ease, border-radius 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    padding 0.3s ease,
+    border-radius 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .navbarCompact {
