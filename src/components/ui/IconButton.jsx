@@ -1,12 +1,11 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGithub, faLinkedinIn} from '@fortawesome/free-brands-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGithub, faLinkedinIn } from "@fortawesome/free-brands-svg-icons";
 import { faEnvelope, faFileLines } from "@fortawesome/free-solid-svg-icons";
 
-import style from './IconButton.module.css';
+import style from "./IconButton.module.css";
 
 export default function IconButton({ icon, label, href, onClick, compact = false }) {
-
-  // Determine icon to render    
+  // Determine icon to render
   const getIcon = () => {
     switch (icon) {
       case "github":
@@ -36,5 +35,5 @@ export default function IconButton({ icon, label, href, onClick, compact = false
       <span className={style.icon}>{getIcon()}</span>
       <span className={style.tooltip}>{label}</span>
     </a>
-  )
+  );
 }

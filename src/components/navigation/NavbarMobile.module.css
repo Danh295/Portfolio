@@ -55,7 +55,9 @@
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.22s ease, transform 0.22s ease;
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
 }
 
 .menuTooltip::after,
@@ -93,7 +95,10 @@
   height: 2px;
   border-radius: 999px;
   background: var(--secondary);
-  transition: transform 0.24s ease, opacity 0.2s ease, top 0.24s ease;
+  transition:
+    transform 0.24s ease,
+    opacity 0.2s ease,
+    top 0.24s ease;
 }
 
 .bar:nth-child(1) {
@@ -129,7 +134,9 @@
   opacity: 0;
   pointer-events: none;
   transform: translateY(-6px);
-  transition: opacity 0.22s ease, transform 0.22s ease;
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
 }
 
 .dropdownOpen {
