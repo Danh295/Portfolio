@@ -1,5 +1,21 @@
-import { redirect } from "next/navigation";
+"use client";
 
-export default function ProjectsPage() {
-  redirect("/#projects");
+import { useEffect } from "react";
+import { site } from "@/config/site";
+
+const TARGET = `${site.basePath}/#projects`;
+
+export default function ProjectsRedirect() {
+  useEffect(() => {
+    window.location.replace(TARGET);
+  }, []);
+
+  return (
+    <>
+      <meta httpEquiv="refresh" content={`0;url=${TARGET}`} />
+      <p style={{ padding: "2rem", textAlign: "center" }}>
+        Redirecting to <a href={TARGET}>{TARGET}</a>…
+      </p>
+    </>
+  );
 }
