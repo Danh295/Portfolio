@@ -24,6 +24,9 @@ const SKILL_CATEGORY_MAP = {
   ChromaDB: "Backend",
   MCP: "Backend",
   "MCP Server": "Backend",
+  "Node.js": "Backend",
+  "Express.js": "Backend",
+  MongoDB: "Backend",
   Gemini: "AI / ML",
   "Gemini API": "AI / ML",
   ElevenLabs: "AI / ML",
@@ -39,7 +42,6 @@ const SKILL_CATEGORY_MAP = {
   OCR: "Computer Vision / OCR",
   Electron: "Tooling / Infra",
   Cloudinary: "Tooling / Infra",
-  ESLint: "Tooling / Infra",
   "GitHub Pages": "Tooling / Infra",
 };
 
