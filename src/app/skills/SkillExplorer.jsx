@@ -126,28 +126,16 @@ function ProjectTypeBadge({ category }) {
         ? styles.badgePersonal
         : styles.badgeHackathon;
 
-  return (
-    <span className={`${styles.projectBadge} ${toneClass}`}>{category}</span>
-  );
+  return <span className={`${styles.projectBadge} ${toneClass}`}>{category}</span>;
 }
 
-function FocusCard({
-  activeSkill,
-  projectTypeOrder,
-  compact = false,
-  isLocked = false,
-  onUnlock,
-}) {
+function FocusCard({ activeSkill, projectTypeOrder, compact = false, isLocked = false, onUnlock }) {
   return (
-    <div
-      className={`${styles.focusCard} ${compact ? styles.focusCardCompact : ""}`}
-    >
+    <div className={`${styles.focusCard} ${compact ? styles.focusCardCompact : ""}`}>
       <div className={styles.focusHeader}>
         <div className={styles.focusHeaderRow}>
           <div className={styles.focusTitleGroup}>
-            <span className={styles.eyebrow}>
-              {isLocked ? "Selected Skill" : "Focused skill"}
-            </span>
+            <span className={styles.eyebrow}>{isLocked ? "Selected Skill" : "Focused skill"}</span>
             <h2 className={styles.focusTitle}>{activeSkill.name}</h2>
             <p className={styles.focusSubhead}>{activeSkill.category}</p>
           </div>
@@ -167,18 +155,12 @@ function FocusCard({
 
       <div className={styles.focusStats}>
         <div className={styles.focusStatCard}>
-          <span className={styles.focusStatValue}>
-            {activeSkill.projectCount}
-          </span>
+          <span className={styles.focusStatValue}>{activeSkill.projectCount}</span>
           <span className={styles.focusStatLabel}>Projects using it</span>
         </div>
         <div className={styles.focusStatCard}>
           <span className={styles.focusStatValue}>
-            {
-              projectTypeOrder.filter(
-                (type) => activeSkill.projectTypeCounts[type] > 0,
-              ).length
-            }
+            {projectTypeOrder.filter((type) => activeSkill.projectTypeCounts[type] > 0).length}
           </span>
           <span className={styles.focusStatLabel}>Project contexts</span>
         </div>
@@ -236,12 +218,7 @@ function FocusCard({
 
 /* ── main component ─────────────────────────────────────────────── */
 
-export default function SkillExplorer({
-  skillGroups,
-  initialSkillName,
-  stats,
-  projectTypeOrder,
-}) {
+export default function SkillExplorer({ skillGroups, initialSkillName, projectTypeOrder }) {
   const sceneRef = useRef(null);
   const orbitPlaneRef = useRef(null);
   const orbitFieldRef = useRef(null);
@@ -260,31 +237,18 @@ export default function SkillExplorer({
   const hoveredSkillNameRef = useRef(null);
   const sceneReadyRef = useRef(false);
 
-  const skills = useMemo(
-    () => skillGroups.flatMap((group) => group.skills),
-    [skillGroups],
-  );
+  const skills = useMemo(() => skillGroups.flatMap((group) => group.skills), [skillGroups]);
   const defaultSkillName = initialSkillName ?? skills[0]?.name ?? "";
-  const clusters = useMemo(
-    () => buildClusterModel(skillGroups),
-    [skillGroups],
-  );
-  const allNodes = useMemo(
-    () => clusters.flatMap((c) => c.nodes),
-    [clusters],
-  );
+  const clusters = useMemo(() => buildClusterModel(skillGroups), [skillGroups]);
+  const allNodes = useMemo(() => clusters.flatMap((c) => c.nodes), [clusters]);
 
   const [hoveredSkillName, setHoveredSkillName] = useState(null);
   const [lockedSkillName, setLockedSkillName] = useState(null);
   const [sceneReady, setSceneReady] = useState(false);
 
-  const selectedSkillName =
-    lockedSkillName ?? hoveredSkillName ?? defaultSkillName;
-  const activeSkill =
-    skills.find((s) => s.name === selectedSkillName) ?? skills[0];
-  const lockedNode = lockedSkillName
-    ? allNodes.find((n) => n.name === lockedSkillName)
-    : null;
+  const selectedSkillName = lockedSkillName ?? hoveredSkillName ?? defaultSkillName;
+  const activeSkill = skills.find((s) => s.name === selectedSkillName) ?? skills[0];
+  const lockedNode = lockedSkillName ? allNodes.find((n) => n.name === lockedSkillName) : null;
 
   durationRef.current = lockedSkillName
     ? MAIN_ORBIT_LOCKED_SPEED
@@ -356,9 +320,7 @@ export default function SkillExplorer({
   /* ── animation loop ─────────────────────────────────────────── */
 
   useEffect(() => {
-    const prefersReduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     if (prefersReduced) {
       return undefined;
@@ -395,14 +357,10 @@ export default function SkillExplorer({
       /* main orbit rotation */
       const mainDegsPerMs = 360 / (durationRef.current * 1000);
 
-      orbitAngleRef.current =
-        (orbitAngleRef.current + mainDegsPerMs * deltaMs) % 360;
+      orbitAngleRef.current = (orbitAngleRef.current + mainDegsPerMs * deltaMs) % 360;
 
       if (orbitFieldRef.current) {
-        orbitFieldRef.current.style.setProperty(
-          "--orbit-angle",
-          `${orbitAngleRef.current}deg`,
-        );
+        orbitFieldRef.current.style.setProperty("--orbit-angle", `${orbitAngleRef.current}deg`);
       }
 
       const { width: sceneW, height: sceneH } = sceneSizeRef.current;
@@ -419,19 +377,13 @@ export default function SkillExplorer({
 
       /* 3D tilt — dual-axis wobble for oval orbit effect */
       const tiltX =
-        TILT_X_BASE +
-        Math.sin((timestamp * 2 * Math.PI) / (TILT_X_PERIOD * 1000)) *
-          TILT_X_AMP;
+        TILT_X_BASE + Math.sin((timestamp * 2 * Math.PI) / (TILT_X_PERIOD * 1000)) * TILT_X_AMP;
       const tiltY =
-        TILT_Y_BASE +
-        Math.sin((timestamp * 2 * Math.PI) / (TILT_Y_PERIOD * 1000)) *
-          TILT_Y_AMP;
+        TILT_Y_BASE + Math.sin((timestamp * 2 * Math.PI) / (TILT_Y_PERIOD * 1000)) * TILT_Y_AMP;
 
       if (orbitPlaneRef.current) {
-        orbitPlaneRef.current.style.transform =
-          `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+        orbitPlaneRef.current.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
       }
-
 
       /* phase 1: compute orbital target positions (flat 2D — CSS 3D handles tilt) */
       const targets = new Map();
@@ -439,32 +391,19 @@ export default function SkillExplorer({
       clusters.forEach((cluster) => {
         /* slow down mini-orbit when hovering a skill in this cluster (not when locked) */
         const clusterHasHover =
-          hoveredName &&
-          !lockedName &&
-          cluster.nodes.some((n) => n.name === hoveredName);
-        const baseMiniDegsPerMs =
-          (360 * cluster.miniDirection) / (cluster.miniSpeed * 1000);
-        const miniDegsPerMs = clusterHasHover
-          ? baseMiniDegsPerMs * 0.2
-          : baseMiniDegsPerMs;
+          hoveredName && !lockedName && cluster.nodes.some((n) => n.name === hoveredName);
+        const baseMiniDegsPerMs = (360 * cluster.miniDirection) / (cluster.miniSpeed * 1000);
+        const miniDegsPerMs = clusterHasHover ? baseMiniDegsPerMs * 0.2 : baseMiniDegsPerMs;
         const prevMini = miniAnglesRef.current[cluster.title] ?? 0;
 
-        miniAnglesRef.current[cluster.title] =
-          (prevMini + miniDegsPerMs * deltaMs) % 360;
+        miniAnglesRef.current[cluster.title] = (prevMini + miniDegsPerMs * deltaMs) % 360;
 
         const miniAngle = miniAnglesRef.current[cluster.title];
 
         /* cluster center — flat 2D polar position */
-        const clusterAngle =
-          cluster.centerAngle + orbitAngleRef.current;
-        const clusterRadiusPx =
-          (cluster.mainRadius / 100) * minDim;
-        const { x: cx, y: cy } = polarToPixel(
-          clusterAngle,
-          clusterRadiusPx,
-          centerX,
-          centerY,
-        );
+        const clusterAngle = cluster.centerAngle + orbitAngleRef.current;
+        const clusterRadiusPx = (cluster.mainRadius / 100) * minDim;
+        const { x: cx, y: cy } = polarToPixel(clusterAngle, clusterRadiusPx, centerX, centerY);
 
         /* position mini orbit ring via JS */
         const ringEl = miniRingRefs.current.get(cluster.title);
@@ -480,12 +419,7 @@ export default function SkillExplorer({
         cluster.nodes.forEach((skill) => {
           const skillAngle = skill.localAngle + miniAngle;
           const miniRadiusPx = (skill.miniRadius / 100) * minDim;
-          const { x: orbitX, y: orbitY } = polarToPixel(
-            skillAngle,
-            miniRadiusPx,
-            cx,
-            cy,
-          );
+          const { x: orbitX, y: orbitY } = polarToPixel(skillAngle, miniRadiusPx, cx, cy);
 
           const isLocked = lockedName === skill.name;
 
@@ -507,10 +441,7 @@ export default function SkillExplorer({
           return;
         }
 
-        const dist = Math.hypot(
-          target.x - current.x,
-          target.y - current.y,
-        );
+        const dist = Math.hypot(target.x - current.x, target.y - current.y);
         const lerp = dist > 8 ? LERP_SPEED : 1.0;
 
         nodePositionsRef.current.set(name, {
@@ -548,24 +479,12 @@ export default function SkillExplorer({
           return;
         }
 
-        const clusterAngle =
-          cluster.centerAngle + orbitAngleRef.current;
-        const labelRadiusPx =
-          (cluster.labelRadius / 100) * minDim;
-        const lPos = polarToPixel(
-          clusterAngle,
-          labelRadiusPx,
-          centerX,
-          centerY,
-        );
+        const clusterAngle = cluster.centerAngle + orbitAngleRef.current;
+        const labelRadiusPx = (cluster.labelRadius / 100) * minDim;
+        const lPos = polarToPixel(clusterAngle, labelRadiusPx, centerX, centerY);
         const pad = 30;
         const opacity =
-          lPos.x < pad ||
-          lPos.x > sceneW - pad ||
-          lPos.y < 20 ||
-          lPos.y > sceneH - 20
-            ? 0
-            : 1;
+          lPos.x < pad || lPos.x > sceneW - pad || lPos.y < 20 || lPos.y > sceneH - 20 ? 0 : 1;
 
         labelEl.style.setProperty("--label-x", `${lPos.x}px`);
         labelEl.style.setProperty("--label-y", `${lPos.y}px`);
@@ -646,10 +565,7 @@ export default function SkillExplorer({
         <div className={styles.panelHeader}>
           <span className={styles.eyebrow}>A Project-Driven Skill Map</span>
           <h2 className={styles.panelTitle}>My Tech Stack</h2>
-          <p className={styles.panelIntro}>
-            Click on any skill to see related projects
-            and stats.
-          </p>
+          <p className={styles.panelIntro}>Click on any skill to see related projects and stats.</p>
         </div>
 
         <div className={styles.explorerContent}>
@@ -662,24 +578,14 @@ export default function SkillExplorer({
             <div ref={orbitPlaneRef} className={styles.orbitPlane}>
               {/* decorative background */}
               <div className={styles.sceneGlow} />
-              <div
-                className={`${styles.orbitRing} ${styles.orbitRingOuter}`}
-              />
-              <div
-                className={`${styles.orbitRing} ${styles.orbitRingMid}`}
-              />
-              <div
-                className={`${styles.orbitRing} ${styles.orbitRingInner}`}
-              />
+              <div className={`${styles.orbitRing} ${styles.orbitRingOuter}`} />
+              <div className={`${styles.orbitRing} ${styles.orbitRingMid}`} />
+              <div className={`${styles.orbitRing} ${styles.orbitRingInner}`} />
 
               {/* rotating decoration layer */}
               <div ref={orbitFieldRef} className={styles.orbitField}>
                 {/* SVG orbit lines from center to each cluster */}
-                <svg
-                  className={styles.orbitLines}
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
-                >
+                <svg className={styles.orbitLines} viewBox="0 0 100 100" preserveAspectRatio="none">
                   {orbitLineData.map(({ title, center }) => (
                     <g key={`line-${title}`}>
                       <line
@@ -689,12 +595,7 @@ export default function SkillExplorer({
                         y2={center.y}
                         className={styles.orbitLine}
                       />
-                      <circle
-                        cx={center.x}
-                        cy={center.y}
-                        r="0.5"
-                        className={styles.orbitLineDot}
-                      />
+                      <circle cx={center.x} cy={center.y} r="0.5" className={styles.orbitLineDot} />
                     </g>
                   ))}
                 </svg>
@@ -777,12 +678,9 @@ export default function SkillExplorer({
                   }}
                   className={styles.categoryLabelAnchor}
                 >
-                  <span className={styles.categoryLabel}>
-                    {cluster.title}
-                  </span>
+                  <span className={styles.categoryLabel}>{cluster.title}</span>
                 </div>
               ))}
-
             </div>
 
             {/* locked node — rendered outside orbitPlane so it stays flat */}
@@ -826,9 +724,7 @@ export default function SkillExplorer({
 
             {/* center hub with icon slot — counter-rotated to stay flat */}
             <div
-              className={`${styles.coreLabel} ${
-                lockedSkillName ? styles.coreLabelLocked : ""
-              }`}
+              className={`${styles.coreLabel} ${lockedSkillName ? styles.coreLabelLocked : ""}`}
               style={{
                 "--slot-size": lockedNode
                   ? `${ICON_BASE_SIZE * lockedNode.scale + 6}px`
@@ -837,44 +733,21 @@ export default function SkillExplorer({
             >
               <div
                 ref={coreSlotRef}
-                className={`${styles.coreSlot} ${
-                  lockedSkillName ? styles.coreSlotFilled : ""
-                }`}
+                className={`${styles.coreSlot} ${lockedSkillName ? styles.coreSlotFilled : ""}`}
               >
-                <svg
-                  className={styles.slotRings}
-                  viewBox="0 0 100 100"
-                  aria-hidden="true"
-                >
-                  {Array.from(
-                    { length: activeSkill.projectCount },
-                    (_, i) => {
-                      const r =
-                        activeSkill.projectCount === 1
-                          ? 30
-                          : 12 +
-                            (i * 30) /
-                              (activeSkill.projectCount - 1);
+                <svg className={styles.slotRings} viewBox="0 0 100 100" aria-hidden="true">
+                  {Array.from({ length: activeSkill.projectCount }, (_, i) => {
+                    const r =
+                      activeSkill.projectCount === 1
+                        ? 30
+                        : 12 + (i * 30) / (activeSkill.projectCount - 1);
 
-                      return (
-                        <circle
-                          key={i}
-                          cx="50"
-                          cy="50"
-                          r={r}
-                          className={styles.slotRing}
-                        />
-                      );
-                    },
-                  )}
+                    return <circle key={i} cx="50" cy="50" r={r} className={styles.slotRing} />;
+                  })}
                 </svg>
               </div>
-              <strong className={styles.coreName}>
-                {activeSkill.name}
-              </strong>
-              <span className={styles.coreCategory}>
-                {activeSkill.category}
-              </span>
+              <strong className={styles.coreName}>{activeSkill.name}</strong>
+              <span className={styles.coreCategory}>{activeSkill.category}</span>
             </div>
           </div>
 
@@ -895,9 +768,7 @@ export default function SkillExplorer({
           {/* mobile center hub */}
           <div className={styles.mobileHub}>
             <div
-              className={`${styles.mobileSlot} ${
-                lockedSkillName ? styles.mobileSlotFilled : ""
-              }`}
+              className={`${styles.mobileSlot} ${lockedSkillName ? styles.mobileSlotFilled : ""}`}
             >
               <TechTag
                 label={activeSkill.name}
@@ -909,12 +780,8 @@ export default function SkillExplorer({
               />
             </div>
             <div className={styles.mobileHubText}>
-              <strong className={styles.mobileHubName}>
-                {activeSkill.name}
-              </strong>
-              <span className={styles.mobileHubCategory}>
-                {activeSkill.category}
-              </span>
+              <strong className={styles.mobileHubName}>{activeSkill.name}</strong>
+              <span className={styles.mobileHubCategory}>{activeSkill.category}</span>
               <span className={styles.mobileHubCount}>
                 {activeSkill.projectCount} project
                 {activeSkill.projectCount === 1 ? "" : "s"}
@@ -945,11 +812,7 @@ export default function SkillExplorer({
                       count={skill.projectCount}
                       active={activeSkill?.name === skill.name}
                       locked={lockedSkillName === skill.name}
-                      onClose={
-                        lockedSkillName === skill.name
-                          ? unlockSelection
-                          : undefined
-                      }
+                      onClose={lockedSkillName === skill.name ? unlockSelection : undefined}
                       onClick={() => toggleSkillLock(skill.name)}
                       aria-pressed={lockedSkillName === skill.name}
                     />
