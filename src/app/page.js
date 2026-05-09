@@ -15,7 +15,7 @@ import SkillExplorer from "./skills/SkillExplorer";
 import styles from "./page.module.css";
 
 export default function Home() {
-  const { skillGroups, initialSkillName, stats, projectTypeOrder } = buildSkillModel();
+  const { skillGroups, initialSkillName, projectTypeOrder } = buildSkillModel();
 
   return (
     <>
@@ -39,7 +39,7 @@ export default function Home() {
                     <h2>
                       <span>{homeContent.intro.greeting} </span>
                       <span className={styles.name}>{homeContent.intro.name}</span>
-                      <span>  </span>
+                      <span> </span>
                       <WaveEmoji />
                     </h2>
                     <h1 className={styles.title}>{homeContent.intro.title}</h1>
@@ -124,7 +124,8 @@ export default function Home() {
         <div className={styles.sectionHero}>
           <h2 className={styles.sectionTitle}>Projects</h2>
           <p className={styles.sectionLead}>
-            Recent work including full-stack builds, hackathon submissions, computer vision and OCR pipelines.
+            Recent work including full-stack builds, hackathon submissions, computer vision and OCR
+            pipelines.
           </p>
         </div>
         <ProjectsTimeline projects={projects} />
@@ -137,7 +138,8 @@ export default function Home() {
         <div className={styles.sectionHero}>
           <h2 className={styles.sectionTitle}>Experience</h2>
           <p className={styles.sectionLead}>
-            Roles, leadership work, and team experience across frontend delivery and shipping polished web experiences.
+            Roles, leadership work, and team experience across frontend delivery and shipping
+            polished web experiences.
           </p>
         </div>
         <ExperienceTimeline entries={experienceEntries} />
@@ -156,7 +158,6 @@ export default function Home() {
         <SkillExplorer
           skillGroups={skillGroups}
           initialSkillName={initialSkillName}
-          stats={stats}
           projectTypeOrder={projectTypeOrder}
         />
       </section>
