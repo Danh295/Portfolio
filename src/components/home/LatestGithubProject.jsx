@@ -7,6 +7,7 @@ import { site } from "@/config/site";
 import styles from "./LatestGithubProject.module.css";
 
 const STORAGE_KEY = "latest-github-project";
+const CACHE_TTL_MS = 60 * 60 * 1000;
 const GITHUB_API_URL = `https://api.github.com/users/${site.github.username}/repos?sort=created&per_page=1&type=owner`;
 const HARDCODED_FALLBACK_REPO = {
   name: "Portfolio",
@@ -65,6 +66,11 @@ export default function LatestGithubProject() {
       const cachedRepo = readCachedRepo();
       if (cachedRepo) {
         setRepo(cachedRepo);
+
+        const fetchedAt = cachedRepo.fetchedAt ? Date.parse(cachedRepo.fetchedAt) : NaN;
+        if (Number.isFinite(fetchedAt) && Date.now() - fetchedAt < CACHE_TTL_MS) {
+          return;
+        }
       }
 
       try {
@@ -108,12 +114,7 @@ export default function LatestGithubProject() {
           <span className={styles.updated}>Created {formatDate(repo.created_at)}</span>
         </div>
 
-        <a
-          href={repo.html_url}
-          className={styles.link}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href={repo.html_url} className={styles.link} target="_blank" rel="noopener noreferrer">
           <span>Open repository</span>
           <FontAwesomeIcon icon={faArrowUpRightFromSquare} className={styles.linkIcon} />
         </a>
