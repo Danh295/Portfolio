@@ -7,6 +7,11 @@ export function useActiveSection(ids) {
   const idsKey = ids.join("|");
 
   useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash && ids.includes(hash)) {
+      setActiveId(hash);
+    }
+
     const observers = [];
 
     ids.forEach((id) => {
