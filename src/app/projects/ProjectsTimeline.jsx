@@ -3,10 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faArrowUpRightFromSquare,
-  faCodeBranch,
-} from "@fortawesome/free-solid-svg-icons";
+import { faArrowUpRightFromSquare, faCodeBranch } from "@fortawesome/free-solid-svg-icons";
 import { SiDevpost } from "react-icons/si";
 import TechTag from "@/components/ui/TechTag";
 import { useReducedMotion } from "@/lib/useReducedMotion";
@@ -30,12 +27,7 @@ function ActionLink({ href, label, icon }) {
   const isDevpost = icon === "devpost";
 
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={styles.actionLink}
-    >
+    <a href={href} target="_blank" rel="noopener noreferrer" className={styles.actionLink}>
       <span>{label}</span>
       {isDevpost ? (
         <SiDevpost className={styles.actionIcon} />
@@ -66,15 +58,18 @@ function MediaCarousel({ images }) {
     return () => clearInterval(timerRef.current);
   }, [resetTimer]);
 
-  const navigate = useCallback((direction) => {
-    setActive((prev) => {
-      const next = prev + direction;
-      if (next < 0) return 0;
-      if (next >= count) return count - 1;
-      return next;
-    });
-    resetTimer();
-  }, [count, resetTimer]);
+  const navigate = useCallback(
+    (direction) => {
+      setActive((prev) => {
+        const next = prev + direction;
+        if (next < 0) return 0;
+        if (next >= count) return count - 1;
+        return next;
+      });
+      resetTimer();
+    },
+    [count, resetTimer],
+  );
 
   useEffect(() => {
     const el = frameRef.current;
@@ -97,8 +92,7 @@ function MediaCarousel({ images }) {
       if (Math.abs(accumulated) >= threshold) {
         const direction = accumulated > 0 ? 1 : -1;
         const atBound =
-          (direction === 1 && active === count - 1) ||
-          (direction === -1 && active === 0);
+          (direction === 1 && active === count - 1) || (direction === -1 && active === 0);
         if (!atBound) {
           navigate(direction);
           e.preventDefault();
@@ -123,13 +117,18 @@ function MediaCarousel({ images }) {
         />
       ))}
       {count > 1 && (
-        <div className={styles.previewDots} aria-hidden="true">
+        <div className={styles.previewDots}>
           {images.map((img, i) => (
             <button
               key={img.src}
               type="button"
               className={`${styles.previewDot} ${i === active ? styles.previewDotActive : ""}`}
-              onClick={() => { setActive(i); resetTimer(); }}
+              aria-label={`Go to image ${i + 1}`}
+              aria-current={i === active ? "true" : undefined}
+              onClick={() => {
+                setActive(i);
+                resetTimer();
+              }}
             />
           ))}
         </div>
@@ -193,16 +192,19 @@ export default function ProjectsTimeline({ projects }) {
     };
   }, [projects.length]);
 
-  const scrollToCard = useCallback((index, behavior) => {
-    const card = cardRefs.current[index];
-    const viewport = viewportRef.current;
-    if (card && viewport) {
-      viewport.scrollTo({
-        top: card.offsetTop,
-        behavior: behavior ?? (reducedMotion ? "auto" : "smooth"),
-      });
-    }
-  }, [reducedMotion]);
+  const scrollToCard = useCallback(
+    (index, behavior) => {
+      const card = cardRefs.current[index];
+      const viewport = viewportRef.current;
+      if (card && viewport) {
+        viewport.scrollTo({
+          top: card.offsetTop,
+          behavior: behavior ?? (reducedMotion ? "auto" : "smooth"),
+        });
+      }
+    },
+    [reducedMotion],
+  );
 
   useEffect(() => {
     const syncHashToCard = () => {
@@ -233,9 +235,7 @@ export default function ProjectsTimeline({ projects }) {
   }%`;
 
   const formatMetaLine = (project) => {
-    return [project.role, project.company, project.location]
-      .filter(Boolean)
-      .join(" • ");
+    return [project.role, project.company, project.location].filter(Boolean).join(" • ");
   };
 
   return (
@@ -262,10 +262,7 @@ export default function ProjectsTimeline({ projects }) {
             />
           ))}
           {hoveredDot !== null && (
-            <div
-              className={styles.dotPreview}
-              style={{ top: `${dotPositions[hoveredDot] ?? 0}%` }}
-            >
+            <div className={styles.dotPreview} style={{ top: `${dotPositions[hoveredDot] ?? 0}%` }}>
               {projects[hoveredDot].images?.[0] && (
                 <div className={styles.dotPreviewThumb}>
                   <Image
@@ -287,75 +284,95 @@ export default function ProjectsTimeline({ projects }) {
       <div className={styles.carouselFrame}>
         <div ref={viewportRef} className={styles.scrollViewport}>
           <div className={styles.projectStack}>
-          {projects.map((project, index) => (
-            <article
-              key={project.title}
-              id={project.slug}
-              ref={(node) => {
-                cardRefs.current[index] = node;
-              }}
-              className={`${styles.projectCard} ${!project.images?.length ? styles.projectCardCompact : ""}`}
-              data-project-card
-            >
-              <div className={styles.copyColumn}>
-                <div className={styles.copyHeader}>
-                  <div className={styles.copyIntro}>
-                    <div className={styles.titleRow}>
-                      <h2 className={styles.projectTitle}>{project.title}</h2>
-                      {project.category && (
-                        <span
-                          className={`${styles.projectCategory} ${getProjectCategoryClass(project.category)}`}
-                        >
-                          {project.category}
-                        </span>
-                      )}
+            {projects.map((project, index) => (
+              <article
+                key={project.title}
+                id={project.slug}
+                ref={(node) => {
+                  cardRefs.current[index] = node;
+                }}
+                className={`${styles.projectCard} ${!project.images?.length ? styles.projectCardCompact : ""}`}
+                data-project-card
+              >
+                <div className={styles.copyColumn}>
+                  <div className={styles.copyHeader}>
+                    <div className={styles.copyIntro}>
+                      <div className={styles.titleRow}>
+                        <h2 className={styles.projectTitle}>{project.title}</h2>
+                        {project.category && (
+                          <span
+                            className={`${styles.projectCategory} ${getProjectCategoryClass(project.category)}`}
+                          >
+                            {project.category}
+                          </span>
+                        )}
+                      </div>
+                      <p className={styles.projectMeta}>{formatMetaLine(project)}</p>
+                      <p className={styles.projectTimeline}>{project.timeline}</p>
                     </div>
-                    <p className={styles.projectMeta}>{formatMetaLine(project)}</p>
-                    <p className={styles.projectTimeline}>{project.timeline}</p>
+
+                    {!project.images?.length &&
+                      (project.github || project.demo || project.devpost) && (
+                        <div className={styles.actions}>
+                          {project.github && (
+                            <ActionLink href={project.github} label="GitHub" icon={faCodeBranch} />
+                          )}
+                          {project.demo && (
+                            <ActionLink
+                              href={project.demo}
+                              label="Open Project"
+                              icon={faArrowUpRightFromSquare}
+                            />
+                          )}
+                          {project.devpost && (
+                            <ActionLink href={project.devpost} label="Devpost" icon="devpost" />
+                          )}
+                        </div>
+                      )}
                   </div>
 
-                  {!project.images?.length && (project.github || project.demo || project.devpost) && (
-                    <div className={styles.actions}>
-                      {project.github && <ActionLink href={project.github} label="GitHub" icon={faCodeBranch} />}
-                      {project.demo && <ActionLink href={project.demo} label="Open Project" icon={faArrowUpRightFromSquare} />}
-                      {project.devpost && <ActionLink href={project.devpost} label="Devpost" icon="devpost" />}
-                    </div>
-                  )}
+                  <p className={styles.projectContext}>{project.context}</p>
+
+                  <ul className={styles.bulletList}>
+                    {project.bullets.map((bullet) => (
+                      <li key={bullet}>{bullet}</li>
+                    ))}
+                  </ul>
                 </div>
 
-                <p className={styles.projectContext}>{project.context}</p>
+                {project.images?.length > 0 && (
+                  <div className={styles.visualColumn}>
+                    {(project.github || project.demo || project.devpost) && (
+                      <div className={styles.actions}>
+                        {project.github && (
+                          <ActionLink href={project.github} label="GitHub" icon={faCodeBranch} />
+                        )}
+                        {project.demo && (
+                          <ActionLink
+                            href={project.demo}
+                            label="Open Project"
+                            icon={faArrowUpRightFromSquare}
+                          />
+                        )}
+                        {project.devpost && (
+                          <ActionLink href={project.devpost} label="Devpost" icon="devpost" />
+                        )}
+                      </div>
+                    )}
 
-                <ul className={styles.bulletList}>
-                  {project.bullets.map((bullet) => (
-                    <li key={bullet}>{bullet}</li>
+                    <MediaCarousel images={project.images} />
+                  </div>
+                )}
+
+                <div className={styles.tagRow}>
+                  {project.tags.map((tag) => (
+                    <TechTag key={tag} label={tag} />
                   ))}
-                </ul>
-              </div>
-
-              {project.images?.length > 0 && (
-                <div className={styles.visualColumn}>
-                  {(project.github || project.demo || project.devpost) && (
-                    <div className={styles.actions}>
-                      {project.github && <ActionLink href={project.github} label="GitHub" icon={faCodeBranch} />}
-                      {project.demo && <ActionLink href={project.demo} label="Open Project" icon={faArrowUpRightFromSquare} />}
-                      {project.devpost && <ActionLink href={project.devpost} label="Devpost" icon="devpost" />}
-                    </div>
-                  )}
-
-                  <MediaCarousel images={project.images} />
                 </div>
-              )}
-
-              <div className={styles.tagRow}>
-                {project.tags.map((tag) => (
-                  <TechTag key={tag} label={tag} />
-                ))}
-              </div>
-            </article>
-          ))}
+              </article>
+            ))}
           </div>
         </div>
-
       </div>
     </section>
   );
