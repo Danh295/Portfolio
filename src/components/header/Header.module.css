@@ -1,0 +1,83 @@
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-bar);
+  background: var(--bg);
+  border-bottom: 1px solid var(--fg);
+  transition: background 0.3s;
+}
+
+.inner {
+  box-sizing: content-box; /* width is 1200px plus padding, as in the design */
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 14px var(--pad-x);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.home {
+  font-weight: 500;
+}
+
+.home .key {
+  font-weight: 400;
+}
+
+.key {
+  color: var(--mid);
+}
+
+.links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+:global(html:not(.kbd)) .link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Every label keeps the same padding; selecting one only swaps colours, so nothing
+   around it moves. */
+.label {
+  padding: 0 4px;
+}
+
+.chip {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  border: 1px solid var(--fg);
+  padding: 5px 10px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+:global(html:not(.kbd)) .btn:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.dim {
+  opacity: 0.6;
+}
+
+@media (max-width: 600px) {
+  .actions {
+    margin-left: 0;
+  }
+}

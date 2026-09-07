@@ -2,10 +2,10 @@ const isProd = process.env.NODE_ENV === "production";
 const basePath = isProd ? "/Portfolio" : "";
 
 export const site = {
-  name: "Danny Hu",
-  title: "Danny Hu | Portfolio",
+  name: "danny hu",
+  title: "danny hu | portfolio",
   description:
-    "Personal portfolio of Danny Hu — student and full-stack developer. Explore projects, skills, and experience across web development, machine learning, and image processing.",
+    "personal portfolio of danny hu — student and full-stack developer. explore projects, skills, and experience across web development, machine learning, and image processing",
   url: "https://danh295.github.io/Portfolio",
   basePath,
   github: {

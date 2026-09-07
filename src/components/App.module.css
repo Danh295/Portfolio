@@ -1,0 +1,50 @@
+/* No case transforms: every string is stored exactly as it's displayed (src/data,
+   src/config), so the gui and the terminal always agree. */
+.root {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  transition:
+    background 0.3s,
+    color 0.3s;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  --main-pb: 72px;
+  flex: 1;
+  width: 100%;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 var(--pad-x) var(--main-pb);
+}
+
+/* The last section (skills + footer) is at least one screen tall from where a jump
+   parks a section top (--nav-offset), so jumping to it lines up like the others
+   instead of stopping early at the bottom of the page. */
+.tail {
+  min-height: calc(100vh - var(--nav-offset) - var(--bar-h, 38.5px) - var(--main-pb));
+  min-height: calc(100dvh - var(--nav-offset) - var(--bar-h, 38.5px) - var(--main-pb));
+}
+
+/* Project detail sizes itself to the viewport; only keep its 24px bottom gap. */
+.mainDetail {
+  padding-bottom: 24px;
+}
+
+.foot {
+  padding-top: 28px;
+  font-size: 12px;
+  color: var(--mid);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+@media (max-width: 600px) {
+  .root {
+    --pad-x: 16px;
+  }
+}
