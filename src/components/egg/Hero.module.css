@@ -1,0 +1,512 @@
+/* On landing, the hero fills the viewport between the sticky nav and bottom bar
+   with the same gap above and below it. --nav-h / --bar-h are measured in App.jsx. */
+.hero {
+  --hero-gap: 40px;
+  margin-top: var(--hero-gap);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  background: var(--line);
+  min-height: calc(100vh - var(--nav-h, 58.5px) - var(--bar-h, 38.5px) - 2 * var(--hero-gap));
+  min-height: calc(100dvh - var(--nav-h, 58.5px) - var(--bar-h, 38.5px) - 2 * var(--hero-gap));
+}
+
+.intro,
+.egg {
+  min-width: 0;
+  background: var(--bg);
+  transition: background 0.3s;
+}
+
+.intro {
+  flex: 1 1 480px;
+  padding: 40px 32px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.prompt {
+  font-size: 13px;
+  color: var(--mid);
+}
+
+.h1 {
+  margin: 0;
+  font-size: 48px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.seeking {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.dot {
+  flex: none;
+}
+
+.pretty {
+  text-wrap: pretty;
+}
+
+/* Selectable hero elements share one look: inverted when selected, no cursor, and the
+   same padding either way so selecting never shifts text. */
+.more {
+  padding: 0 4px;
+  margin-left: -4px;
+  color: var(--mid);
+  white-space: nowrap;
+}
+
+.moreOn .pressKey {
+  color: inherit;
+  opacity: 0.7;
+}
+
+.more.moreOn {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+:global(html:not(.kbd)) .more.moreOn:hover {
+  color: var(--bg);
+}
+
+:global(html:not(.kbd)) .more:hover {
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.lead {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.55;
+  text-wrap: pretty;
+  text-transform: none;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.factKey {
+  font-size: 12px;
+  color: var(--mid);
+  padding-top: 2px;
+}
+
+.raw {
+  text-transform: none;
+}
+
+.egg {
+  flex: 1 1 520px;
+  padding: 28px 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+/* Header and footer have fixed heights, so the stage between them (and with it the
+   ASCII frame's scale) never changes as the game moves through its stages. They only
+   change with the viewport. */
+.eggHead {
+  flex: none;
+  height: 108px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 24px;
+  overflow: hidden;
+}
+
+.eggTitleCol {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.eggTitleRow {
+  display: block;
+  height: 25px;
+  white-space: nowrap;
+}
+
+.eggTitle {
+  position: relative;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 25px;
+  padding: 0 4px;
+  margin-left: -4px;
+}
+
+.eggSub {
+  height: 36px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--mid);
+  max-width: 40ch;
+  text-wrap: pretty;
+}
+
+.clock {
+  flex: none;
+  display: block;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  line-height: 34px;
+  height: 34px;
+  white-space: pre;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Six 18px lines: exactly the header's height. */
+.stats {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.statsHead {
+  color: var(--mid);
+  white-space: nowrap;
+}
+
+.statRow {
+  display: grid;
+  grid-template-columns: 96px auto 40px;
+  gap: 8px;
+  white-space: pre;
+}
+
+.bar {
+  letter-spacing: 0;
+}
+
+.statN {
+  text-align: right;
+  color: var(--mid);
+}
+
+/* The frame is laid out out-of-flow so it never sets the hero's height; it is
+   scaled down (--egg-scale, set in Hero.jsx) to fit whatever height is left. */
+.stage {
+  flex: 1;
+  min-height: 240px;
+  position: relative;
+}
+
+.fit {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scaled {
+  transform: scale(var(--egg-scale, 1));
+}
+
+.eggFoot {
+  flex: none;
+  height: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--mid);
+  white-space: nowrap;
+}
+
+.eggFoot > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Overlays centred over the pot. They never take clicks, so the pot still does. */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* One box style for every text over the pot (start, phases, rules): same border,
+   size and weight, so the scene reads as one system. */
+.box {
+  background: var(--bg);
+  border: 1px solid var(--fg);
+  padding: 7px 14px;
+  font-size: 12px;
+  line-height: 1.55;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Arcade-style "press start": blinks until the egg is selected, then holds still,
+   inverted. Hidden (not unmounted) once the game starts. */
+.pressStart {
+  pointer-events: auto;
+  animation: press-blink 1.1s steps(1) infinite;
+}
+
+/* Hovering it looks exactly like having it selected. */
+:global(html:not(.kbd)) .pressStart:hover,
+.pressStart.pressStartOn {
+  background: var(--fg);
+  color: var(--bg);
+  animation: none;
+}
+
+:global(html:not(.kbd)) .pressStart:hover .pressKey,
+.pressStartOn .pressKey {
+  color: inherit;
+  opacity: 0.7;
+}
+
+.pressKey {
+  color: var(--mid);
+}
+
+@keyframes press-blink {
+  55% {
+    opacity: 0;
+  }
+}
+
+/* Rules card before the first round. */
+/* Takes the pointer (so the cursor isn't in pan mode over it); a click continues. */
+.rules {
+  pointer-events: auto;
+  position: relative;
+  width: min(34ch, calc(100% - 24px));
+  padding: 18px 14px 10px;
+  background: var(--bg);
+  border: 1px solid var(--fg);
+  font-size: 12px;
+  line-height: 1.55;
+  font-weight: 400;
+}
+
+.rulesLabel {
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  padding: 0 6px;
+  background: var(--bg);
+  line-height: 20px;
+}
+
+.rule {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  padding: 4px 0;
+  border-top: 1px dashed var(--line);
+}
+
+.rule:first-of-type {
+  border-top: 0;
+}
+
+.ruleN {
+  color: var(--mid);
+}
+
+.rulesGo {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--fg);
+  color: var(--mid);
+}
+
+/* The rules, collapsed to a chip in the game viewport's top-right after the first read. */
+.rulesChip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  padding: 0 4px;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--mid);
+  background: var(--bg);
+}
+
+:global(html:not(.kbd)) .rulesChip:hover {
+  color: var(--fg);
+}
+
+.rulesChip.rulesChipOn {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* The slot under the pot: the heating callouts and the stage's button share one cell,
+   so "start!" turns into the button in place. */
+.low {
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding-bottom: 14px;
+}
+
+.low > * {
+  grid-area: 1 / 1;
+}
+
+/* simmering… / rolling boil! / ready? / start! — written by the game loop. */
+.announce {
+  opacity: 0;
+}
+
+.announce[data-show="true"] {
+  opacity: 1;
+}
+
+/* Pull the eggs / play again. Selected (the usual case, since starting selects the egg)
+   or hovered, it's inverted and still; it flickers in from the "start!" box. */
+.act {
+  pointer-events: auto;
+  font-family: inherit;
+  color: var(--fg);
+}
+
+:global(html:not(.kbd)) .act:hover,
+.act.actOn {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+:global(html:not(.kbd)) .act:hover .pressKey,
+.actOn .pressKey {
+  color: inherit;
+  opacity: 0.7;
+}
+
+.actOn {
+  animation: act-in 0.36s steps(1);
+}
+
+@keyframes act-in {
+  0%,
+  66% {
+    background: var(--bg);
+    color: var(--fg);
+  }
+
+  33% {
+    background: var(--fg);
+    color: var(--bg);
+  }
+}
+
+/* Narrow frames: stats lose their bars, the title shrinks, and the footer takes two
+   fixed lines, so every stage is still the same size. */
+@container (max-width: 480px) {
+  .eggTitle {
+    font-size: 16px;
+  }
+
+  .statRow {
+    grid-template-columns: auto 28px;
+  }
+
+  .statRow .bar {
+    display: none;
+  }
+
+  .eggFoot {
+    height: 40px;
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+/* Below this width the two cells stack (480 + 520 + gap), so the hero can't fit one
+   screen anyway: let it grow and give the frame its full height. */
+/* Blinking cursor after the selected header; hidden while the heading effect types. */
+.caret::after {
+  content: "█";
+  animation: caret-blink 1.04s steps(1) infinite;
+}
+
+.caret[data-typing]::after {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret::after,
+  .pressStart,
+  .actOn {
+    animation: none;
+  }
+}
+
+@media (max-width: 1066px) {
+  .hero {
+    min-height: 0;
+  }
+
+  .stage {
+    min-height: 470px;
+  }
+}
+
+@media (max-width: 600px) {
+  .intro {
+    padding: 32px 20px 24px;
+  }
+
+  .h1 {
+    font-size: 40px;
+  }
+
+  .egg {
+    padding: 24px 12px 16px;
+  }
+}
+
+/* Local copy: CSS Modules scope keyframe names, so a global one can't be referenced. */
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
