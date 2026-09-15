@@ -1,0 +1,63 @@
+.skills {
+  margin-top: 56px;
+  padding: 28px 24px 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+  gap: 28px 48px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--mid);
+  padding-bottom: 6px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 110px auto 28px;
+  gap: 14px;
+  align-items: center;
+  justify-content: start;
+  padding: 3px 6px;
+  margin: 0 -6px;
+  transition: background 0.12s;
+}
+
+:global(html:not(.kbd)) .row:hover {
+  background: var(--soft);
+}
+
+.raw {
+  text-transform: none;
+}
+
+.bar,
+.course {
+  letter-spacing: 0;
+}
+
+.count {
+  text-align: right;
+  color: var(--mid);
+}
+
+@media (max-width: 480px) {
+  .skills {
+    padding: 28px 12px 20px;
+  }
+
+  .row {
+    grid-template-columns: 84px auto 24px;
+    gap: 8px;
+  }
+}
