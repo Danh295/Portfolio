@@ -1,0 +1,207 @@
+.mid {
+  color: var(--mid);
+}
+
+.bold {
+  font-weight: 500;
+}
+
+.cmd {
+  display: flex;
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.cmd.term {
+  gap: 10px;
+  padding-top: 14px;
+}
+
+.txt {
+  white-space: pre-wrap;
+}
+
+.txt.term {
+  max-width: 880px;
+  text-wrap: pretty;
+}
+
+.hint {
+  align-self: flex-start;
+  border: 1px dashed var(--mid);
+  padding: 2px 8px;
+  margin-top: 4px;
+}
+
+:global(html:not(.kbd)) .hint:hover,
+:global(html:not(.kbd)) .lsItem:hover,
+:global(html:not(.kbd)) .treeBtn:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.bang {
+  background: var(--fg);
+  color: var(--bg);
+  padding: 0 4px;
+}
+
+.h {
+  font-weight: 500;
+  font-size: 18px;
+}
+
+.h.term {
+  font-size: 30px;
+  letter-spacing: -0.04em;
+  padding: 10px 0 6px;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 10px;
+}
+
+.kv.term {
+  grid-template-columns: 230px 1fr;
+  gap: 12px;
+}
+
+.kvVal {
+  white-space: pre-wrap;
+  max-width: 720px;
+}
+
+.help {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: 0 40px;
+  padding: 2px 0 4px;
+}
+
+.helpCol {
+  display: flex;
+  flex-direction: column;
+}
+
+.helpRow {
+  display: grid;
+  grid-template-columns: minmax(0, 13em) 1fr;
+  gap: 12px;
+}
+
+.link {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  justify-self: start;
+}
+
+.ls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 24px;
+}
+
+.ls.term {
+  gap: 2px 32px;
+}
+
+.lsItem {
+  padding: 0 3px;
+  margin-left: -3px;
+  white-space: pre;
+}
+
+.term .lsItem {
+  padding: 0 4px;
+  margin-left: -4px;
+}
+
+.treeRow {
+  white-space: pre;
+  display: flex;
+}
+
+.treeBtn {
+  padding: 0 4px;
+  margin-left: -4px;
+}
+
+.meta {
+  color: var(--mid);
+  padding-left: 18px;
+}
+
+.expTerm {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+}
+
+.expSum {
+  max-width: 680px;
+  text-wrap: pretty;
+}
+
+.expEmbed {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+}
+
+.bar {
+  display: grid;
+  grid-template-columns: 110px auto 28px;
+  gap: 10px;
+  justify-content: start;
+}
+
+.bar.term {
+  grid-template-columns: 150px auto 40px;
+  gap: 12px;
+  transition: background 0.12s;
+}
+
+:global(html:not(.kbd)) .bar.term:hover {
+  background: var(--soft);
+}
+
+.barGlyphs {
+  letter-spacing: 0;
+}
+
+.egg {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.eggStage {
+  align-self: flex-start;
+}
+
+.eggStatus {
+  white-space: pre;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .kv,
+  .kv.term,
+  .expTerm {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .bar.term {
+    grid-template-columns: 96px auto 28px;
+  }
+}
