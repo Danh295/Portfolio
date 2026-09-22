@@ -1,0 +1,24 @@
+.ov {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-intro);
+  color: var(--fg);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.boot {
+  background: var(--bg);
+}
+
+.pre {
+  margin: 0;
+  font: 12px/14px var(--mono);
+  white-space: pre;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.bootPre {
+  padding: 40px 48px;
+}
