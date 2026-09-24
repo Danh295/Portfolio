@@ -1,0 +1,276 @@
+.cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 10000;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.cursor[data-hidden="true"],
+:global(html.kbd) .cursor {
+  opacity: 0;
+}
+
+.outline {
+  fill: var(--bg);
+}
+
+.fill {
+  fill: var(--fg);
+}
+
+/* One glyph per state; each is offset so its hotspot sits on the pointer position
+   (the cursor element's top-left). Pixels are drawn at 1.25×. */
+.glyph {
+  position: absolute;
+  display: none;
+  transform-origin: 0 0;
+  transition: transform 0.08s steps(2, end);
+}
+
+.glyph svg {
+  display: block;
+}
+
+/* ---------- retro set (terminal mode) ---------- */
+
+/* !important beats the inline display:none each glyph starts with. */
+.cursor[data-set="retro"][data-state="arrow"] .arrow,
+.cursor[data-set="retro"][data-state="pointer"] .pointer,
+.cursor[data-set="retro"][data-state="text"] .text,
+.cursor[data-set="retro"][data-state="busy"] .busy,
+.cursor[data-set="retro"][data-state="pan"] .pan,
+:global(html[data-loading]) .cursor[data-set="retro"] .busy {
+  display: block !important;
+}
+
+/* While the boot intro plays, every state shows the hourglass. */
+:global(html[data-loading]) .cursor .glyph:not(.busy) {
+  display: none !important;
+}
+
+.arrow {
+  left: 0;
+  top: 0;
+}
+
+/* fingertip hotspot */
+.pointer {
+  left: -6.25px;
+  top: 0;
+}
+
+/* I-beam and hourglass hotspots at their centres */
+.text {
+  left: -4.4px;
+  top: -9.4px;
+}
+
+.busy {
+  left: -6.9px;
+  top: -8.75px;
+}
+
+.pan {
+  left: -8.1px;
+  top: -8.1px;
+}
+
+.cursor[data-press="true"] .glyph {
+  transform: scale(0.85);
+}
+
+/* Blinking indicators — a different one per state. */
+.block {
+  position: absolute;
+  left: 21px;
+  top: 14px;
+  width: 6px;
+  height: 10px;
+  background: var(--fg);
+  outline: 1px solid var(--bg);
+  animation: blink 1.04s steps(1) infinite;
+}
+
+.caretBlink {
+  animation: blink 1.04s steps(1) infinite;
+}
+
+.sandA {
+  animation: blink 1.2s steps(1) infinite;
+}
+
+.sandB {
+  position: absolute;
+  left: 0;
+  top: 0;
+  animation: blink 1.2s steps(1) infinite reverse;
+}
+
+.dot {
+  position: absolute;
+  left: 6.25px;
+  top: 6.25px;
+  width: 4px;
+  height: 4px;
+  background: var(--bg);
+  animation: blink 0.7s steps(1) infinite;
+}
+
+/* ---------- block set (gui mode) ---------- */
+
+/* One square on the hotspot that snaps (no easing) between shapes. Difference blending
+   against the page: white inverts whatever is underneath, so it reads on either theme
+   and on inverted (selected) elements. */
+.cursor[data-set="block"] {
+  mix-blend-mode: difference;
+}
+
+.cursor[data-set="block"] .sq {
+  display: block !important;
+}
+
+/* default: a small solid block */
+.sq {
+  --s: 8px;
+  position: absolute;
+  left: calc(var(--s) / -2);
+  top: calc(var(--s) / -2);
+  width: var(--s);
+  height: var(--s);
+  background: #fff;
+  box-sizing: border-box;
+}
+
+/* pointer: a larger solid square, inverting what it covers, spinning steadily so
+   clickable reads at a glance. It holds still while pressed. */
+.cursor[data-set="block"][data-state="pointer"] .sq {
+  --s: 16px;
+  animation: spin 1.6s linear infinite;
+}
+
+/* text: a thin bar */
+.cursor[data-set="block"][data-state="text"] .sq {
+  left: -1px;
+  top: -9px;
+  width: 2px;
+  height: 18px;
+}
+
+/* pan: a square outline with a block in the middle */
+.cursor[data-set="block"][data-state="pan"] .sq {
+  --s: 18px;
+  background: transparent;
+  border: 2px solid #fff;
+}
+
+.cursor[data-set="block"][data-state="pan"] .sq::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  width: 4px;
+  height: 4px;
+  background: #fff;
+}
+
+/* busy (the boot intro): a square outline with a block stepping round its corners */
+.cursor[data-set="block"][data-state="busy"] .sq,
+:global(html[data-loading]) .cursor[data-set="block"] .sq {
+  --s: 18px;
+  left: -9px;
+  top: -9px;
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  border: 2px solid #fff;
+}
+
+.quad {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 7px;
+  height: 7px;
+  background: #fff;
+}
+
+.cursor[data-set="block"][data-state="busy"] .quad,
+:global(html[data-loading]) .cursor[data-set="block"] .quad {
+  display: block;
+  animation: round 0.8s steps(1) infinite;
+}
+
+.cursor[data-set="block"][data-state="busy"] .sq::after,
+:global(html[data-loading]) .cursor[data-set="block"] .sq::after {
+  display: none;
+}
+
+/* pressing: the square tightens */
+.cursor[data-set="block"][data-press="true"][data-state="pointer"] .sq,
+.cursor[data-set="block"][data-press="true"][data-state="pan"] .sq {
+  --s: 14px;
+}
+
+.cursor[data-set="block"][data-press="true"][data-state="pan"] .sq::after {
+  left: 3px;
+  top: 3px;
+}
+
+.cursor[data-set="block"][data-press="true"][data-state="pointer"] .sq {
+  animation: none;
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes round {
+  0% {
+    translate: 0 0;
+  }
+
+  25% {
+    translate: 7px 0;
+  }
+
+  50% {
+    translate: 7px 7px;
+  }
+
+  75% {
+    translate: 0 7px;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glyph {
+    transition: none;
+  }
+
+  .quad,
+  .sq {
+    animation: none !important;
+  }
+
+  .block,
+  .caretBlink,
+  .sandA,
+  .dot {
+    animation: none;
+  }
+
+  .sandB {
+    display: none;
+  }
+}
