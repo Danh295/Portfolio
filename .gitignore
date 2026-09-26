@@ -42,3 +42,10 @@ next-env.d.ts
 
 # Gemini CLI
 GEMINI.md
+
+# build-time GitHub snapshot (scripts/sync-github.mjs)
+/src/data/github.generated.json
+
+# Local-only: design reference and private notes
+/design_handoff_portfolio_v4/
+/TODO.MD
