@@ -19,6 +19,13 @@
   font-size: 13px;
 }
 
+/* Every nav button keeps the same padding; selecting one only swaps colours (the whole
+   "[1] projects", key included), so nothing around it moves. */
+.home,
+.link {
+  padding: 0 4px;
+}
+
 .home {
   font-weight: 500;
 }
@@ -33,7 +40,7 @@
 
 .links {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -42,15 +49,14 @@
   text-underline-offset: 3px;
 }
 
-/* Every label keeps the same padding; selecting one only swaps colours, so nothing
-   around it moves. */
-.label {
-  padding: 0 4px;
-}
-
 .chip {
   background: var(--fg);
   color: var(--bg);
+}
+
+.chip .key {
+  color: inherit;
+  opacity: 0.7;
 }
 
 .actions {
