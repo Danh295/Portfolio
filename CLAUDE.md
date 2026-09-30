@@ -52,6 +52,8 @@ npm run deploy        # publish out/ to gh-pages
 
 CI (`.github/workflows/ci.yml`) runs `lint`, `format:check` and `build` on push/PR to `main`. `.github/workflows/deploy.yml` builds and publishes `out/` to `gh-pages` daily (refreshing the GitHub snapshot) and on manual dispatch; `npm run deploy` still works for manual deploys.
 
+**Pages must serve the `gh-pages` branch (root), not `main`.** With Pages pointed at `main`, GitHub builds the repo source with Jekyll and serves a stub "Portfolio" page instead of the site. The site is live only after (1) Settings → Pages → Source = branch `gh-pages` / root, and (2) the Deploy workflow has run at least once (Actions → Deploy → Run workflow) or `npm run deploy` has been run.
+
 ## Git Commits
 
 - Never include a `Co-Authored-By` line in commit messages. Do not credit Claude or any AI as a co-author.
