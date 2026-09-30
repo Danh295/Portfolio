@@ -1,0 +1,163 @@
+.work {
+  margin-top: 56px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.tree {
+  flex: 0 0 240px;
+  padding: 28px 20px;
+  border-right: 1px solid var(--line);
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Build-time GitHub sync status, pinned to the bottom of the folder column. */
+.sync {
+  margin-top: auto;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.syncDot {
+  color: var(--fg);
+}
+
+.syncTime {
+  color: var(--mid);
+  padding-left: 1.2em;
+}
+
+.folder {
+  display: flex;
+  white-space: pre;
+  text-align: left;
+}
+
+.mid {
+  color: var(--mid);
+}
+
+.name,
+.nameOn {
+  padding: 0 4px;
+}
+
+.name {
+  transition: background 0.12s;
+}
+
+:global(html:not(.kbd)) .folder:hover .name {
+  background: var(--soft);
+}
+
+.nameOn {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.count {
+  color: var(--mid);
+  padding-left: 8px;
+}
+
+.list {
+  flex: 1 1 480px;
+  min-width: 0;
+  padding: 12px 24px;
+}
+
+.row,
+.rowOn {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1.1fr) 100px minmax(0, 1.4fr) 44px 24px;
+  gap: 16px;
+  align-items: baseline;
+  padding: 15px 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.row {
+  transition: background 0.15s;
+}
+
+:global(html:not(.kbd)) .row:hover {
+  background: var(--soft);
+}
+
+.rowOn {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.no {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.title {
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.small {
+  font-size: 12px;
+}
+
+.org {
+  font-size: 14px;
+  opacity: 0.65;
+  text-transform: none;
+}
+
+.arrow {
+  font-size: 14px;
+}
+
+@media (max-width: 760px) {
+  .tree {
+    flex: 1 1 100%;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 24px 16px 16px;
+  }
+
+  .list {
+    padding: 8px 12px;
+  }
+
+  .row,
+  .rowOn {
+    grid-template-columns: 28px minmax(0, 1fr) 20px;
+    gap: 4px 12px;
+  }
+
+  .row > :nth-child(3),
+  .rowOn > :nth-child(3),
+  .row > :nth-child(5),
+  .rowOn > :nth-child(5) {
+    display: none;
+  }
+
+  .org {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .arrow {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+}

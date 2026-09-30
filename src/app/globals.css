@@ -1,70 +1,87 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap");
-
-:root {
-  --primary: #6554af;
-  --secondary: #9d9cf7;
-  --highlight: #feb47b;
-  --foreground1: #f9f9f9;
-  --foreground: var(--foreground1);
-  --foreground2: #a1a1ab;
-  --background1: #151518;
-  --background2: rgba(40, 40, 45, 0.88);
-  --iconBG1: rgba(101, 84, 175, 0.24);
-  --iconBG: rgba(72, 65, 78, 0.5);
-  --iconBG2: rgba(24, 24, 27, 0.94);
-  --accentColor: #feb47b;
-
-  --innerShadow: 0px 1px 6px rgba(0, 0, 0, 0.75);
-  --dropShadow1: 0px 24px 80px rgba(0, 0, 0, 0.26);
-  --dropShadow2: 0px 4px 18px rgba(0, 0, 0, 0.2);
-  --buttonDropShadow: var(--dropShadow1), var(--dropShadow2);
-
-  --borderRadius-button: 20px;
-  --borderRadius-content: 32px;
-  --radius-sm: 14px;
-  --radius-md: 22px;
-  --radius-lg: 30px;
-
-  --z-nav: 50;
-  --z-nav-mobile: 60;
-
-  --scrollbar1: var(--iconBG);
-  --scrollbar2: #9d9d9d;
-  --scrollbarHover: rgba(79, 79, 79, 1);
-
-  --tag-row-gap: 8px;
-  --tag-col-gap: 8px;
-
-  --space-card-padding-y: 26px;
-  --space-card-padding-x: 30px;
-  --space-card-column-gap: 28px;
-  --space-card-section-gap: 22px;
-  --space-card-stack-gap: 12px;
-  --space-card-tight-gap: 8px;
+/* Five tokens, switched by theme via <html data-theme>. Default is ink (dark). */
+:root,
+:root[data-theme="dark"] {
+  --bg: #121211;
+  --fg: #eceae5;
+  --mid: #94928d;
+  --line: #302f2c;
+  --soft: #1d1c1b;
+  color-scheme: dark;
 }
 
-* {
-  margin: 0;
-  padding: 0;
+:root[data-theme="light"] {
+  --bg: #f3f2ee;
+  --fg: #161615;
+  --mid: #6b6a66;
+  --line: #d4d2cc;
+  --soft: #e6e4df;
+  color-scheme: light;
+}
+
+:root {
+  --mono: var(--font-plex), var(--font-mono), ui-monospace, monospace;
+  --max-w: 1200px;
+  --pad-x: 32px;
+  /* Where a section jump parks the frame top: under the sticky nav (measured into
+     --nav-h by App.jsx; it wraps to 2–4 rows on narrow screens) plus a gap. */
+  --nav-offset: calc(var(--nav-h, 58px) + 26px);
+  --z-bar: 10;
+  --z-shell: 20;
+  --z-modal: 30;
+  --z-intro: 9998;
+  --z-tip: 9999;
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 html,
 body {
-  scroll-behavior: smooth;
-  overflow-x: clip;
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  transition:
+    background 0.3s,
+    color 0.3s;
+}
+
+/* JetBrains Mono ships programming ligatures (--, &&, ->, ==…). They garble typed
+   shell input and the ASCII art, so render every character as itself. */
+html,
+input,
+textarea {
+  font-variant-ligatures: none;
+  font-feature-settings:
+    "liga" 0,
+    "calt" 0;
 }
 
 body {
-  position: relative;
-  max-width: 100vw;
-  min-height: 100vh;
-  color: var(--foreground1);
-  background: var(--background1);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--mono);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+/* One typeface everywhere, in two weights: Plex Regular (400) and Medium (500). Form
+   controls and code-ish tags would otherwise pick the browser's own fonts, headings and
+   <b>/<strong> would ask for a bold we don't ship, and synthesis would fake it. */
+html {
+  font-synthesis: none;
+}
+
+input,
+textarea,
+select,
+code,
+kbd,
+samp,
+input,
+textarea,
+select {
+  font-size: inherit;
 }
 
 h1,
@@ -72,132 +89,104 @@ h2,
 h3,
 h4,
 h5,
-h6 {
-  font-family: "Poppins", sans-serif;
-  line-height: 1.04;
-  letter-spacing: 0;
-  color: var(--foreground);
-}
-
-h1 {
-  font-size: 76px;
-  font-weight: 800;
-  letter-spacing: -0.05em;
-}
-
-h2 {
-  font-size: 44px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-}
-
-h3 {
-  font-size: 34px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-p {
-  font-family: "Jost", sans-serif;
-  font-size: 28px;
+h6,
+b,
+strong,
+th {
   font-weight: 500;
-  line-height: 1.55;
-  color: var(--foreground);
 }
 
 a {
+  color: inherit;
   text-decoration: none;
-  color: var(--foreground);
+}
+
+html:not(.kbd) a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 button {
-  position: relative;
-  font-family: "Jost", sans-serif;
-  font-size: 18px;
-  font-weight: 600;
-  padding: 16px 40px;
-  color: var(--foreground1);
-  background-color: var(--background2);
-  border: none;
-  border-radius: var(--borderRadius-button);
-  box-shadow: var(--buttonDropShadow);
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  text-transform: inherit;
+  text-align: inherit;
 }
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-  background: transparent;
+pre {
+  font-family: var(--mono);
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+::selection {
+  background: var(--fg);
+  color: var(--bg);
 }
 
-::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.14);
-  border-radius: 999px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  transition: background-color 0.2s ease;
+:focus-visible {
+  outline: 1px dashed var(--fg);
+  outline-offset: 2px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.28);
+/* Custom cursor (components/overlay/Cursor.jsx) replaces the native one everywhere,
+   including its own I-beam over text fields. Only on mouse/trackpad devices. */
+html.cursor-custom,
+html.cursor-custom * {
+  cursor: none !important;
 }
 
-.NavbarMobile {
-  display: none;
+/* First visit: a plain cover until the boot intro's own overlay takes over (the class is
+   set by the boot script in layout.js and removed by Intro.jsx). */
+html.boot-intro body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-intro);
+  background: var(--bg);
 }
 
-.Navbar {
-  display: block;
-  position: sticky;
-  top: 0;
-  z-index: var(--z-nav);
+/* Reloading in terminal mode: keep the gui hidden for the frame before the terminal
+   mounts (the class is set by the boot script in layout.js and removed by App). */
+html.boot-term [data-mode="gui"] {
+  visibility: hidden;
 }
 
-@media screen and (max-width: 920px) {
-  .NavbarMobile {
-    display: block;
-  }
+/* Keyboard mode (html.kbd, components/overlay/Cursor.jsx): hover effects are paused
+   by gating every :hover rule on html:not(.kbd), and tooltips hide, until the mouse
+   moves again. Clicks still land normally (no pointer-events trick, which swallowed a
+   click made without moving the pointer first). */
+html.kbd [role="tooltip"] {
+  opacity: 0 !important;
+}
 
-  .Navbar {
-    display: none;
-  }
+/* Press feedback (src/lib/pressFx.js): a mouse click or the key that activates a button
+   flips it for a beat and drops it 1px, then it snaps back. */
+[data-pressed] {
+  animation: press-fx 0.16s steps(1);
+}
 
-  h1 {
-    font-size: 54px;
-  }
+[data-pressed="plain"] {
+  background-color: var(--bg);
+}
 
-  h2 {
-    font-size: 32px;
-  }
-
-  h3 {
-    font-size: 24px;
-  }
-
-  p {
-    font-size: 22px;
+@keyframes press-fx {
+  0% {
+    filter: invert(1);
+    translate: 0 1px;
   }
 }
 
-@media screen and (max-width: 512px) {
-  h1 {
-    font-size: 42px;
-  }
-
-  h2 {
-    font-size: 28px;
-  }
-
-  h3 {
-    font-size: 20px;
-  }
-
-  p {
-    font-size: 18px;
-  }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

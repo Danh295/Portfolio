@@ -1,0 +1,170 @@
+.term {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  text-transform: none;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.mid {
+  color: var(--mid);
+}
+
+.fg {
+  color: var(--fg);
+}
+
+.dim {
+  opacity: 0.6;
+}
+
+.exit {
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+}
+
+:global(html:not(.kbd)) .exit:hover,
+:global(html:not(.kbd)) .tab:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* min-height: 0 lets the output shrink to the space between the header and the
+   (possibly wrapping) shortcut bar instead of pushing the bar off screen. */
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 28px 32px 20px;
+  line-height: 1.6;
+  cursor: text;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.banner {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.intro {
+  padding-bottom: 16px;
+}
+
+.promptRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-top: 14px;
+}
+
+.prompt {
+  color: var(--mid);
+  flex: none;
+}
+
+.promptHidden {
+  height: 0;
+  overflow: hidden;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--fg);
+  font: inherit;
+  caret-color: var(--fg);
+  padding: 0;
+}
+
+/* One row, always: it scrolls sideways when narrow instead of wrapping, so its
+   height never changes (e.g. while the web font swaps in). */
+.tabs {
+  flex: none;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  align-items: stretch;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  flex: none;
+  white-space: nowrap;
+  padding: 10px 14px;
+  border-right: 1px solid var(--line);
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+:global(html:not(.kbd)) .tab:hover .mid,
+.tabOn .mid {
+  color: inherit;
+}
+
+/* A shortcut is typing itself into the prompt. */
+.tabOn {
+  background: var(--fg);
+  color: var(--bg);
+  animation: tabPress 0.24s steps(2, end);
+}
+
+@keyframes tabPress {
+  from {
+    background: var(--mid);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabOn {
+    animation: none;
+  }
+}
+
+.spark {
+  margin-left: auto;
+  padding: 10px 16px;
+  display: flex;
+  gap: 10px;
+  border-left: 1px solid var(--line);
+}
+
+.bars {
+  letter-spacing: 0;
+}
+
+@media (max-width: 600px) {
+  .body {
+    padding: 20px 16px;
+  }
+
+  .banner {
+    font-size: 7px;
+  }
+}

@@ -1,0 +1,21 @@
+.tip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: var(--z-tip);
+  pointer-events: none;
+  max-width: 300px;
+  padding: 6px 9px;
+  font: 12px/1.45 var(--mono);
+  background: var(--fg);
+  color: var(--bg);
+  opacity: 0;
+  transition: opacity 0.12s;
+  white-space: pre-wrap;
+}
+
+@media (hover: none) {
+  .tip {
+    display: none;
+  }
+}

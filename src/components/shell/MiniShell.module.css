@@ -1,0 +1,84 @@
+.panel {
+  position: fixed;
+  top: 72px;
+  right: 24px;
+  width: min(620px, calc(100vw - 48px));
+  height: min(470px, calc(100vh - 140px));
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 1px solid var(--fg);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  font-size: 13px;
+  text-transform: none;
+  z-index: var(--z-shell);
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--fg);
+  font-size: 12px;
+}
+
+.close {
+  border: 1px solid var(--line);
+  padding: 2px 8px;
+}
+
+:global(html:not(.kbd)) .close:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.dim {
+  opacity: 0.6;
+}
+
+.mid {
+  color: var(--mid);
+  flex: none;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 16px;
+  line-height: 1.55;
+  cursor: text;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.promptRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 10px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--fg);
+  font: inherit;
+  caret-color: var(--fg);
+  padding: 0;
+}
+
+@media (max-width: 600px) {
+  .panel {
+    right: 12px;
+    width: calc(100vw - 24px);
+  }
+}

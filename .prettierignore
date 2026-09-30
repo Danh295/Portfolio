@@ -5,3 +5,5 @@ package-lock.json
 public/
 *.min.js
 *.min.css
+design_handoff_portfolio_v4/
+TODO.MD

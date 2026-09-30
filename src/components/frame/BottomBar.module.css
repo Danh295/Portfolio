@@ -1,0 +1,42 @@
+.bar {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--z-bar);
+  background: var(--bg);
+  border-top: 1px solid var(--fg);
+  transition: background 0.3s;
+}
+
+.inner {
+  box-sizing: content-box; /* width is 1200px plus padding, as in the design */
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 10px var(--pad-x);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.key {
+  color: var(--mid);
+}
+
+.spark {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  color: var(--mid);
+}
+
+.bars {
+  color: var(--fg);
+  letter-spacing: 0;
+}
+
+@media (max-width: 600px) {
+  .spark {
+    margin-left: 0;
+  }
+}

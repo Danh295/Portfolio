@@ -1,0 +1,81 @@
+.frame {
+  border: 1px solid var(--fg);
+  position: relative;
+  scroll-margin-top: var(--nav-offset);
+}
+
+.label,
+.right {
+  position: absolute;
+  top: -10px;
+  z-index: 2;
+  white-space: nowrap;
+  background: var(--bg);
+  line-height: 20px;
+  transition: background 0.3s;
+}
+
+.label {
+  left: 16px;
+  margin: 0;
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.right {
+  right: 16px;
+  padding: 0 8px;
+  font-size: 12px;
+  color: var(--mid);
+}
+
+.on,
+.off {
+  padding: 0 4px;
+}
+
+.on {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* Blinking cursor after the selected section's label: a half block, 1px clear of the
+   inverted chip, absolutely positioned over the space before "├" so the label never
+   changes width. */
+.caret {
+  position: relative;
+}
+
+.caret::after {
+  content: "▌";
+  position: absolute;
+  left: calc(100% + 1px);
+  top: 0;
+  color: var(--fg);
+  animation: caret-blink 1.04s steps(1) infinite;
+}
+
+/* The heading effect draws its own cursor while it runs. */
+.caret:has([data-typing])::after {
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret::after {
+    animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .right {
+    display: none;
+  }
+}
+
+/* Local copy: CSS Modules scope keyframe names, so a global one can't be referenced. */
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
