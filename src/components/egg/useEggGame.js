@@ -118,9 +118,12 @@ export function useEggGame({ reduce, clockMode, mode }) {
     termFx = useRef(null),
     termStatus = useRef(null),
     termBox = useRef(null);
+  // Restarts the frame loop when it has gone idle (set by the loop's effect).
+  const wake = useRef(() => {});
 
   useEffect(() => {
     Object.assign(live.current, { reduce, mode, clockMode });
+    wake.current();
   }, [reduce, mode, clockMode]);
 
   const getScene = () => scene.current || (scene.current = freshScene());
@@ -128,6 +131,7 @@ export function useEggGame({ reduce, clockMode, mode }) {
   const setStage = useCallback((s) => {
     live.current.stage = s;
     setStageState(s);
+    wake.current();
   }, []);
   const setResult = useCallback((r) => {
     live.current.result = r;
@@ -253,11 +257,24 @@ export function useEggGame({ reduce, clockMode, mode }) {
     return lines.join("\n");
   };
 
-  // The frame loop. Physics every frame, paint every other frame.
+  // The frame loop. Physics every frame, paint every other frame. At rest (stage 0 or 5)
+  // it idles while there's nothing to show: the pot is off screen or the tab hidden, or
+  // reduced motion has frozen it and the last frame is painted. Any scroll, resize, key,
+  // pointer, stage or mode change wakes it.
   useEffect(() => {
     let raf = 0,
       last = 0,
-      odd = false;
+      odd = false,
+      awake = 0;
+    const run = () => {
+      // Stay up briefly after any wake, so a layout React commits a moment later (e.g.
+      // after popstate) is seen before the loop decides to idle.
+      awake = performance.now() + 300;
+      if (raf) return;
+      last = 0; // no catch-up lurch after a pause
+      raf = requestAnimationFrame(frame);
+    };
+    wake.current = run;
     const frame = () => {
       odd = !odd;
       const t = getScene(),
@@ -276,8 +293,8 @@ export function useEggGame({ reduce, clockMode, mode }) {
       const k = last ? Math.min(4, (now - last) / (1000 / 60)) : 1,
         ease1 = (rate) => 1 - Math.pow(1 - rate, k); // per-frame lerp rate → this frame's
       last = now;
-      // The game itself always runs (stages, the 15s auto-pull), on screen or not; only
-      // the raster below is skipped while the frame is off screen or the tab is hidden.
+      // While a round is on (stages 1–4) the game always runs (its clocks, the 15s
+      // auto-pull), on screen or not; only the raster below is skipped off screen.
       if (!R && !t.drag) t.B += 0.004 * k;
       t.A += t.vA * k;
       t.B += t.vB * k;
@@ -367,7 +384,8 @@ export function useEggGame({ reduce, clockMode, mode }) {
 
       const rc = box && box.getBoundingClientRect();
       const onScreen = rc && rc.bottom > 0 && rc.top < window.innerHeight && !document.hidden;
-      if (el && box && onScreen && odd) {
+      const painting = el && box && onScreen && odd;
+      if (painting) {
         const W = colsFor(box.clientWidth - (inTerm ? 64 : 48), inTerm ? 540 : 600);
         t.W = W;
         t.H = H;
@@ -392,9 +410,17 @@ export function useEggGame({ reduce, clockMode, mode }) {
           }),
         );
       }
-      raf = requestAnimationFrame(frame);
+      const atRest = (st === 0 || st === 5) && !t.drag,
+        still =
+          R &&
+          painting &&
+          !t.conf.length &&
+          t.shake < 0.01 &&
+          Math.abs(t.vA) + Math.abs(t.vB) < 1e-5 &&
+          Math.abs(t.px) + Math.abs(t.py) < 1e-3;
+      raf = atRest && (!onScreen || still) && now > awake ? 0 : requestAnimationFrame(frame);
     };
-    raf = requestAnimationFrame(frame);
+    run();
 
     const onMove = (e) => {
       const L = live.current,
@@ -406,9 +432,23 @@ export function useEggGame({ reduce, clockMode, mode }) {
       t.my = Math.max(-1, Math.min(1, (e.clientY - rc.top - rc.height / 2) / rc.height));
     };
     document.addEventListener("mousemove", onMove, { passive: true });
+    // Capture phase: scrolls inside the terminal don't bubble, and a key or click may
+    // mount the terminal's inline egg.
+    const WAKE = ["scroll", "keydown", "pointerdown"],
+      opts = { capture: true, passive: true };
+    for (const ev of WAKE) document.addEventListener(ev, run, opts);
+    window.addEventListener("resize", run);
+    window.addEventListener("popstate", run);
+    document.addEventListener("visibilitychange", run);
     return () => {
       cancelAnimationFrame(raf);
+      raf = 0;
+      wake.current = () => {};
       document.removeEventListener("mousemove", onMove);
+      for (const ev of WAKE) document.removeEventListener(ev, run, opts);
+      window.removeEventListener("resize", run);
+      window.removeEventListener("popstate", run);
+      document.removeEventListener("visibilitychange", run);
     };
     // statusText only reads refs
     // eslint-disable-next-line react-hooks/exhaustive-deps

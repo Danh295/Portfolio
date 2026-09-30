@@ -4,13 +4,15 @@
 // Elements with no background of their own get --bg painted in for the flash, so plain
 // text buttons flip to the "selected" look and selected ones flip back to plain.
 
+import { prefersReducedMotion } from "@/lib/useReducedMotion";
+
 const MS = 160;
 const timers = new WeakMap();
 
 /** Flash `el` (no-op for null). Re-triggering restarts it. */
 export function pressFx(el) {
   if (!el || !(el instanceof Element)) return;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (prefersReducedMotion()) return;
   clearTimeout(timers.get(el));
   el.removeAttribute("data-pressed");
   const bg = getComputedStyle(el).backgroundColor;
