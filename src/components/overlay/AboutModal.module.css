@@ -13,7 +13,6 @@
   background: var(--bg);
   color: var(--fg);
   border: 1px solid var(--fg);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
   width: min(640px, 100%);
   max-height: min(80vh, 720px);
   position: relative;
