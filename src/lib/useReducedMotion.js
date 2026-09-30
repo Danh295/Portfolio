@@ -10,7 +10,11 @@ function subscribe(callback) {
   return () => mql.removeEventListener("change", callback);
 }
 
-function getSnapshot() {
+/**
+ * Read the media query now. For code outside React, or that runs during hydration
+ * (when the hook still reports the server value, false).
+ */
+export function prefersReducedMotion() {
   return window.matchMedia(QUERY).matches;
 }
 
@@ -19,5 +23,5 @@ function getServerSnapshot() {
 }
 
 export function useReducedMotion() {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useSyncExternalStore(subscribe, prefersReducedMotion, getServerSnapshot);
 }
