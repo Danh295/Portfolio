@@ -1,0 +1,193 @@
+.exp {
+  margin-top: 56px;
+  padding: 12px 24px;
+}
+
+.item {
+  border-bottom: 1px solid var(--line);
+}
+
+.row,
+.rowOn {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1.1fr) minmax(0, 1.6fr) 24px;
+  gap: 20px;
+  padding: 18px 8px;
+  text-align: left;
+}
+
+.row {
+  transition: background 0.15s;
+}
+
+:global(html:not(.kbd)) .row:hover {
+  background: var(--soft);
+}
+
+.rowOn {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.dateCol {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.faded {
+  opacity: 0.65;
+}
+
+.now,
+.nowOn {
+  align-self: flex-start;
+}
+
+.now {
+  background: var(--fg);
+  color: var(--bg);
+  padding: 1px 6px;
+}
+
+.nowOn {
+  border: 1px solid currentColor;
+  padding: 0 6px;
+}
+
+.titleCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font-size: 18px;
+}
+
+.company {
+  font-size: 14px;
+  opacity: 0.65;
+}
+
+.raw {
+  text-transform: none;
+}
+
+.summary {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  opacity: 0.65;
+}
+
+.rowOn .summary {
+  opacity: 0.75;
+}
+
+.caret {
+  font-size: 14px;
+  opacity: 0.65;
+}
+
+.rowOn .caret {
+  opacity: 1;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 20px;
+  padding: 4px 8px 20px;
+}
+
+.detailsKey {
+  font-size: 12px;
+  color: var(--mid);
+}
+
+.detailList {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  padding: 8px 0;
+  border-top: 1px dashed var(--line);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.n {
+  font-size: 12px;
+  color: var(--mid);
+}
+
+.earlier {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) 24px;
+  gap: 20px;
+  padding: 14px 8px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--mid);
+  transition: background 0.15s;
+}
+
+:global(html:not(.kbd)) .earlier:hover {
+  background: var(--soft);
+}
+
+/* Selected with j/k: same inverted look as a selected role. */
+.earlier.earlierOn {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+@media (max-width: 760px) {
+  .exp {
+    padding: 12px 12px;
+  }
+
+  .row,
+  .rowOn {
+    grid-template-columns: minmax(0, 1fr) 20px;
+    gap: 8px 12px;
+  }
+
+  .dateCol {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .dateCol,
+  .titleCol,
+  .summary {
+    grid-column: 1;
+  }
+
+  .caret {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .details,
+  .earlier {
+    grid-template-columns: minmax(0, 1fr) 20px;
+    gap: 8px 12px;
+  }
+
+  .details {
+    grid-template-columns: 1fr;
+  }
+
+  .earlier > :first-child {
+    display: none;
+  }
+}
