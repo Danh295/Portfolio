@@ -2,13 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import { about } from "@/data/home";
+import { joinParagraphs } from "@/lib/format";
 import styles from "./AboutModal.module.css";
 
 // Same paragraph rules as ~/about.txt in the shell: a blank line between strings that
 // don't carry their own breaks; a single "\n" is a line break inside a paragraph.
-const PARAGRAPHS = about
-  .map((p, i) => (i < about.length - 1 && !p.endsWith("\n") ? p + "\n\n" : p))
-  .join("")
+const PARAGRAPHS = joinParagraphs(about)
   .trim()
   .split(/\n{2,}/)
   .map((p) => p.split("\n"));
