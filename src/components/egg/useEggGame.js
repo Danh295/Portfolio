@@ -13,7 +13,8 @@ import {
 import { countEgg, readBest, writeBest } from "@/lib/egg/counter";
 import { eggStages, eggTypes, eggRules } from "@/data/egg";
 
-import { EGG_ROWS, EGG_FONT_PX, EGG_GRID_SCALE, colsFor } from "@/lib/egg/grid";
+import { EGG_ROWS, EGG_GRID_SCALE, colsFor } from "@/lib/egg/grid";
+import { paint } from "@/lib/egg/paint";
 
 const FRAME_H = EGG_ROWS;
 
@@ -61,27 +62,6 @@ const SIMMER_MS = 1600,
   ROLL_BOIL = 1.5,
   READY_MS = 900,
   START_HOLD_MS = 600;
-
-// Colour layers (flame, confetti) are extra <pre>s stacked over the base frame,
-// pooled per colour on the FX container.
-function paint(el, fx, art) {
-  if (el.textContent !== art.base) el.textContent = art.base;
-  if (!fx) return;
-  const pool = fx.__pool || (fx.__pool = {});
-  for (const c in pool) if (!art.layers[c] && pool[c].textContent) pool[c].textContent = "";
-  for (const c in art.layers) {
-    let p = pool[c];
-    if (!p || !p.isConnected) {
-      p = pool[c] = document.createElement("pre");
-      p.setAttribute("aria-hidden", "true");
-      p.style.cssText =
-        `position:absolute;inset:0;margin:0;font-family:var(--mono);font-size:${EGG_FONT_PX}px;line-height:${EGG_FONT_PX}px;letter-spacing:0;text-transform:none;color:` +
-        c;
-      fx.appendChild(p);
-    }
-    if (p.textContent !== art.layers[c]) p.textContent = art.layers[c];
-  }
-}
 
 /**
  * The egg minigame. One scene, drawn every animation frame into whichever target is
