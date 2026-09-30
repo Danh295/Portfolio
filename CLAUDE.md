@@ -4,30 +4,39 @@ Personal portfolio site for Danny Hu. Next.js 16 (App Router) + React 19, JavaSc
 
 ## Architecture
 
-**Single-page model.** Everything lives on `/`. The home page (`src/app/page.js`) imports the timeline/explorer components from sibling route folders and renders all four sections (`#home`, `#projects`, `#experience`, `#skills`) stacked. Navigation uses anchor links (`/#projects` etc.), not route transitions.
+**v4 design: terminal-style, one client app.** `src/app/page.js` renders `src/components/App.jsx`, the single `"use client"` root that holds all UI state (theme, gui/terminal mode, project filter/selection, open project, experience accordion, shell sessions, vim, help). The design reference lives in `design_handoff_portfolio_v4/` (README + prototype HTML); it is ignored by eslint and prettier.
 
-- `src/app/projects/page.js`, `src/app/experience/page.js`, `src/app/skills/page.js` are stub server components that call `redirect()` to the corresponding anchor. They exist mainly so the routes are addressable.
-- `*Timeline.jsx` / `SkillExplorer.jsx` files live under their route folder but are imported into `app/page.js`. Their `page.module.css` siblings are the styles for those components — the leftover `.page` / `.hero` / `.title` / `.lead` rules in each are dead.
-- `src/app/section-page.module.css` is unused (orphan from earlier layout).
-- `src/app/page.module.css` owns the cross-section layout (`.sectionPage`, `.sectionTitle`, `.divider`).
+- **GUI mode**: `Header`, four `SectionFrame`s (`#home` hero + egg, `#projects`, `#experience`, `#skills`), `BottomBar`. Open project = `ProjectDetail` (state, mirrored to `#projects/<slug>` via `history.pushState`; `popstate` restores it).
+- **Keyboard model**: each section's header is its first stop and the only thing with the blinking cursor; j/k then move through its elements (hero: `more…`, the egg; work/experience: rows), which show as inverted with no cursor. ←/→ move like k/j on the main page (on a project page they step between projects). Enter or Space activates the selected element (Space scrolls when nothing is selected); `m` opens more…. Every activation, by mouse or key (including shortcuts with a visible `data-key` button), flashes the element via `src/lib/pressFx.js`. The egg is played only through its buttons (the centre start box, then one button under the pot that the "start!" callout turns into); clicking the pot itself only pans.
+- **Section headers** (`src/lib/useTextFx.js`, trigger `"active"`) are blank until their section is first active _and_ the header is on screen, then type once per page load. A header counts as played as soon as it starts and always runs to the end, so it never replays. Everything else in the frame types in with it (`SectionFrame` + `src/lib/typeIn.js`, which blanks text nodes to same-width spaces before first paint).
+- **Terminal Enter**: a focused button or link handles its own Enter (e.g. `[exit] back to gui`, links from `cat contact.vcf`); otherwise Enter runs the prompt. In the gui, typing while the embedded shell is open but unfocused goes back to its prompt instead of firing shortcuts.
+- **Section jumps** park frames at `--nav-offset` = the measured nav height (`--nav-h`, App.jsx) + 26px; section labels are `<h2>`s that name their `<section>`.
+- **Keyboard mode** (`html.kbd`, set by any keypress, cleared by a real mouse move or any click) pauses hover styling: every `:hover` rule is written as `html:not(.kbd) … :hover` (`:global(...)` in modules). Don't use `pointer-events: none` for this; it swallows clicks.
+- **Cursor** (`components/overlay/Cursor.jsx`): one state machine (arrow/pointer/text/busy/pan), two sets: square blocks that snap between shapes in gui mode (difference-blended, no easing or trailing), the retro pixel glyphs in terminal mode.
+- **Terminal mode** (`./app --mode terminal`): `components/shell/Terminal.jsx` + `Vim.jsx`. The embedded shell (`` ` `` key) is `MiniShell.jsx`. Both render output with `TermLines.jsx`.
+- **Egg minigame**: `components/egg/useEggGame.js` runs one rAF loop that draws into the hero `<pre>` or the terminal's inline one. Per-frame state stays in refs, never React state; only stage/result/stats are state. The game logic runs every frame whether or not the pot is on screen (only the raster is skipped), and every per-frame step is scaled by elapsed time, so speed doesn't depend on the display's refresh rate. The character grid (resolution) comes from `ui.eggFontPx` via `src/lib/egg/grid.js`; smaller font = more cells in the same frame.
+- `src/app/{projects,experience,skills}/page.js` are client redirect stubs to the matching anchor (static export has no server redirects).
 
-**Static export.** `next.config.mjs` sets `output: "export"`, `images.unoptimized: true`, and `basePath: "/Portfolio"` in production. Consequences:
+**Pure libs (no DOM):**
 
-- No server runtime — no API routes, no middleware, no runtime `redirect()`. The `redirect()` calls in the sub-route pages produce `__next_error__` HTML pages at build, not actual redirects. Anyone hitting `/Portfolio/projects/` directly lands on a broken page. Same for `/experience/` and `/sitemap.xml` advertises these as indexable URLs.
-- Always use `next/image` with the existing `unoptimized` setup. Image `src` paths should be root-relative (`/pfp.jpg`); Next prepends `basePath` automatically.
-- For asset URLs outside `next/image` (PDF, mailto-style hrefs), pull from `src/config/site.js` (`site.resume` already incorporates `basePath`).
+- `src/lib/ascii/egg.js` — `potArt`/`eggArt` renderer + confetti. Ported verbatim from the prototype; tune only while looking at output.
+- `src/lib/ascii/banner.js` — ANSI Shadow "DANNY HU".
+- `src/lib/shell/{fs,spec,exec}.js` — virtual FS, `SPEC` table, `createShell(data)` → `{ exec, runLine, complete }`. Takes content as an argument (no `@/` imports), so it runs under plain node. `src/lib/shell/index.js` wires in the real data.
+- `src/lib/vim.js` — terminal-mode vim as a pure state machine (`openBuffer`, `vimKey(state, key, ctrl)` → next state + effects): normal/visual/visual-line/command-line/search modes, motions, `d`/`y` operators, registers, put, undo/redo. Edits stay in memory.
+- `src/lib/format.js` (`pad`, `lc`), `src/lib/useStickToBottom.js` (both shells pin output to the latest prompt).
+- **GitHub data is build-time only.** `scripts/sync-github.mjs` runs as `prebuild` / `predev` and writes `src/data/github.generated.json` (gitignored): repo metadata for every GitHub link in `projects.js` plus 12 weeks of activity. `src/lib/github.js` reads it (`spark`, `repoFor`, `syncedAt`). Visitors never call the GitHub API; the sync never fails the build and keeps the previous snapshot on errors.
+- `src/lib/egg/game.js` (clock, grading, stats), `src/lib/egg/counter.js` (abacus counter + localStorage fallback), `src/lib/github.js` (reads the build-time snapshot: `spark`, `repoFor`, `syncedAt`, date formatting; no runtime API calls), `src/lib/skills.js` (share-of-projects bars).
+
+**Static export.** `next.config.mjs` sets `output: "export"`, `images.unoptimized: true`, and `basePath: "/Portfolio"` in production. No server runtime. For asset URLs use `src/config/site.js` (`site.resume` already includes `basePath`).
 
 ## Conventions
 
 - **Path alias**: `@/*` → `src/*` (see `jsconfig.json`).
-- **Client components** are marked `"use client"`. Most interactive components (timelines, explorer, hooks consumers) need it.
-- **Styling**: CSS Modules per component. Global tokens (colors, radii, spacing, z-index) live in `:root` in `src/app/globals.css`. Prefer existing custom properties (`--secondary`, `--radius-md`, `--space-card-*`) over hard-coded values.
-- **Data**: All content (projects, experience, home copy, site metadata) is hand-authored under `src/data/` and `src/config/`. There is no CMS.
-- **Skills model**: `src/lib/skills.js` derives the orbit/cluster data from `src/data/projects.js` tags. Two registries must stay in sync when adding a new tag:
-  1. `SKILL_CATEGORY_MAP` in `src/lib/skills.js` — assigns the tag to one of `Frontend / Backend / AI / ML / Computer Vision / OCR / Tooling / Infra`. Unmapped tags silently fall back to `Tooling / Infra`.
-  2. `siMap` / `faMap` in `src/components/ui/TechTag.jsx` — picks the icon. Unmapped tags render a generic gear icon.
-- **Section anchors are the canonical URLs.** Cross-section links (e.g. SkillExplorer → ProjectsTimeline) navigate by setting `window.location.hash` and dispatching `hashchange`; ProjectsTimeline listens for `hashchange` to scroll its inner viewport to the matching project `slug`.
-- **Reduced motion**: `src/lib/useReducedMotion.js` is the source of truth. Honour it in any new animation/wheel-hijack code.
+- **Styling**: CSS Modules per component. Five theme tokens (`--bg --fg --mid --line --soft`) in `src/app/globals.css`, switched by `<html data-theme>` via `src/lib/useTheme.js`; default is dark (ink). Radius 0, no shadows except the shell/help overlays. Font is IBM Plex Mono, self-hosted from `src/app/fonts/plex/` via `next/font/local` (`--font-plex`), with JetBrains Mono Regular as a per-glyph fallback for the few symbols Plex lacks (■ □ ●); both have a 0.6em advance, which the ASCII art and egg grid assume. `--mono` is the stack. Two weights only: 400 and 500 (headings); there is no bold, and `font-synthesis: none` stops the browser faking one. Don't use Google-hosted fonts: their subsets drop the box-drawing/block glyphs (U+2500–259F). Plex has no ↵ or ★, so use ↲ for Enter. **Casing is stored exactly as displayed** (no `text-transform`, no JS case changes), so the gui and terminal always match: the site's voice is lowercase, including Danny's name, his own project names, job titles, dates and locations ("waterloo, on"); external entities keep their normal casing (companies, schools, events, products and tech: IESO, City of Waterloo, UofTHacks, GitHub, Next.js) as do acronyms (OCR, AI, BBA, UTC).
+- **Lint rules**: eslint-config-next 16 enables the React Compiler hook rules (`refs`, `set-state-in-effect`, `immutability`, `purity`). Pass refs as top-level `*Ref` props (not nested in objects), and set state from callbacks, not synchronously in effect bodies.
+- **Data**: All content is hand-authored in `src/data/` (`projects.js`, `experience.js`, `home.js`, `egg.js`) and `src/config/` (`site.js`, `ui.js` for design options + shortcuts). There is no CMS.
+- **Skills**: `coreTechStack` in `src/data/home.js`. A skill's bar = share of projects whose `tags` include it (exact or prefix word). Skills used by no project show `coursework`; list the courses in that item's `courses` array.
+- **Reduced motion**: `src/lib/useReducedMotion.js` is the source of truth. It skips the intro and heading effects and freezes the egg orbit.
 
 ## Commands
 
@@ -35,12 +44,13 @@ Personal portfolio site for Danny Hu. Next.js 16 (App Router) + React 19, JavaSc
 npm run dev           # local dev server
 npm run lint          # eslint .
 npm run format        # prettier --write .
-npm run format:check  # prettier --check . (NOT in CI)
+npm run format:check  # prettier --check . (runs in CI)
 npm run build         # next build → out/
+npm run sync          # refresh the build-time GitHub snapshot
 npm run deploy        # publish out/ to gh-pages
 ```
 
-CI (`.github/workflows/ci.yml`) runs `lint` + `build` on push/PR to `main`. It does not run `format:check`, so formatting drift is not caught automatically.
+CI (`.github/workflows/ci.yml`) runs `lint`, `format:check` and `build` on push/PR to `main`. `.github/workflows/deploy.yml` builds and publishes `out/` to `gh-pages` daily (refreshing the GitHub snapshot) and on manual dispatch; `npm run deploy` still works for manual deploys.
 
 ## Git Commits
 
