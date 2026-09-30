@@ -1,6 +1,8 @@
 // Once-per-session intro. The decision is made on first call (client only) and
 // cached, so the intro overlay and the heading effects agree on the delay.
 
+import { prefersReducedMotion } from "@/lib/useReducedMotion";
+
 const KEY = "danny-intro";
 
 // Boot intro timing: one log line per LINE_MS, then a 24-cell progress bar at CELL_MS a
@@ -28,9 +30,9 @@ export function introPlan(fx, reduce) {
   } catch {
     // storage blocked: treat as unseen
   }
-  // Query the media directly: during hydration useReducedMotion still reports the
+  // Read the media now, not the hook: during hydration useReducedMotion still reports the
   // server value (false), and this plan is cached on first call.
-  const still = reduce || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const still = reduce || prefersReducedMotion();
   if (fx === "none" || still || seen) {
     plan = { fx: "none", delay: 0, at: performance.now() };
     return plan;

@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { ui } from "@/config/ui";
 import { INTRO_END, introWait } from "@/lib/intro";
 import { runTextFx } from "@/lib/textFx";
+import { prefersReducedMotion } from "@/lib/useReducedMotion";
 
 // Headings that have started their one-time effect this page load. Survives remounts
 // (e.g. opening and closing a project), so each plays exactly once per load.
@@ -13,8 +14,7 @@ const BLANK = " ";
 /** Whether a one-time heading has already played this load (e.g. to skip related fx). */
 export const isPlayed = (trigger, text) => played.has(trigger + ":" + text);
 
-export const isStill = (reduce) =>
-  reduce || ui.headerFx === "none" || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+export const isStill = (reduce) => reduce || ui.headerFx === "none" || prefersReducedMotion();
 
 /**
  * Animate the heading in `ref` to `text`.
