@@ -9,7 +9,7 @@ import { useReducedMotion } from "@/lib/useReducedMotion";
 import styles from "./NotFound.module.css";
 
 // The upright egg just fits in this many rows (see SCALE in src/lib/ascii/roll.js).
-const ROWS = 39;
+const ROWS = 28;
 const FRAME_STYLE = { "--egg-font": EGG_FONT_PX + "px", "--egg-h": ROWS * EGG_FONT_PX + "px" };
 
 /**
