@@ -1,5 +1,7 @@
 // Virtual filesystem for the fake shell. Paths are arrays of segments relative to
-// ~ (e.g. ["projects", "hackathon"]). No imports: content comes in through `data`.
+// ~ (e.g. ["projects", "hackathon"]). No `@/` imports: content comes in through `data`.
+
+import { joinParagraphs } from "../format.js";
 
 const slugify = (s) =>
   String(s)
@@ -115,12 +117,7 @@ export function createFs(data) {
   function fileLines(node) {
     switch (node.k) {
       case "about":
-        // Paragraphs may carry their own "\n" breaks; ones without get a blank line after.
-        return about
-          .map((p, i) => (i < about.length - 1 && !p.endsWith("\n") ? p + "\n\n" : p))
-          .join("")
-          .replace(/\n+$/, "")
-          .split("\n");
+        return joinParagraphs(about).replace(/\n+$/, "").split("\n");
       case "exp": {
         const e = experience[node.i];
         return [
