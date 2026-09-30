@@ -9,9 +9,9 @@ import { rollPose, eggCentre, eggWidth, eggWidthSlope } from "../egg/roll.js";
 // A character cell is 0.6 as wide as it is tall (the font's advance).
 const ASPECT = 0.6;
 // Rows per egg half-length, and where the ground sits, as fractions of the frame height
-// (for ~32 rows: the upright egg just fits above the ground, with a few ground rows below).
-const SCALE = 0.36,
-  GROUND = 0.84;
+// (for ~39 rows: the upright egg just fits above the ground, with a few ground rows below).
+const SCALE = 0.41,
+  GROUND = 0.897;
 
 // Shading ramp, dark to light (never blank inside the egg, so it stays a solid shape).
 const RAMP = ".:-=+*#%@";
