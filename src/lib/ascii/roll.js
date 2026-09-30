@@ -9,9 +9,9 @@ import { rollPose, eggCentre, eggWidth, eggWidthSlope } from "../egg/roll.js";
 // A character cell is 0.6 as wide as it is tall (the font's advance).
 const ASPECT = 0.6;
 // Rows per egg half-length, and where the ground sits, as fractions of the frame height
-// (for ~39 rows: the upright egg just fits above the ground, with a few ground rows below).
-const SCALE = 0.41,
-  GROUND = 0.897;
+// (for ~28 rows: the upright egg just fits above the ground, with a few ground rows below).
+const SCALE = 0.375,
+  GROUND = 0.857;
 
 // Shading ramp, dark to light (never blank inside the egg, so it stays a solid shape).
 const RAMP = ".:-=+*#%@";
@@ -91,9 +91,7 @@ export function rollArt(t, W, H) {
             nz = z / nl,
             nx = nbx * c + nby * s,
             ny = -nbx * s + nby * c;
-          let l = 0.2 + 0.8 * Math.max(0, nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]);
-          // Speckles fixed to the shell, so the turn shows beyond the outline.
-          if (hash(Math.floor(u / 0.1), Math.floor(by / 0.1)) < 0.14) l *= 0.45;
+          const l = 0.2 + 0.8 * Math.max(0, nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]);
           hit++;
           lum += l;
         }
