@@ -1,0 +1,4 @@
+User-Agent: *
+Allow: /
+
+Sitemap: https://danh295.github.io/Portfolio/sitemap.xml

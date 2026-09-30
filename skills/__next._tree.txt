@@ -1,0 +1,4 @@
+:HL["/Portfolio/_next/static/chunks/d41cdd29cd8674ac.css","style"]
+:HL["/Portfolio/_next/static/media/IBMPlexMono_Medium.p.7604228e.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/Portfolio/_next/static/media/IBMPlexMono_Regular.p.b15f62cf.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+0:{"buildId":"KpYsrHRRUTqhNKmxq8TwY","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"skills","paramType":null,"paramKey":"skills","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
