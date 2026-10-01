@@ -974,6 +974,7 @@ export default function App() {
             <main
               ref={contentRef}
               className={view ? `${styles.main} ${styles.mainDetail}` : styles.main}
+              data-snap={view ? undefined : ""}
             >
               {view ? (
                 <ProjectDetail
@@ -1073,8 +1074,8 @@ export default function App() {
                 onClose={() => setTermOpen(false)}
               />
             )}
-            {help && <HelpModal onClose={() => setHelp(false)} />}
             {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
+            {help && <HelpModal onClose={() => setHelp(false)} />}
           </>
         ) : (
           <Terminal

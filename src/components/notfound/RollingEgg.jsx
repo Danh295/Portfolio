@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { rollArt } from "@/lib/ascii/roll";
+import { rollArt, ROLL_ROWS } from "@/lib/ascii/roll";
 import { restTime } from "@/lib/egg/roll";
 import { paint } from "@/lib/egg/paint";
-import { EGG_FONT_PX, EGG_CELL_W, colsFor } from "@/lib/egg/grid";
+import { EGG_FONT_PX, EGG_CELL_W } from "@/lib/egg/grid";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import styles from "./NotFound.module.css";
 
-// The upright egg just fits in this many rows (see SCALE in src/lib/ascii/roll.js).
-const ROWS = 28;
+const ROWS = ROLL_ROWS;
+const MAX_COLS = Math.floor(540 / EGG_CELL_W);
 const FRAME_STYLE = { "--egg-font": EGG_FONT_PX + "px", "--egg-h": ROWS * EGG_FONT_PX + "px" };
 
 /**
@@ -30,7 +30,8 @@ export default function RollingEgg() {
       t = reduce ? restTime() : 0;
     const draw = () => paint(pre, null, { base: rollArt(t, cols, ROWS) });
     const size = () => {
-      cols = colsFor(box.clientWidth, 540);
+      // As wide as the frame allows (no minimum, so it never spills out of a narrow one).
+      cols = Math.max(1, Math.min(MAX_COLS, Math.floor(box.clientWidth / EGG_CELL_W)));
       pre.style.width = Math.round(cols * EGG_CELL_W) + "px"; // centred by margin: auto
     };
     size();
