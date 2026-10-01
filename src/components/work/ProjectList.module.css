@@ -49,10 +49,6 @@
   padding: 0 4px;
 }
 
-.name {
-  transition: background 0.12s;
-}
-
 :global(html:not(.kbd)) .folder:hover .name {
   background: var(--soft);
 }
@@ -83,10 +79,6 @@
   padding: 15px 8px;
   border-bottom: 1px solid var(--line);
   text-align: left;
-}
-
-.row {
-  transition: background 0.15s;
 }
 
 :global(html:not(.kbd)) .row:hover {

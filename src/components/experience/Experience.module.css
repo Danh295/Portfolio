@@ -17,10 +17,6 @@
   text-align: left;
 }
 
-.row {
-  transition: background 0.15s;
-}
-
 :global(html:not(.kbd)) .row:hover {
   background: var(--soft);
 }
@@ -136,7 +132,6 @@
   text-align: left;
   font-size: 13px;
   color: var(--mid);
-  transition: background 0.15s;
 }
 
 :global(html:not(.kbd)) .earlier:hover {

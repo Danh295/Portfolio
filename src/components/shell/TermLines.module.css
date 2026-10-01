@@ -166,7 +166,6 @@
 .bar.term {
   grid-template-columns: 150px auto 40px;
   gap: 12px;
-  transition: background 0.12s;
 }
 
 :global(html:not(.kbd)) .bar.term:hover {

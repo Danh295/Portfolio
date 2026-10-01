@@ -21,7 +21,6 @@
   white-space: nowrap;
   background: var(--bg);
   line-height: 20px;
-  transition: background 0.3s;
 }
 
 .label {
