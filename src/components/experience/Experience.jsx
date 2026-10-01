@@ -1,4 +1,5 @@
 import SectionFrame from "@/components/frame/SectionFrame";
+import Hint from "@/components/Hint";
 import { experienceEntries } from "@/data/experience";
 import { pad } from "@/lib/format";
 import styles from "./Experience.module.css";
@@ -19,11 +20,11 @@ export default function Experience({
     <SectionFrame
       id="experience"
       sec={2}
-      prefix={<span data-hint="">[2] </span>}
+      prefix={<Hint>[2] </Hint>}
       title="~/experience"
       right={
         <>
-          <span data-hint="">[j/k] move · </span>[↲] expand
+          <Hint>[j/k] move · </Hint>[↲] expand
         </>
       }
       active={active}

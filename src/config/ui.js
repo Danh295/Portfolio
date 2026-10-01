@@ -8,34 +8,36 @@ export const ui = {
 };
 
 // The `?` overlay.
-// `off` is what the row says while single-key shortcuts are off (src/lib/useKeysPref.js):
-// a replacement for rows that still half-work (← / → keep moving), `true` for rows whose
-// keys aren't characters (always work), and nothing for rows that go away.
+// `always`: the row's keys work with single-key shortcuts off (src/lib/useKeysPref.js);
+// `offKey`: the row says this instead while they're off (← / → keep moving). Rows with
+// neither go away while off.
 export const shortcuts = [
-  ["↑ / ↓", "previous / next section", true],
-  ["1 / 2 / 3", "jump to projects / experience / skills"],
-  [
-    "j / k  ← / →",
-    "move: section header → its items → next section",
-    { key: "← / →", desc: "move: section header → its items → next section" },
-  ],
-  ["enter / space", "press the selected item (egg, more…, project, role)", true],
-  ["f", "cycle project folder"],
-  ["← / →", "on a project: prev / next project", true],
-  ["esc", "back · close", true],
-  ["h", "home"],
-  ["m", "more… (about me)"],
-  ["i", "egg rules"],
-  ["t", "toggle theme"],
-  ["`", "shell"],
-  ["e g l r", "email · GitHub · LinkedIn · resume"],
-  ["?", "this list"],
-].map(([key, desc, off]) => ({ key, desc, off }));
+  { key: "↑ / ↓", desc: "previous / next section", always: true },
+  { key: "1 / 2 / 3", desc: "jump to projects / experience / skills" },
+  {
+    key: "j / k  ← / →",
+    desc: "move: section header → its items → next section",
+    offKey: "← / →",
+  },
+  {
+    key: "enter / space",
+    desc: "press the selected item (egg, more…, project, role)",
+    always: true,
+  },
+  { key: "f", desc: "cycle project folder" },
+  { key: "← / →", desc: "on a project: prev / next project", always: true },
+  { key: "esc", desc: "back · close", always: true },
+  { key: "h", desc: "home" },
+  { key: "m", desc: "more… (about me)" },
+  { key: "i", desc: "egg rules" },
+  { key: "t", desc: "toggle theme" },
+  { key: "`", desc: "shell" },
+  { key: "e g l r", desc: "email · GitHub · LinkedIn · resume" },
+  { key: "?", desc: "this list" },
+];
 
 /** The rows to show: all of them, or (shortcuts off) only the ones that still work. */
-export const shortcutRows = (keysOn) =>
-  keysOn
-    ? shortcuts
-    : shortcuts
-        .filter((r) => r.off)
-        .map((r) => (r.off === true ? r : { key: r.off.key, desc: r.off.desc }));
+export function shortcutRows(keysOn) {
+  const rows = keysOn ? shortcuts : shortcuts.filter((r) => r.always || r.offKey);
+  return rows.map((r) => ({ key: (!keysOn && r.offKey) || r.key, desc: r.desc }));
+}
