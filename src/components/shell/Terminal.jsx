@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { BANNER } from "@/lib/ascii/banner";
+import Hint from "@/components/Hint";
 import { SHORTCUT_CMDS } from "@/lib/shell/spec";
 import { useStickToBottom } from "@/lib/useStickToBottom";
 import TermLines from "./TermLines";
@@ -60,7 +61,7 @@ export default function Terminal({
               zsh 5.9 · danny@portfolio · type <span className={styles.fg}>help</span> for commands
             </div>
             <div className={`${styles.mid} ${styles.intro}`}>
-              [tab] completes · [↑↓] history · <span data-hint="">[0–9] shortcuts · </span>
+              [tab] completes · [↑↓] history · <Hint>[0–9] shortcuts · </Hint>
               <span className={styles.fg}>exit</span> or <span className={styles.fg}>ctrl-d</span>{" "}
               leaves
             </div>
@@ -103,9 +104,7 @@ export default function Terminal({
             aria-pressed={pressedTab === i}
             className={pressedTab === i ? `${styles.tab} ${styles.tabOn}` : styles.tab}
           >
-            <span className={styles.mid} data-hint="">
-              {i}:
-            </span>
+            <Hint className={styles.mid}>{i}:</Hint>
             {c}
           </button>
         ))}

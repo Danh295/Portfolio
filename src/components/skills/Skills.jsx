@@ -1,4 +1,5 @@
 import SectionFrame from "@/components/frame/SectionFrame";
+import Hint from "@/components/Hint";
 import { projects } from "@/data/projects";
 import styles from "./Skills.module.css";
 
@@ -7,7 +8,7 @@ export default function Skills({ skills, active, reduce }) {
     <SectionFrame
       id="skills"
       sec={3}
-      prefix={<span data-hint="">[3] </span>}
+      prefix={<Hint>[3] </Hint>}
       title="~/skills"
       right={"bar = share of " + projects.length + " projects · hover for details"}
       active={active}
