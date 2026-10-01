@@ -43,9 +43,6 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  transition:
-    background 0.3s,
-    color 0.3s;
 }
 
 /* JetBrains Mono ships programming ligatures (--, &&, ->, ==…). They garble typed

@@ -4,7 +4,6 @@
   z-index: var(--z-bar);
   background: var(--bg);
   border-bottom: 1px solid var(--fg);
-  transition: background 0.3s;
 }
 
 .inner {
@@ -72,10 +71,10 @@
   gap: 8px;
 }
 
-/* The colour is the token itself, not inherited, and the hover fill snaps: an inherited
-   colour would re-trigger a transition on every frame of the page's theme fade, so a
-   hovered button's text sank into its fill and crept back for most of a second; a fade
-   also left the fill half-on whenever the pointer crossed a button. */
+/* Nothing on the site fades between colours (hover, selection and the theme all snap): a
+   fade left a fill half-on whenever the pointer crossed a button, and made selected text
+   unreadable until its fill caught up. The colour is the token itself, not inherited, so a
+   theme change reaches the button in the same frame as everything around it. */
 .btn {
   border: 1px solid var(--fg);
   color: var(--fg);

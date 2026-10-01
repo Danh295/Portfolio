@@ -4,7 +4,6 @@
   z-index: var(--z-bar);
   background: var(--bg);
   border-top: 1px solid var(--fg);
-  transition: background 0.3s;
 }
 
 .inner {
