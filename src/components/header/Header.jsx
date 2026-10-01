@@ -19,11 +19,14 @@ export default function Header({
   return (
     <nav ref={navRef} className={styles.nav}>
       <div className={styles.inner}>
-        <button type="button" onClick={onHome} data-key="h" data-tip="home" className={styles.home}>
-          <span className={styles.key}>[h]</span>{" "}
-          <span className={activeSec === 0 ? `${styles.label} ${styles.chip}` : styles.label}>
-            ~/danny
-          </span>
+        <button
+          type="button"
+          onClick={onHome}
+          data-key="h"
+          data-tip="home"
+          className={activeSec === 0 ? `${styles.home} ${styles.chip}` : styles.home}
+        >
+          <span className={styles.key}>[h]</span> ~/danny
         </button>
         <div className={styles.links}>
           {SECTIONS.map((s) => (
@@ -33,13 +36,10 @@ export default function Header({
               onClick={() => onSection(s.n)}
               data-key={s.n}
               data-tip={s.tip}
-              className={styles.link}
+              className={activeSec === s.n ? `${styles.link} ${styles.chip}` : styles.link}
               aria-current={activeSec === s.n ? "true" : undefined}
             >
-              <span className={styles.key}>[{s.n}]</span>{" "}
-              <span className={activeSec === s.n ? `${styles.label} ${styles.chip}` : styles.label}>
-                {s.label}
-              </span>
+              <span className={styles.key}>[{s.n}]</span> {s.label}
             </button>
           ))}
         </div>
