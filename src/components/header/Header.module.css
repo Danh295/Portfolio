@@ -20,10 +20,17 @@
 }
 
 /* Every nav button keeps the same padding; selecting one only swaps colours (the whole
-   "[1] projects", key included), so nothing around it moves. */
+   "[1] projects", key included), so nothing around it moves. The negative margins pull
+   the padding back out, so the text lines up with the page edge and the gaps stay as
+   they were (the chip's fill reaches 4px past the text). */
 .home,
 .link {
   padding: 0 4px;
+}
+
+.home,
+.links {
+  margin-left: -4px;
 }
 
 .home {
