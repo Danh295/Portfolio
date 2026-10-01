@@ -45,6 +45,12 @@
   color: var(--mid);
 }
 
+/* Shortcuts off (src/lib/useKeysPref.js): the [x] hints are dimmed. */
+:global(html[data-keys="off"]) .key,
+:global(html[data-keys="off"]) .dim {
+  opacity: 0.35;
+}
+
 .links {
   display: flex;
   gap: 8px;
