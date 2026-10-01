@@ -24,7 +24,12 @@ export default function HelpModal({ onClose }) {
         aria-label="keyboard shortcuts"
         onClick={(e) => e.stopPropagation()}
       >
-        <span className={styles.label}>┤ keys ├</span>
+        <div className={styles.head}>
+          <span>┤ keys ├</span>
+          <button type="button" onClick={onClose} data-key="Escape" className={styles.close}>
+            <span className={styles.dim}>[esc]</span> close
+          </button>
+        </div>
         <div className={styles.list}>
           {shortcuts.map((k) => (
             <div key={k.key} className={styles.row}>
