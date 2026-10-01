@@ -113,8 +113,8 @@
   display: none;
 }
 
-/* The colour is the token itself (not inherited) and the hover fill snaps: an inherited
-   colour would re-trigger a fade on every frame of the page's theme fade. */
+/* The colour is the token itself (not inherited) and the hover fill snaps, like every
+   other fill on the site (see .btn in Header.module.css). */
 .tab {
   flex: none;
   white-space: nowrap;
