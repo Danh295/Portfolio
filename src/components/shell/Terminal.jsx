@@ -108,7 +108,7 @@ export default function Terminal({
         ))}
         {spark && (
           <span data-tip={spark.tip} className={styles.spark}>
-            <span className={styles.mid}>git log · 12w</span>
+            <span className={`${styles.mid} ${styles.sparkLabel}`}>git log · 12w</span>
             <span className={styles.bars}>{spark.bars}</span>
           </span>
         )}
