@@ -30,18 +30,18 @@ export default function AboutModal({ onClose }) {
         aria-labelledby="about-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <span id="about-title" className={styles.label}>
-          ┤ ~/about.txt ├
-        </span>
-        <button
-          ref={closeRef}
-          type="button"
-          onClick={onClose}
-          data-key="Escape"
-          className={styles.close}
-        >
-          <span className={styles.dim}>[esc]</span> close
-        </button>
+        <div className={styles.head}>
+          <span id="about-title">┤ ~/about.txt ├</span>
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            data-key="Escape"
+            className={styles.close}
+          >
+            <span className={styles.dim}>[esc]</span> close
+          </button>
+        </div>
         <div className={styles.body}>
           {PARAGRAPHS.map((lines, i) => (
             <p key={i} className={styles.p}>

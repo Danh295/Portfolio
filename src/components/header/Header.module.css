@@ -72,12 +72,14 @@
   gap: 8px;
 }
 
+/* The colour is the token itself, not inherited, and the hover fill snaps: an inherited
+   colour would re-trigger a transition on every frame of the page's theme fade, so a
+   hovered button's text sank into its fill and crept back for most of a second; a fade
+   also left the fill half-on whenever the pointer crossed a button. */
 .btn {
   border: 1px solid var(--fg);
+  color: var(--fg);
   padding: 5px 10px;
-  transition:
-    background 0.15s,
-    color 0.15s;
 }
 
 :global(html:not(.kbd)) .btn:hover {
