@@ -25,6 +25,7 @@ export default function Header({
           data-key="h"
           data-tip="home"
           className={activeSec === 0 ? `${styles.home} ${styles.chip}` : styles.home}
+          aria-current={activeSec === 0 ? "true" : undefined}
         >
           <span className={styles.key}>[h]</span> ~/danny
         </button>

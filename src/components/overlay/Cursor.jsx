@@ -138,8 +138,9 @@ const PAN_TARGET = 'pre[role="img"]';
 
 /**
  * Custom cursor (mouse/trackpad only), in two sets that share one state machine:
- *   gui mode      block: one square on the hotspot that snaps between shapes, drawn
- *                 with difference blending so it inverts whatever is underneath
+ *   gui mode      block: one square on the hotspot that morphs between shapes with a
+ *                 short ease-out (~0.14s), drawn with difference blending so it inverts
+ *                 whatever is underneath
  *   terminal mode retro: pixel-art glyphs, each with its own blinking indicator
  * States:
  *   arrow   default
@@ -147,7 +148,8 @@ const PAN_TARGET = 'pre[role="img"]';
  *   text    over text fields, or while dragging a text selection (bar / I-beam)
  *   busy    while the boot intro plays (html[data-loading]) (a block stepping round a
  *           square / hourglass)
- *   pan     over the egg / dragging it (square outline / four-way arrows)
+ *   pan     over the egg / dragging it (a square outline spinning round a fixed centre
+ *           block / four-way arrows)
  * Any keypress switches to keyboard mode: the cursor hides and hover effects and tooltips
  * pause (html.kbd) until the mouse actually moves again.
  */
