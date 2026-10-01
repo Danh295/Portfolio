@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Hint from "@/components/Hint";
 import { shortcutRows } from "@/config/ui";
 import styles from "./HelpModal.module.css";
 
@@ -32,7 +33,7 @@ export default function HelpModal({ onClose, keysOn, onToggleKeys }) {
         </div>
         <div className={styles.list}>
           {shortcutRows(keysOn).map((k) => (
-            <div key={k.key} className={styles.row}>
+            <div key={k.key + k.desc} className={styles.row}>
               <span className={styles.key}>{k.key}</span>
               <span className={styles.desc}>{k.desc}</span>
             </div>
@@ -50,7 +51,9 @@ export default function HelpModal({ onClose, keysOn, onToggleKeys }) {
           </button>
           <span className={styles.note}>enter, space, arrows and esc always work</span>
         </div>
-        <div className={styles.foot}>{keysOn ? "[esc] or [?] to close" : "[esc] to close"}</div>
+        <div className={styles.foot}>
+          [esc]<Hint> or [?]</Hint> to close
+        </div>
       </div>
     </div>
   );

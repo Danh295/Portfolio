@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import SectionFrame from "@/components/frame/SectionFrame";
+import Hint from "@/components/Hint";
 import { homeContent } from "@/data/home";
 import { useTextFx } from "@/lib/useTextFx";
 import { EGG_PX } from "@/lib/egg/grid";
@@ -65,7 +66,7 @@ export default function Hero({
       titleFx="none"
       right={
         <>
-          <span data-hint="">[j/k] move · </span>[↲] select
+          <Hint>[j/k] move · </Hint>[↲] select
         </>
       }
       active={active}
@@ -92,9 +93,7 @@ export default function Hero({
               data-key="m"
               data-tip="about me"
             >
-              <span className={styles.pressKey} data-hint="">
-                [m]{" "}
-              </span>
+              <Hint className={styles.pressKey}>[m] </Hint>
               more…
             </button>
           </p>
@@ -191,10 +190,8 @@ export default function Hero({
                     "click or press any key to proceed"
                   ) : (
                     <>
-                      <span className={styles.pressKey} data-hint="">
-                        [i] or{" "}
-                      </span>
-                      click · close
+                      <Hint className={styles.pressKey}>[i]</Hint>
+                      <Hint> or</Hint> click · close
                     </>
                   )}
                 </div>
@@ -211,7 +208,7 @@ export default function Hero({
               aria-expanded={!!rulesOpen}
               data-tip="how to play"
             >
-              <span data-hint="">[i] </span>rules
+              <Hint>[i] </Hint>rules
             </button>
           )}
           {/* Under the pot, so the water stays in view: the heating callouts, then the

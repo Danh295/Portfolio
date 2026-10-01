@@ -1,4 +1,5 @@
 import SectionFrame from "@/components/frame/SectionFrame";
+import Hint from "@/components/Hint";
 import { projects, projectFolders } from "@/data/projects";
 import { pad } from "@/lib/format";
 import { fmtStamp, syncedAt, syncedCount } from "@/lib/github";
@@ -25,11 +26,11 @@ export default function ProjectList({
     <SectionFrame
       id="projects"
       sec={1}
-      prefix={<span data-hint="">[1] </span>}
+      prefix={<Hint>[1] </Hint>}
       title="~/projects"
       right={
         <>
-          <span data-hint="">[j/k] move · </span>[↲] open<span data-hint=""> · [f] folder</span>
+          <Hint>[j/k] move · </Hint>[↲] open<Hint> · [f] folder</Hint>
         </>
       }
       active={active}
