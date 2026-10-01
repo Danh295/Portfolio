@@ -72,6 +72,12 @@ html {
   font-synthesis: none;
 }
 
+/* Shortcuts off (src/lib/useKeysPref.js): hide the hints for one-character keys. Hints for
+   keys that still work (esc, enter, arrows, tab) are left untagged. */
+html[data-keys="off"] [data-hint] {
+  display: none;
+}
+
 /* Scrolling the section list snaps to the top of each section, so the next header lands
    exactly where a jump parks it and its type-in starts at once. Mouse and trackpad only
    (touch scrolls freely). The list marks itself with data-snap (App.jsx); project pages

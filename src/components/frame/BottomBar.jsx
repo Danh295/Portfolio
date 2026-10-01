@@ -6,7 +6,10 @@ export default function BottomBar({ spark, barRef }) {
     <div ref={barRef} className={styles.bar}>
       <div className={styles.inner}>
         <a href={`mailto:${site.email}`} data-key="e" data-tip={site.email}>
-          <span className={styles.key}>[e]</span> email ↗
+          <span className={styles.key} data-hint="">
+            [e]{" "}
+          </span>
+          email ↗
         </a>
         <a
           href={site.github.profile}
@@ -15,13 +18,22 @@ export default function BottomBar({ spark, barRef }) {
           rel="noreferrer"
           data-tip={site.github.profile.replace("https://", "")}
         >
-          <span className={styles.key}>[g]</span> GitHub ↗
+          <span className={styles.key} data-hint="">
+            [g]{" "}
+          </span>
+          GitHub ↗
         </a>
         <a href={site.linkedin} target="_blank" rel="noreferrer" data-key="l" data-tip="LinkedIn">
-          <span className={styles.key}>[l]</span> LinkedIn ↗
+          <span className={styles.key} data-hint="">
+            [l]{" "}
+          </span>
+          LinkedIn ↗
         </a>
         <a href={site.resume} target="_blank" rel="noreferrer" data-key="r" data-tip="pdf">
-          <span className={styles.key}>[r]</span> resume ↗
+          <span className={styles.key} data-hint="">
+            [r]{" "}
+          </span>
+          resume ↗
         </a>
         {spark && (
           <span data-tip={spark.tip} className={styles.spark}>

@@ -1080,7 +1080,9 @@ export default function App() {
                       <span suppressHydrationWarning>
                         © {new Date().getFullYear()} danny hu · soft-boiled in waterloo
                       </span>
-                      <span>[↑/↓] sections · [?] all keys · [`] shell</span>
+                      <span>
+                        [↑/↓] sections<span data-hint=""> · [?] all keys · [`] shell</span>
+                      </span>
                     </div>
                   </div>
                 </>
@@ -1120,6 +1122,7 @@ export default function App() {
             eggStatusRef={termStatusRef}
             running={termEggRunning}
             pressedTab={pressedTab}
+            keysOn={keysOn}
             onShortcut={typeRun}
             onRun={(c) => run("term", c)}
             onInput={(v) => {

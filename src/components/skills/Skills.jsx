@@ -7,7 +7,7 @@ export default function Skills({ skills, active, reduce }) {
     <SectionFrame
       id="skills"
       sec={3}
-      prefix="[3] "
+      prefix={<span data-hint="">[3] </span>}
       title="~/skills"
       right={"bar = share of " + projects.length + " projects · hover for details"}
       active={active}
