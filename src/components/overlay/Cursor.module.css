@@ -120,15 +120,24 @@
 
 /* ---------- block set (gui mode) ---------- */
 
-/* One square on the hotspot that snaps (no easing) between shapes. Difference blending
-   against the page: white inverts whatever is underneath, so it reads on either theme
-   and on inverted (selected) elements. */
+/* One square on the hotspot that morphs between shapes with a short ease-out (size,
+   outline and fill all move together, so it reads as one shape changing). Difference
+   blending against the page: white inverts whatever is underneath, so it reads on either
+   theme and on inverted (selected) elements. */
 .cursor[data-set="block"] {
   mix-blend-mode: difference;
 }
 
 .cursor[data-set="block"] .sq {
   display: block !important;
+  border: 0 solid #fff;
+  transition:
+    width 0.14s cubic-bezier(0.2, 0.7, 0.2, 1),
+    height 0.14s cubic-bezier(0.2, 0.7, 0.2, 1),
+    left 0.14s cubic-bezier(0.2, 0.7, 0.2, 1),
+    top 0.14s cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-width 0.14s cubic-bezier(0.2, 0.7, 0.2, 1),
+    background-color 0.14s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 /* default: a small solid block */
@@ -158,18 +167,21 @@
   height: 18px;
 }
 
-/* pan: a square outline with a block in the middle */
+/* pan: a square outline spinning steadily round a block that stays put in the middle.
+   The block is the cursor's own ::after, not a child of the square, so it doesn't turn
+   with it. It keeps spinning while pressed (that's when the egg is being dragged). */
 .cursor[data-set="block"][data-state="pan"] .sq {
   --s: 18px;
   background: transparent;
-  border: 2px solid #fff;
+  border-width: 2px;
+  animation: spin 1.6s linear infinite;
 }
 
-.cursor[data-set="block"][data-state="pan"] .sq::after {
+.cursor[data-set="block"][data-state="pan"]::after {
   content: "";
   position: absolute;
-  left: 5px;
-  top: 5px;
+  left: -2px;
+  top: -2px;
   width: 4px;
   height: 4px;
   background: #fff;
@@ -184,7 +196,7 @@
   width: 18px;
   height: 18px;
   background: transparent;
-  border: 2px solid #fff;
+  border-width: 2px;
 }
 
 .quad {
@@ -203,8 +215,8 @@
   animation: round 0.8s steps(1) infinite;
 }
 
-.cursor[data-set="block"][data-state="busy"] .sq::after,
-:global(html[data-loading]) .cursor[data-set="block"] .sq::after {
+/* the intro's hourglass square never shows the pan block, even over the egg */
+:global(html[data-loading]) .cursor[data-set="block"]::after {
   display: none;
 }
 
@@ -212,11 +224,6 @@
 .cursor[data-set="block"][data-press="true"][data-state="pointer"] .sq,
 .cursor[data-set="block"][data-press="true"][data-state="pan"] .sq {
   --s: 14px;
-}
-
-.cursor[data-set="block"][data-press="true"][data-state="pan"] .sq::after {
-  left: 3px;
-  top: 3px;
 }
 
 .cursor[data-set="block"][data-press="true"][data-state="pointer"] .sq {
@@ -261,6 +268,7 @@
   .quad,
   .sq {
     animation: none !important;
+    transition: none !important;
   }
 
   .block,
