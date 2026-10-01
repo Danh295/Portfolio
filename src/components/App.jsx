@@ -974,6 +974,7 @@ export default function App() {
             <main
               ref={contentRef}
               className={view ? `${styles.main} ${styles.mainDetail}` : styles.main}
+              data-snap={view ? undefined : ""}
             >
               {view ? (
                 <ProjectDetail
