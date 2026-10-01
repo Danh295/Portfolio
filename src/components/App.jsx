@@ -992,6 +992,7 @@ export default function App() {
               navRef={navRef}
               activeSec={view ? 1 : activeSec}
               dark={dark}
+              shellOpen={termOpen}
               onHome={goHome}
               onSection={goSec}
               onShell={() => setTermOpen((o) => !o)}
