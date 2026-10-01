@@ -16,7 +16,6 @@
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
   width: min(540px, 100%);
   position: relative;
-  padding: 28px 24px 18px;
   font-size: 13px;
 }
 
@@ -24,20 +23,36 @@
   outline: none;
 }
 
-/* Short viewports: the list scrolls inside the box (the label on the border stays). */
-.list {
-  max-height: calc(100dvh - 160px);
-  overflow-y: auto;
+/* The same header bar as the embedded shell: an unbroken top border, the label inside
+   it, and the close button on the right. */
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--fg);
+  font-size: 12px;
 }
 
-.label {
-  position: absolute;
-  top: -10px;
-  left: 16px;
-  white-space: nowrap;
-  background: var(--bg);
-  padding: 0 8px;
-  line-height: 20px;
+.close {
+  border: 1px solid var(--line);
+  padding: 2px 8px;
+}
+
+:global(html:not(.kbd)) .close:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.dim {
+  opacity: 0.6;
+}
+
+/* Short viewports: the list scrolls inside the box (the header and footer stay). */
+.list {
+  max-height: calc(100dvh - 170px);
+  overflow-y: auto;
+  padding: 6px 24px 0;
 }
 
 .row {
@@ -57,7 +72,7 @@
 }
 
 .foot {
-  padding-top: 14px;
+  padding: 14px 24px 18px;
   color: var(--mid);
   font-size: 12px;
 }

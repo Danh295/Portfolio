@@ -723,7 +723,7 @@ export default function App() {
     // A shortcut with a visible button (header, bottom bar, hero, project page, dialog
     // close) flashes it; the last match is the topmost (dialogs render after the page).
     const keyed = document.querySelectorAll('[data-key="' + CSS.escape(e.key) + '"]');
-    if (!(e.key === "Escape" && help)) pressFx(keyed[keyed.length - 1]); // help has no button
+    pressFx(keyed[keyed.length - 1]);
   };
 
   // Scroll spy: the last section whose top is above 55% of the viewport is active.
