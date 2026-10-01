@@ -125,19 +125,17 @@
    blending against the page: white inverts whatever is underneath, so it reads on either
    theme and on inverted (selected) elements. */
 .cursor[data-set="block"] {
+  --morph-time: 0.14s;
+  --morph-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   mix-blend-mode: difference;
 }
 
 .cursor[data-set="block"] .sq {
   display: block !important;
   border: 0 solid #fff;
-  transition:
-    width 0.14s cubic-bezier(0.2, 0.7, 0.2, 1),
-    height 0.14s cubic-bezier(0.2, 0.7, 0.2, 1),
-    left 0.14s cubic-bezier(0.2, 0.7, 0.2, 1),
-    top 0.14s cubic-bezier(0.2, 0.7, 0.2, 1),
-    border-width 0.14s cubic-bezier(0.2, 0.7, 0.2, 1),
-    background-color 0.14s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-property: width, height, left, top, border-width, background-color;
+  transition-duration: var(--morph-time);
+  transition-timing-function: var(--morph-ease);
 }
 
 /* default: a small solid block */
@@ -153,7 +151,7 @@
 }
 
 /* pointer: a larger solid square, inverting what it covers, spinning steadily so
-   clickable reads at a glance. It holds still while pressed. */
+   clickable reads at a glance. It holds still (at its current angle) while pressed. */
 .cursor[data-set="block"][data-state="pointer"] .sq {
   --s: 16px;
   animation: spin 1.6s linear infinite;
@@ -177,14 +175,26 @@
   animation: spin 1.6s linear infinite;
 }
 
-.cursor[data-set="block"][data-state="pan"]::after {
+/* The centre block always exists, at zero size on the hotspot, and grows with the
+   outline on the same timing, so it doesn't pop in or out while the square morphs. */
+.cursor[data-set="block"]::after {
   content: "";
   position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  background: #fff;
+  transition-property: width, height, left, top;
+  transition-duration: var(--morph-time);
+  transition-timing-function: var(--morph-ease);
+}
+
+.cursor[data-set="block"][data-state="pan"]::after {
   left: -2px;
   top: -2px;
   width: 4px;
   height: 4px;
-  background: #fff;
 }
 
 /* busy (the boot intro): a square outline with a block stepping round its corners */
@@ -227,7 +237,7 @@
 }
 
 .cursor[data-set="block"][data-press="true"][data-state="pointer"] .sq {
-  animation: none;
+  animation-play-state: paused;
 }
 
 @keyframes spin {
@@ -266,7 +276,8 @@
   }
 
   .quad,
-  .sq {
+  .sq,
+  .cursor::after {
     animation: none !important;
     transition: none !important;
   }
