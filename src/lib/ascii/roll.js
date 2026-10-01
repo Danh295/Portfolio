@@ -8,8 +8,10 @@ import { rollPose, eggCentre, eggWidth, eggWidthSlope } from "../egg/roll.js";
 
 // A character cell is 0.6 as wide as it is tall (the font's advance).
 const ASPECT = 0.6;
-// Rows per egg half-length, and where the ground sits, as fractions of the frame height
-// (for ~28 rows: the upright egg just fits above the ground, with a few ground rows below).
+// The frame height this is tuned for: the upright egg just fits above the ground, with a
+// few ground rows below. SCALE (rows per egg half-length) and GROUND (the first ground
+// row) are fractions of it, so callers should pass ROLL_ROWS as H.
+export const ROLL_ROWS = 28;
 const SCALE = 0.375,
   GROUND = 0.857;
 
