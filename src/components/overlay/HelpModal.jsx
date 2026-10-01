@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { shortcuts } from "@/config/ui";
 import styles from "./HelpModal.module.css";
 
-export default function HelpModal({ onClose }) {
+export default function HelpModal({ onClose, keysOn, onToggleKeys }) {
   const boxRef = useRef(null);
   // Focus moves into the dialog (so Tab/Enter don't operate the page behind it) and
   // back to wherever it was when the dialog closes.
@@ -38,7 +38,19 @@ export default function HelpModal({ onClose }) {
             </div>
           ))}
         </div>
-        <div className={styles.foot}>[esc] or [?] to close</div>
+        <div className={styles.toggleRow}>
+          <button
+            type="button"
+            onClick={onToggleKeys}
+            data-key="s"
+            aria-pressed={keysOn}
+            className={styles.toggle}
+          >
+            <span className={styles.dim}>[s]</span> single-key shortcuts: {keysOn ? "on" : "off"}
+          </button>
+          <span className={styles.note}>enter, space, arrows and esc always work</span>
+        </div>
+        <div className={styles.foot}>{keysOn ? "[esc] or [?] to close" : "[esc] to close"}</div>
       </div>
     </div>
   );

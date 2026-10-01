@@ -6,7 +6,7 @@
 //
 // Output lines are { t, ... } where t is one of:
 //   cmd txt dim hint err h kv help link ls dir file exp bar egg
-// Effects (fx) tell the UI what to do: { cwd, sec, filter, open, theme, mode, close,
+// Effects (fx) tell the UI what to do: { cwd, sec, filter, open, theme, keys, mode, close,
 //   vim, pend, href, egg, sec0, clear }.
 
 import { createFs, pstr, resolve } from "./fs.js";
@@ -433,6 +433,18 @@ export function createShell(data) {
           fx.theme = m[1];
           out.push({ t: "dim", text: "THEME=" + m[1] });
         } else err(c + ": usage: export THEME=dark|light");
+        break;
+      }
+      case "set": {
+        const [what, val] = args.map(lc);
+        if (what !== "keys" || (val !== undefined && val !== "on" && val !== "off"))
+          err(c + ": usage: set keys [on|off]");
+        else if (val === undefined)
+          out.push({ t: "dim", text: "keys=" + (ctx.keys === false ? "off" : "on") });
+        else {
+          fx.keys = val;
+          out.push({ t: "dim", text: "keys=" + val });
+        }
         break;
       }
       case "date":
