@@ -25,6 +25,7 @@ import { shell, skills, pstr } from "@/lib/shell";
 import { SHORTCUT_CMDS } from "@/lib/shell/spec";
 import { spark } from "@/lib/github";
 import { useTheme } from "@/lib/useTheme";
+import { useKeysPref } from "@/lib/useKeysPref";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { openBuffer, vimKey as vimStep } from "@/lib/vim";
 import styles from "./App.module.css";
@@ -121,6 +122,8 @@ function useOnChange(value, fn) {
 export default function App() {
   const reduce = useReducedMotion();
   const [dark, setDark, toggleTheme] = useTheme();
+  // Single-character shortcuts on/off (WCAG 2.1.4); Enter, Space, arrows and Esc always work.
+  const [keysOn, setKeysOn, toggleKeys] = useKeysPref();
   const [mode, setMode] = useState("gui");
   const [filter, setFilter] = useState("all");
   const [view, setView] = useState(null);
@@ -304,7 +307,12 @@ export default function App() {
     }
     // A click or shortcut while `mail`'s y/N is waiting answers "no", then runs.
     const cancelled = T.pend ? [{ t: "dim", text: "cancelled" }] : [];
-    const { out, fx, cwd } = shell.runLine(raw, k, { cwd: T.cwd, spark, hist: T.hist });
+    const { out, fx, cwd } = shell.runLine(raw, k, {
+      cwd: T.cwd,
+      spark,
+      hist: T.hist,
+      keys: keysOn,
+    });
     const tr = raw.trim(),
       hadEgg = T.lines.some((l) => l.t === "egg");
     setSessions((s) => {
@@ -328,6 +336,7 @@ export default function App() {
     });
     if (hadEgg && !fx.egg) egg.reset();
     if (fx.theme) setDark(fx.theme === "dark");
+    if (fx.keys) setKeysOn(fx.keys === "on");
     if (fx.mode) switchMode(fx.mode);
     if (fx.close) setTermOpen(false);
     if (fx.vim) {
@@ -448,7 +457,14 @@ export default function App() {
       else if (e.ctrlKey && e.key === "c") quitEgg();
       return;
     }
-    if (k === "term" && plain && !T.input && /^[0-9]$/.test(e.key) && SHORTCUT_CMDS[+e.key]) {
+    if (
+      k === "term" &&
+      keysOn &&
+      plain &&
+      !T.input &&
+      /^[0-9]$/.test(e.key) &&
+      SHORTCUT_CMDS[+e.key]
+    ) {
       e.preventDefault();
       typeRun(+e.key);
     } else if (e.key === "Enter") {
@@ -524,6 +540,7 @@ export default function App() {
       return;
     }
     if (e.key === "`") {
+      if (!keysOn) return; // the header's terminal button still works
       e.preventDefault();
       setTermOpen((o) => !o);
       pressFx(document.querySelector('[data-key="`"]'));
@@ -537,6 +554,13 @@ export default function App() {
       return;
     }
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // In the keys popup, s flips the shortcuts on/off (its toggle button says so).
+    if (help && e.key === "s") {
+      e.preventDefault();
+      toggleKeys();
+      pressFx(document.querySelector('[data-key="s"]'));
+      return;
+    }
     // The embedded shell is open but its input lost focus (e.g. after selecting output
     // to copy): typing goes back to its prompt instead of firing gui shortcuts. Enter
     // still activates a focused control; Esc closes the shell below.
@@ -714,6 +738,8 @@ export default function App() {
       }
       return;
     }
+    // Shortcuts off: every single-character key (letters, digits, ?) is left alone.
+    if (!keysOn && e.key.length === 1) return;
     const fn = map[e.key];
     if (!fn) return;
     if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !home && idx < 0) return;
@@ -1075,7 +1101,9 @@ export default function App() {
               />
             )}
             {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
-            {help && <HelpModal onClose={() => setHelp(false)} />}
+            {help && (
+              <HelpModal onClose={() => setHelp(false)} keysOn={keysOn} onToggleKeys={toggleKeys} />
+            )}
           </>
         ) : (
           <Terminal
