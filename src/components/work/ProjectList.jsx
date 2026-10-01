@@ -25,9 +25,13 @@ export default function ProjectList({
     <SectionFrame
       id="projects"
       sec={1}
-      prefix="[1] "
+      prefix={<span data-hint="">[1] </span>}
       title="~/projects"
-      right="[j/k] move · [↲] open · [f] folder"
+      right={
+        <>
+          <span data-hint="">[j/k] move · </span>[↲] open<span data-hint=""> · [f] folder</span>
+        </>
+      }
       active={active}
       caret={sel < 0}
       reduce={reduce}

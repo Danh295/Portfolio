@@ -63,7 +63,11 @@ export default function Hero({
       sec={0}
       title="~/danny"
       titleFx="none"
-      right="[j/k] move · [↲] select"
+      right={
+        <>
+          <span data-hint="">[j/k] move · </span>[↲] select
+        </>
+      }
       active={active}
       caret={false}
       className={styles.hero}
@@ -88,7 +92,10 @@ export default function Hero({
               data-key="m"
               data-tip="about me"
             >
-              <span className={styles.pressKey}>[m]</span> more…
+              <span className={styles.pressKey} data-hint="">
+                [m]{" "}
+              </span>
+              more…
             </button>
           </p>
         </div>
@@ -184,7 +191,10 @@ export default function Hero({
                     "click or press any key to proceed"
                   ) : (
                     <>
-                      <span className={styles.pressKey}>[i]</span> or click · close
+                      <span className={styles.pressKey} data-hint="">
+                        [i] or{" "}
+                      </span>
+                      click · close
                     </>
                   )}
                 </div>
@@ -201,7 +211,7 @@ export default function Hero({
               aria-expanded={!!rulesOpen}
               data-tip="how to play"
             >
-              [i] rules
+              <span data-hint="">[i] </span>rules
             </button>
           )}
           {/* Under the pot, so the water stays in view: the heating callouts, then the
