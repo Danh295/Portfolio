@@ -89,7 +89,7 @@ export const viewport = {
 // - A reload starts on the hero: drop the #section / #projects/<slug> hash pushed while
 //   browsing, and turn off browser scroll restoration (the app drives scrolling). Fresh
 //   visits keep their hash, so /#projects links and the redirect stubs still work.
-const BOOT = `try{var d=document.documentElement,t=localStorage.getItem("danny-theme");if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";d.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="dark"?"#121211":"#F3F2EE"}catch(e){}try{if(sessionStorage.getItem("danny-mode")==="term")document.documentElement.classList.add("boot-term")}catch(e){}try{history.scrollRestoration="manual";var n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="reload"&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}${INTRO_COVER}`;
+const BOOT = `try{if(localStorage.getItem("danny-keys")==="off")document.documentElement.dataset.keys="off"}catch(e){}try{var d=document.documentElement,t=localStorage.getItem("danny-theme");if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";d.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="dark"?"#121211":"#F3F2EE"}catch(e){}try{if(sessionStorage.getItem("danny-mode")==="term")document.documentElement.classList.add("boot-term")}catch(e){}try{history.scrollRestoration="manual";var n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="reload"&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}${INTRO_COVER}`;
 
 export default function RootLayout({ children }) {
   return (

@@ -8,14 +8,21 @@ export const ui = {
 };
 
 // The `?` overlay.
+// `off` is what the row says while single-key shortcuts are off (src/lib/useKeysPref.js):
+// a replacement for rows that still half-work (← / → keep moving), `true` for rows whose
+// keys aren't characters (always work), and nothing for rows that go away.
 export const shortcuts = [
-  ["↑ / ↓", "previous / next section"],
+  ["↑ / ↓", "previous / next section", true],
   ["1 / 2 / 3", "jump to projects / experience / skills"],
-  ["j / k  ← / →", "move: section header → its items → next section"],
-  ["enter / space", "press the selected item (egg, more…, project, role)"],
+  [
+    "j / k  ← / →",
+    "move: section header → its items → next section",
+    { key: "← / →", desc: "move: section header → its items → next section" },
+  ],
+  ["enter / space", "press the selected item (egg, more…, project, role)", true],
   ["f", "cycle project folder"],
-  ["← / →", "on a project: prev / next project"],
-  ["esc", "back · close"],
+  ["← / →", "on a project: prev / next project", true],
+  ["esc", "back · close", true],
   ["h", "home"],
   ["m", "more… (about me)"],
   ["i", "egg rules"],
@@ -23,4 +30,12 @@ export const shortcuts = [
   ["`", "shell"],
   ["e g l r", "email · GitHub · LinkedIn · resume"],
   ["?", "this list"],
-].map(([key, desc]) => ({ key, desc }));
+].map(([key, desc, off]) => ({ key, desc, off }));
+
+/** The rows to show: all of them, or (shortcuts off) only the ones that still work. */
+export const shortcutRows = (keysOn) =>
+  keysOn
+    ? shortcuts
+    : shortcuts
+        .filter((r) => r.off)
+        .map((r) => (r.off === true ? r : { key: r.off.key, desc: r.off.desc }));

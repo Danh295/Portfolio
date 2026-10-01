@@ -23,10 +23,6 @@
   color: var(--mid);
 }
 
-:global(html[data-keys="off"]) .key {
-  opacity: 0.35;
-}
-
 .spark {
   margin-left: auto;
   display: flex;

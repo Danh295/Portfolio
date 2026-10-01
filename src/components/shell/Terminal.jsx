@@ -22,6 +22,7 @@ export default function Terminal({
   eggFxRef,
   eggStatusRef,
   running,
+  keysOn = true,
   pressedTab,
   onShortcut,
   onRun,
@@ -59,7 +60,7 @@ export default function Terminal({
               zsh 5.9 · danny@portfolio · type <span className={styles.fg}>help</span> for commands
             </div>
             <div className={`${styles.mid} ${styles.intro}`}>
-              [tab] completes · [↑↓] history · [0–9] shortcuts ·{" "}
+              [tab] completes · [↑↓] history · <span data-hint="">[0–9] shortcuts · </span>
               <span className={styles.fg}>exit</span> or <span className={styles.fg}>ctrl-d</span>{" "}
               leaves
             </div>
@@ -98,11 +99,13 @@ export default function Terminal({
             key={c}
             type="button"
             onClick={() => onShortcut(i)}
-            data-tip={"run: " + c + " (or press " + i + ")"}
+            data-tip={"run: " + c + (keysOn ? " (or press " + i + ")" : "")}
             aria-pressed={pressedTab === i}
             className={pressedTab === i ? `${styles.tab} ${styles.tabOn}` : styles.tab}
           >
-            <span className={styles.mid}>{i}:</span>
+            <span className={styles.mid} data-hint="">
+              {i}:
+            </span>
             {c}
           </button>
         ))}
