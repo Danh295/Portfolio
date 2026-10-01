@@ -30,7 +30,6 @@
   justify-content: start;
   padding: 3px 6px;
   margin: 0 -6px;
-  transition: background 0.12s;
 }
 
 :global(html:not(.kbd)) .row:hover {

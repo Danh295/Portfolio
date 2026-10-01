@@ -113,14 +113,14 @@
   display: none;
 }
 
+/* The colour is the token itself (not inherited) and the hover fill snaps: an inherited
+   colour would re-trigger a fade on every frame of the page's theme fade. */
 .tab {
   flex: none;
   white-space: nowrap;
   padding: 10px 14px;
   border-right: 1px solid var(--line);
-  transition:
-    background 0.12s,
-    color 0.12s;
+  color: var(--fg);
 }
 
 :global(html:not(.kbd)) .tab:hover .mid,
