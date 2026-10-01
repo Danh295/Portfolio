@@ -1073,8 +1073,8 @@ export default function App() {
                 onClose={() => setTermOpen(false)}
               />
             )}
-            {help && <HelpModal onClose={() => setHelp(false)} />}
             {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
+            {help && <HelpModal onClose={() => setHelp(false)} />}
           </>
         ) : (
           <Terminal
