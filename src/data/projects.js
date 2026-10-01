@@ -30,6 +30,34 @@ export const projects = [
     links: [],
   },
   {
+    slug: "ai-room-editor",
+    title: "ai room editor",
+    category: "personal",
+    org: "personal project",
+    context: "interactive canvas editor, AI-assisted data entry",
+    timeline: "aug 2026 – present",
+    year: "2026",
+    purpose:
+      "a local room and furniture planner: draw or trace a floor plan, build a furniture library from real product specs, and lay everything out at scale with snapping, collision and clearance checks",
+    bullets: [
+      "built a 2D floor plan editor on a canvas, with wall, door and window tools, exact-dimension entry, pan and zoom, undo/redo, and keyboard shortcuts",
+      "added a placement engine that snaps furniture to walls and other pieces, flags overlaps, and checks walkway clearance, with a properties panel for size, shape, colour and layers",
+      "integrated Gemini so a product link, model number or photo becomes a furniture entry with real dimensions, and a photo of a floor plan can be traced into walls, with every result confirmed before it is saved",
+    ],
+    tags: [
+      "React",
+      "TypeScript",
+      "Vite",
+      "Konva",
+      "Zustand",
+      "Node.js",
+      "Express.js",
+      "Gemini API",
+      "Vitest",
+    ],
+    links: [{ label: "GitHub", href: repoUrl("AI-Room-Editor") }],
+  },
+  {
     slug: "portfolio",
     title: "portfolio",
     category: "personal",
@@ -48,6 +76,27 @@ export const projects = [
     links: [
       { label: "GitHub", href: repoUrl("Portfolio") },
       { label: "live", href: `${site.url}/` },
+    ],
+  },
+  {
+    slug: "puppetmaster",
+    title: "puppetmaster",
+    category: "hackathon",
+    org: "DDC x Ignition Hacks · 2nd place overall",
+    context: "real-time pose detection, browser animation tools",
+    timeline: "apr 2026",
+    year: "2026",
+    purpose:
+      "a browser-based animation studio that tracks your pose with a webcam and drives a 2D puppet in real time, so animations are performed rather than keyframed — won second place overall",
+    bullets: [
+      "built the recording flow around MediaPipe pose detection, including hands-free gesture controls to start, stop and cancel a take",
+      "added an NLE-style timeline with clip trimming and append-recording, so takes can be edited after the fact",
+      "built the layered asset system and an export that composites the layers into a standalone, shareable HTML player",
+    ],
+    tags: ["Next.js", "React", "TypeScript", "Tailwind CSS", "MediaPipe", "HTML5 Canvas"],
+    links: [
+      { label: "GitHub", href: repoUrl("PuppetMaster") },
+      { label: "Devpost", href: "https://devpost.com/software/puppetmaster" },
     ],
   },
   {
