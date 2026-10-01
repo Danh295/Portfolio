@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Header from "@/components/header/Header";
+import Hint from "@/components/Hint";
 import BottomBar from "@/components/frame/BottomBar";
 import Hero from "@/components/egg/Hero";
 import { useEggGame } from "@/components/egg/useEggGame";
@@ -1081,7 +1082,7 @@ export default function App() {
                         © {new Date().getFullYear()} danny hu · soft-boiled in waterloo
                       </span>
                       <span>
-                        [↑/↓] sections<span data-hint=""> · [?] all keys · [`] shell</span>
+                        [↑/↓] sections<Hint> · [?] all keys · [`] shell</Hint>
                       </span>
                     </div>
                   </div>

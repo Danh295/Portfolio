@@ -1,4 +1,5 @@
 import styles from "./Header.module.css";
+import Hint from "@/components/Hint";
 
 const SECTIONS = [
   { n: 1, label: "projects", tip: "jump to projects" },
@@ -27,9 +28,7 @@ export default function Header({
           className={activeSec === 0 ? `${styles.home} ${styles.chip}` : styles.home}
           aria-current={activeSec === 0 ? "true" : undefined}
         >
-          <span className={styles.key} data-hint="">
-            [h]{" "}
-          </span>
+          <Hint className={styles.key}>[h] </Hint>
           ~/danny
         </button>
         <div className={styles.links}>
@@ -43,9 +42,7 @@ export default function Header({
               className={activeSec === s.n ? `${styles.link} ${styles.chip}` : styles.link}
               aria-current={activeSec === s.n ? "true" : undefined}
             >
-              <span className={styles.key} data-hint="">
-                [{s.n}]{" "}
-              </span>
+              <Hint className={styles.key}>[{s.n}] </Hint>
               {s.label}
             </button>
           ))}
@@ -58,9 +55,7 @@ export default function Header({
             data-tip="embedded shell"
             className={styles.btn}
           >
-            <span className={styles.dim} data-hint="">
-              [`]{" "}
-            </span>
+            <Hint className={styles.dim}>[`] </Hint>
             terminal
           </button>
           <button
@@ -70,9 +65,7 @@ export default function Header({
             data-tip="switch theme"
             className={styles.btn}
           >
-            <span className={styles.dim} data-hint="">
-              [t]{" "}
-            </span>
+            <Hint className={styles.dim}>[t] </Hint>
             {dark ? "light" : "dark"}
           </button>
           <button
@@ -82,9 +75,7 @@ export default function Header({
             data-tip="keyboard shortcuts"
             className={styles.btn}
           >
-            <span className={styles.dim} data-hint="">
-              [?]{" "}
-            </span>
+            <Hint className={styles.dim}>[?] </Hint>
             keys
           </button>
         </div>
