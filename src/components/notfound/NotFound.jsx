@@ -20,10 +20,12 @@ function shellPath() {
   } catch {
     // malformed escape: show it as typed
   }
+  // Control and bidi-override characters can reorder or hide the text around them.
+  p = p.replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u2069\ufeff]/g, "?");
   return "~" + p.replace(/\/+$/, "");
 }
 
-/** The 404 page: a failed `cd` in the site's shell voice, over a turning pot. */
+/** The 404 page: a failed `cd` in the site's shell voice, over a rolling egg. */
 export default function NotFound() {
   const router = useRouter();
   // The exported 404.html is served for every unknown URL, so the path can only come

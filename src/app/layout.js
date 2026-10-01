@@ -35,8 +35,6 @@ const mono = localFont({
   preload: false,
 });
 
-const OG_IMAGE = `${site.url}/pfp.jpg`;
-
 export const metadata = {
   metadataBase: new URL(site.url),
   title: site.title,
@@ -66,13 +64,11 @@ export const metadata = {
     title: site.title,
     description: site.description,
     locale: "en_US",
-    images: [{ url: OG_IMAGE, alt: site.name }],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: site.title,
     description: site.description,
-    images: [OG_IMAGE],
   },
   robots: {
     index: true,

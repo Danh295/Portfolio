@@ -147,12 +147,27 @@
   }
 }
 
+/* Never shrinks or wraps (the shortcut tabs already fill the row on most windows, and a
+   shrinking flex item squeezed its label onto three lines), and stays pinned to the right
+   edge while the tabs scroll sideways under it. */
 .spark {
+  flex: none;
   margin-left: auto;
+  position: sticky;
+  right: 0;
+  background: var(--bg);
+  white-space: nowrap;
   padding: 10px 16px;
   display: flex;
   gap: 10px;
   border-left: 1px solid var(--line);
+}
+
+/* On narrow screens just the bars (the tooltip has the details). */
+@media (max-width: 720px) {
+  .sparkLabel {
+    display: none;
+  }
 }
 
 .bars {

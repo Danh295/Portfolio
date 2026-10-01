@@ -72,6 +72,25 @@ html {
   font-synthesis: none;
 }
 
+/* Scrolling the section list snaps to the top of each section, so the next header lands
+   exactly where a jump parks it and its type-in starts at once. Mouse and trackpad only
+   (touch scrolls freely). The list marks itself with data-snap (App.jsx); project pages
+   and the terminal don't have it, so they scroll normally.
+   - Where every section fits the screen: mandatory, one section per scroll gesture.
+   - On smaller windows a section can be taller than the screen, and mandatory snapping
+     lands loosely inside it, so there it only snaps when you stop near a section top. */
+@media (hover: hover) and (pointer: fine) {
+  html:has([data-snap]) {
+    scroll-snap-type: y proximity;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (min-width: 900px) and (min-height: 740px) {
+  html:has([data-snap]) {
+    scroll-snap-type: y mandatory;
+  }
+}
+
 input,
 textarea,
 select,

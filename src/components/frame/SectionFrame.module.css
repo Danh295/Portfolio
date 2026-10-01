@@ -2,6 +2,15 @@
   border: 1px solid var(--fg);
   position: relative;
   scroll-margin-top: var(--nav-offset);
+  /* Only has an effect while the page snaps (see globals.css). */
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* The hero's own snap position would leave the page scrolled a few px; the top of the
+   page is its snap point instead (App.module.css). */
+.frame[data-sec="0"] {
+  scroll-snap-align: none;
 }
 
 .label,
