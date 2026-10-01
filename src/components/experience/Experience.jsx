@@ -19,9 +19,13 @@ export default function Experience({
     <SectionFrame
       id="experience"
       sec={2}
-      prefix="[2] "
+      prefix={<span data-hint="">[2] </span>}
       title="~/experience"
-      right="[j/k] move · [↲] expand"
+      right={
+        <>
+          <span data-hint="">[j/k] move · </span>[↲] expand
+        </>
+      }
       active={active}
       caret={expSel < 0}
       reduce={reduce}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { shortcuts } from "@/config/ui";
+import { shortcutRows } from "@/config/ui";
 import styles from "./HelpModal.module.css";
 
 export default function HelpModal({ onClose, keysOn, onToggleKeys }) {
@@ -31,7 +31,7 @@ export default function HelpModal({ onClose, keysOn, onToggleKeys }) {
           </button>
         </div>
         <div className={styles.list}>
-          {shortcuts.map((k) => (
+          {shortcutRows(keysOn).map((k) => (
             <div key={k.key} className={styles.row}>
               <span className={styles.key}>{k.key}</span>
               <span className={styles.desc}>{k.desc}</span>

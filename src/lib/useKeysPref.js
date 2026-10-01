@@ -4,7 +4,7 @@ import { useCallback, useSyncExternalStore } from "react";
 
 // Whether the single-character keyboard shortcuts (j k e g l r t h m i f 1 2 3 ? ` and the
 // terminal's 0-9) are on. WCAG 2.1.4 wants a way to turn them off; default is on. Saved in
-// localStorage ("on" / "off"), mirrored onto <html data-keys> so CSS can dim the key hints
+// localStorage ("on" / "off"), mirrored onto <html data-keys> so CSS can hide the key hints
 // while they're off.
 const KEY = "danny-keys";
 const listeners = new Set();

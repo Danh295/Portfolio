@@ -27,7 +27,10 @@ export default function Header({
           className={activeSec === 0 ? `${styles.home} ${styles.chip}` : styles.home}
           aria-current={activeSec === 0 ? "true" : undefined}
         >
-          <span className={styles.key}>[h]</span> ~/danny
+          <span className={styles.key} data-hint="">
+            [h]{" "}
+          </span>
+          ~/danny
         </button>
         <div className={styles.links}>
           {SECTIONS.map((s) => (
@@ -40,7 +43,10 @@ export default function Header({
               className={activeSec === s.n ? `${styles.link} ${styles.chip}` : styles.link}
               aria-current={activeSec === s.n ? "true" : undefined}
             >
-              <span className={styles.key}>[{s.n}]</span> {s.label}
+              <span className={styles.key} data-hint="">
+                [{s.n}]{" "}
+              </span>
+              {s.label}
             </button>
           ))}
         </div>
@@ -52,7 +58,10 @@ export default function Header({
             data-tip="embedded shell"
             className={styles.btn}
           >
-            <span className={styles.dim}>[`]</span> terminal
+            <span className={styles.dim} data-hint="">
+              [`]{" "}
+            </span>
+            terminal
           </button>
           <button
             type="button"
@@ -61,7 +70,10 @@ export default function Header({
             data-tip="switch theme"
             className={styles.btn}
           >
-            <span className={styles.dim}>[t]</span> {dark ? "light" : "dark"}
+            <span className={styles.dim} data-hint="">
+              [t]{" "}
+            </span>
+            {dark ? "light" : "dark"}
           </button>
           <button
             type="button"
@@ -70,7 +82,10 @@ export default function Header({
             data-tip="keyboard shortcuts"
             className={styles.btn}
           >
-            <span className={styles.dim}>[?]</span> keys
+            <span className={styles.dim} data-hint="">
+              [?]{" "}
+            </span>
+            keys
           </button>
         </div>
       </div>
