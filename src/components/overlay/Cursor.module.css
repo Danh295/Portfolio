@@ -39,7 +39,6 @@
 .cursor[data-set="retro"][data-state="arrow"] .arrow,
 .cursor[data-set="retro"][data-state="pointer"] .pointer,
 .cursor[data-set="retro"][data-state="text"] .text,
-.cursor[data-set="retro"][data-state="busy"] .busy,
 .cursor[data-set="retro"][data-state="pan"] .pan,
 :global(html[data-loading]) .cursor[data-set="retro"] .busy {
   display: block !important;
@@ -198,7 +197,6 @@
 }
 
 /* busy (the boot intro): a square outline with a block stepping round its corners */
-.cursor[data-set="block"][data-state="busy"] .sq,
 :global(html[data-loading]) .cursor[data-set="block"] .sq {
   --s: 18px;
   left: -9px;
@@ -219,7 +217,6 @@
   background: #fff;
 }
 
-.cursor[data-set="block"][data-state="busy"] .quad,
 :global(html[data-loading]) .cursor[data-set="block"] .quad {
   display: block;
   animation: round 0.8s steps(1) infinite;
