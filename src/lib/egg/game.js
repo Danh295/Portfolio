@@ -54,13 +54,12 @@ export function gradeEgg(cook, C) {
 export const isNewBest = (cook, best, C) =>
   best == null || Math.abs(cook - C.T) < Math.abs(best - C.T);
 
-/** Header + rows for the visitor stats panel. */
+/** Header + rows for the stats panel (eggs cooked on this device). */
 export function statsView(stats, types) {
-  const tot = stats.vals.reduce((x, y) => x + y, 0) || 1;
+  const sum = stats.vals.reduce((x, y) => x + y, 0),
+    tot = sum || 1;
   return {
-    head: stats.live
-      ? tot.toLocaleString() + " eggs cooked by visitors"
-      : tot + " eggs cooked on this device",
+    head: sum.toLocaleString() + (sum === 1 ? " egg" : " eggs") + " cooked on this device",
     rows: types.map((x, i) => {
       const f = Math.round((stats.vals[i] / tot) * 10);
       return {
