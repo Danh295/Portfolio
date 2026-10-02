@@ -538,26 +538,33 @@ export function createShell(data) {
    * { matches } to print as a listing; null when there's nothing to do.
    */
   function complete(input, cwd) {
-    const toks = input.split(/\s+/);
+    const toks = input.trimStart().split(/\s+/),
+      cmd = lc(toks[0]);
     if (toks.length === 1) {
-      const m = CMDS.filter((c) => c.startsWith(lc(input)));
+      const m = CMDS.filter((c) => c.startsWith(cmd));
       if (m.length === 1) return { input: m[0] + " " };
       return m.length > 1 ? { matches: m } : null;
     }
-    if (toks[0] === "export") {
+    if (cmd === "export") {
       // Complete the value being typed after THEME=; with none yet, list both.
       const v = lc((input.split("=")[1] || "").trim()),
         opts = ["dark", "light"].filter((o) => o.startsWith(v));
       if (!v || opts.length > 1) return { input: "export THEME=", matches: ["dark", "light"] };
       return opts.length ? { input: "export THEME=" + opts[0] } : null;
     }
-    const last = toks[toks.length - 1],
-      slash = last.lastIndexOf("/"),
+    const last = toks[toks.length - 1];
+    // `cd ..`, `cd ~`, `ls ../..`: a bare directory reference just gets its slash.
+    if (/^(~|\.\.)(\/\.\.)*$/.test(last))
+      return { input: [...toks.slice(0, -1), last + "/"].join(" ") };
+    const slash = last.lastIndexOf("/"),
       dirPart = slash >= 0 ? last.slice(0, slash + 1) : "",
       base = slash >= 0 ? last.slice(slash + 1) : last;
     const node = getNode(resolve(cwd, dirPart || "."));
     if (!node || node.t !== "dir") return null;
-    const m = sortKeys(node, base.startsWith(".")).filter((n) => n.startsWith(base));
+    // cd only goes into folders, so it only offers folders.
+    const m = sortKeys(node, base.startsWith(".")).filter(
+      (n) => n.startsWith(base) && (cmd !== "cd" || node.c[n].t === "dir"),
+    );
     if (!m.length) return null;
     if (m.length === 1) {
       const done = dirPart + m[0] + (node.c[m[0]].t === "dir" ? "/" : "");
