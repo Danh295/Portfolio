@@ -11,8 +11,6 @@
     "build": "next build",
     "prebuild": "node scripts/sync-github.mjs",
     "sync": "node scripts/sync-github.mjs",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d out --nojekyll",
     "lint": "eslint . --max-warnings 0",
     "test": "node --import ./test/register.mjs --test \"test/**/*.test.mjs\"",
     "format": "prettier --write .",
@@ -27,7 +25,6 @@
     "eslint": "^10.11.0",
     "eslint-config-next": "^16.3.8",
     "espree": "^11.2.0",
-    "gh-pages": "^6.3.0",
     "prettier": "^3.9.9"
   },
   "homepage": "https://danh295.github.io/Portfolio/"
