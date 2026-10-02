@@ -1,0 +1,72 @@
+name: Pages
+
+# Builds the static site and deploys it to GitHub Pages (Settings → Pages → Source:
+# GitHub Actions) on every push to main, daily (to refresh the build-time GitHub
+# snapshot, scripts/sync-github.mjs) and by hand. Lint, format check and tests gate it.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 9 * * *" # daily, ~5am Toronto
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run format:check
+
+      - run: npm test
+
+      # The previous GitHub snapshot, so a failed API call keeps the last good data
+      # instead of shipping a day without it.
+      - uses: actions/cache/restore@v6
+        with:
+          path: src/data/github.generated.json
+          key: github-snapshot-${{ github.run_id }}
+          restore-keys: github-snapshot-
+
+      # prebuild runs the GitHub sync; the token raises the API limit and enables the
+      # contribution calendar.
+      - run: npm run build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/cache/save@v6
+        with:
+          path: src/data/github.generated.json
+          key: github-snapshot-${{ github.run_id }}
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

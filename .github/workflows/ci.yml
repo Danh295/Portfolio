@@ -1,10 +1,13 @@
 name: CI
 
+# Pull requests only (e.g. Dependabot): pushes to main are checked by the Pages
+# workflow, which runs the same steps before it deploys.
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   verify:
@@ -14,7 +17,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: npm
 
       - run: npm ci
@@ -22,6 +25,8 @@ jobs:
       - run: npm run lint
 
       - run: npm run format:check
+
+      - run: npm test
 
       - run: npm run build
         env:

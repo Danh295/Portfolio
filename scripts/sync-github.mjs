@@ -7,7 +7,10 @@
 //
 // - Repos are the GitHub links found in src/data/projects.js.
 // - Activity uses the GraphQL contribution calendar when GITHUB_TOKEN is set (CI), and
-//   falls back to counting public PushEvents otherwise.
+//   falls back to counting public PushEvents otherwise. Both are bucketed the same way:
+//   12 rolling 7-day windows ending now (oldest first), so no bar is a partial week.
+// - In CI the Pages workflow restores the previous snapshot from the actions cache first,
+//   so "keep the previous snapshot" works there too.
 // - Never fails the build: on errors the previous snapshot is kept (or an empty one
 //   written), and the UI hides whatever is missing. Never fakes data.
 //
@@ -53,7 +56,7 @@ async function api(path, init = {}) {
 function projectRepos() {
   const src = readFileSync(PROJECTS, "utf8"),
     repos = new Set();
-  for (const m of src.matchAll(/github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?["/]/g))
+  for (const m of src.matchAll(/github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?["/#?]/g))
     repos.add(`${m[1]}/${m[2]}`);
   for (const m of src.matchAll(/repoUrl\("([\w.-]+)"\)/g)) repos.add(`${USER}/${m[1]}`);
   return [...repos];
@@ -69,29 +72,46 @@ async function repoInfo(full) {
   };
 }
 
-// Last 12 weeks, oldest first.
-async function contributions() {
-  const q = `query($login:String!){user(login:$login){contributionsCollection{contributionCalendar{weeks{contributionDays{contributionCount}}}}}}`;
-  const r = await api("/graphql", {
-    method: "POST",
-    body: JSON.stringify({ query: q, variables: { login: USER } }),
-  });
-  const weeks = r.data.user.contributionsCollection.contributionCalendar.weeks;
-  return weeks
-    .slice(-12)
-    .map((w) => w.contributionDays.reduce((a, d) => a + d.contributionCount, 0));
-}
-
-async function pushes() {
-  const events = await api(`/users/${USER}/events/public?per_page=100`),
-    now = Date.now(),
-    w = new Array(12).fill(0);
-  for (const e of events) {
-    if (e.type !== "PushEvent") continue;
-    const i = Math.max(0, Math.floor((now - Date.parse(e.created_at)) / WEEK_MS));
-    if (i < 12) w[11 - i] += 1;
+// 12 rolling 7-day windows ending now, oldest first. `items` are [time ms, count].
+function buckets(items, now = Date.now()) {
+  const w = new Array(12).fill(0);
+  for (const [t, n] of items) {
+    const i = Math.floor((now - t) / WEEK_MS);
+    if (i >= 0 && i < 12) w[11 - i] += n;
   }
   return w;
+}
+
+// Contribution calendar for just the last 12 weeks (plus a day for the time zone edge).
+async function contributions() {
+  const now = Date.now(),
+    from = new Date(now - 12 * WEEK_MS - 864e5).toISOString(),
+    to = new Date(now).toISOString();
+  const q = `query($login:String!,$from:DateTime!,$to:DateTime!){user(login:$login){contributionsCollection(from:$from,to:$to){contributionCalendar{weeks{contributionDays{date contributionCount}}}}}}`;
+  const r = await api("/graphql", {
+    method: "POST",
+    body: JSON.stringify({ query: q, variables: { login: USER, from, to } }),
+  });
+  if (r.errors?.length) throw new Error("graphql: " + r.errors[0].message);
+  const days = r.data.user.contributionsCollection.contributionCalendar.weeks.flatMap(
+    (w) => w.contributionDays,
+  );
+  // A day counts from its end, so today's contributions land in the newest window.
+  return buckets(
+    days.map((d) => [Date.parse(d.date) + 864e5 - 1, d.contributionCount]),
+    now,
+  );
+}
+
+// Public push events (no token): up to 3 pages of 100, the API's limit.
+async function pushes() {
+  const items = [];
+  for (let page = 1; page <= 3; page++) {
+    const events = await api(`/users/${USER}/events/public?per_page=100&page=${page}`);
+    for (const e of events) if (e.type === "PushEvent") items.push([Date.parse(e.created_at), 1]);
+    if (events.length < 100) break;
+  }
+  return buckets(items);
 }
 
 async function main() {

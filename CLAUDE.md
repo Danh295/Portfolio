@@ -44,23 +44,24 @@ Personal portfolio site for Danny Hu. Next.js 16 (App Router) + React 19, JavaSc
 
 ```
 npm run dev           # local dev server
-npm run lint          # eslint .
+npm run lint          # eslint . (fails on any warning)
 npm run format        # prettier --write .
-npm run format:check  # prettier --check . (runs in CI)
+npm run format:check  # prettier --check .
+npm test              # node:test suites in test/ (pure libs + data checks)
 npm run build         # next build → out/
 npm run sync          # refresh the build-time GitHub snapshot
-npm run deploy        # publish out/ to gh-pages
 ```
 
-CI (`.github/workflows/ci.yml`) runs `lint`, `format:check` and `build` on push/PR to `main`. `.github/workflows/deploy.yml` builds and publishes `out/` to `gh-pages` daily (refreshing the GitHub snapshot) and on manual dispatch; `npm run deploy` still works for manual deploys.
+**Deploys.** `.github/workflows/pages.yml` runs `lint`, `format:check`, `test` and `build` and deploys `out/` with GitHub's Pages artifact actions on every push to `main`, daily at 09:17 UTC (refreshing the GitHub snapshot; the previous snapshot is restored from the actions cache first, so an API failure keeps the last good data) and on `gh workflow run pages.yml`. Settings → Pages → Source must be **GitHub Actions**. A red check on `main` means nothing was deployed. `.github/workflows/ci.yml` runs the same checks on pull requests only (Dependabot opens grouped monthly ones, `.github/dependabot.yml`). The old `gh-pages` branch is no longer served (kept briefly as a rollback). Node version: `.nvmrc`.
 
-**Pages must serve the `gh-pages` branch (root), not `main`.** With Pages pointed at `main`, GitHub builds the repo source with Jekyll and serves a stub "Portfolio" page instead of the site. The site is live only after (1) Settings → Pages → Source = branch `gh-pages` / root, and (2) the Deploy workflow has run at least once (Actions → Deploy → Run workflow) or `npm run deploy` has been run.
+**Tests** (`test/*.test.mjs`) import the app's modules unchanged through `test/hooks.mjs`, which resolves `@/` and extensionless imports like Next does and loads `src/**/*.js` as ESM. Keep the pure libs free of DOM and React so they stay testable. The coursework test is a `todo` until the `courses` arrays are filled.
+
+**Lockfile:** write it only with CI's npm (`npx npm@11.19.0 install --package-lock-only`). A local `npm install`/`npm prune` with another npm version drops the `@emnapi/*` entries and `npm ci` then fails in CI.
 
 ## Known gaps (2026-10 review)
 
 Open findings from the October 2026 review, by phase; delete each line when it lands.
 
-- **Phase 2 (process):** pushes to `main` don't deploy (daily/manual only; moving to the GitHub Pages artifact workflow); no tests (only `src/lib/shell/*` and `vim.js` import cleanly under plain node: `egg/game.js` and `skills.js` lack `.js` extensions, `github.js` and `egg/grid.js` use `@/`); shell path/completion edge cases; the sync's keep-previous fallback never applies on a fresh CI runner; no `.nvmrc`, Dependabot or `--max-warnings 0`.
 - **Phase 3 (accessibility):** type-in replaces real text with spaces until a section is reached (screen readers, find-in-page, crawlers); popups lack a focus trap; focus isn't restored on closing the shell or a project; j/k selection isn't announced; shell output has no live region; the egg start can't be reached with Tab; light `--mid` on `--soft` is 4.26:1.
 - **Phase 4 (SEO):** projects exist only at `#projects/<slug>` (not indexable); no Person JSON-LD; redirect stubs ship client JS.
 - **Phase 5 (performance):** all state lives in `App.jsx`, so every embedded-shell keystroke re-renders the whole page.

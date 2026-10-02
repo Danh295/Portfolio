@@ -12,12 +12,12 @@ npm run dev           # local dev server
 npm run lint          # eslint .
 npm run format        # prettier --write .
 npm run format:check  # prettier --check . (runs in CI)
+npm test              # unit tests (node:test)
 npm run build         # static export to out/
 npm run sync          # refresh the build-time GitHub snapshot
-npm run deploy        # build and publish out/ to the gh-pages branch by hand
 ```
 
-Needs Node 22 or newer (CI uses 24). Content lives in `src/data/` and `src/config/`; there is no CMS.
+Needs Node 22 or newer (CI uses the version in `.nvmrc`). Content lives in `src/data/` and `src/config/`; there is no CMS.
 
 ## Layout
 
@@ -30,6 +30,7 @@ src/
   data/           # projects, experience, home, egg content
   lib/            # pure helpers: shell, vim, ascii renderers, egg physics and game
 scripts/          # sync-github.mjs (build-time GitHub data)
+test/             # node:test suites + the loader that resolves @/ imports
 public/           # the resume PDF
 ```
 
@@ -37,4 +38,4 @@ public/           # the resume PDF
 
 ## Deploying
 
-The site is served from the `gh-pages` branch (root), not `main`. The Deploy workflow (`.github/workflows/deploy.yml`) builds `main` and publishes `out/` there daily and on manual dispatch (Actions → Deploy → Run workflow, or `gh workflow run deploy.yml --ref main`). CI (`.github/workflows/ci.yml`) runs lint, format check and build on every push and PR to `main`.
+Every push to `main` is checked (lint, format, tests, build) and deployed to GitHub Pages by `.github/workflows/pages.yml`, which also runs daily to refresh the build-time GitHub snapshot and can be started by hand (`gh workflow run pages.yml`). Pull requests get the same checks from `.github/workflows/ci.yml`.
