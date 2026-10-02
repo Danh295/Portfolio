@@ -27,7 +27,9 @@ export default function ProjectDetail({ slug, reduce, onBack, onOpen }) {
   if (repo)
     meta.push([
       "GitHub",
-      repo.stars + (repo.stars === 1 ? " star" : " stars") + " · pushed " + fmtDate(repo.pushedAt),
+      repo.stars +
+        (repo.stars === 1 ? " star" : " stars") +
+        (repo.pushedAt ? " · pushed " + fmtDate(repo.pushedAt) : ""),
     ]);
   const links = p.links.length ? p.links : [{ label: "internal project", href: null }];
 

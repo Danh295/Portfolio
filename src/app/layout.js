@@ -3,12 +3,13 @@ import "./globals.css";
 import { site } from "@/config/site";
 import { ui } from "@/config/ui";
 
-// Mirrors introPlan() in src/lib/intro.js: boot intro, not yet seen this session, motion ok.
+// Mirrors introPlan() in src/lib/intro.js: boot intro, not yet seen this session, motion ok,
+// and not a deep link (a #hash goes straight to its section).
 // Only on the home page (the only route that renders the intro, which removes the cover);
 // if the intro never mounts (a failed script), a fail-safe uncovers the page after 6s.
 const INTRO_COVER =
   ui.introFx === "boot"
-    ? `try{var h=document.documentElement,p=location.pathname.replace(/\\/+$/,"");if((p===${JSON.stringify(site.basePath)}||p==="")&&sessionStorage.getItem("danny-intro")!=="1"&&!matchMedia("(prefers-reduced-motion: reduce)").matches){h.classList.add("boot-intro");h.dataset.loading="true";setTimeout(function(){if(h.classList.contains("boot-intro")){h.classList.remove("boot-intro");delete h.dataset.loading}},6000)}}catch(e){}`
+    ? `try{var h=document.documentElement,p=location.pathname.replace(/\\/+$/,"");if((p===${JSON.stringify(site.basePath)}||p==="")&&!location.hash&&sessionStorage.getItem("danny-intro")!=="1"&&!matchMedia("(prefers-reduced-motion: reduce)").matches){h.classList.add("boot-intro");h.dataset.loading="true";setTimeout(function(){if(h.classList.contains("boot-intro")){h.classList.remove("boot-intro");delete h.dataset.loading}},6000)}}catch(e){}`
     : "";
 
 // Self-hosted IBM Plex Mono (OFL, fonts/plex/OFL.txt): the site's typeface. It covers
@@ -74,10 +75,26 @@ export const metadata = {
     index: true,
     follow: true,
   },
+  // Listed by hand: Next's generated links left favicon.ico off the home page, so
+  // browsers that skip SVG icons asked for /favicon.ico at the domain root (outside
+  // /Portfolio) and got a 404. Setting `icons` replaces the generated links, so all three
+  // files in src/app are listed here.
+  icons: {
+    icon: [
+      { url: `${site.basePath}/favicon.ico`, sizes: "48x48" },
+      { url: `${site.basePath}/icon.svg`, type: "image/svg+xml" },
+    ],
+    apple: `${site.basePath}/apple-icon.png`,
+  },
 };
 
+// The pre-paint script sets the saved theme's colour; these cover the first paint and
+// visitors without JavaScript.
 export const viewport = {
-  themeColor: "#121211",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#121211" },
+    { media: "(prefers-color-scheme: light)", color: "#F3F2EE" },
+  ],
 };
 
 // Runs before first paint (and before hydration):
@@ -89,7 +106,7 @@ export const viewport = {
 // - A reload starts on the hero: drop the #section / #projects/<slug> hash pushed while
 //   browsing, and turn off browser scroll restoration (the app drives scrolling). Fresh
 //   visits keep their hash, so /#projects links and the redirect stubs still work.
-const BOOT = `try{if(localStorage.getItem("danny-keys")==="off")document.documentElement.dataset.keys="off"}catch(e){}try{var d=document.documentElement,t=localStorage.getItem("danny-theme");if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";d.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="dark"?"#121211":"#F3F2EE"}catch(e){}try{if(sessionStorage.getItem("danny-mode")==="term")document.documentElement.classList.add("boot-term")}catch(e){}try{history.scrollRestoration="manual";var n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="reload"&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}${INTRO_COVER}`;
+const BOOT = `try{if(localStorage.getItem("danny-keys")==="off")document.documentElement.dataset.keys="off"}catch(e){}try{var d=document.documentElement,t=localStorage.getItem("danny-theme");if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";d.dataset.theme=t;document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.content=t==="dark"?"#121211":"#F3F2EE"})}catch(e){}try{if(sessionStorage.getItem("danny-mode")==="term")document.documentElement.classList.add("boot-term")}catch(e){}try{history.scrollRestoration="manual";var n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="reload"&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}${INTRO_COVER}`;
 
 export default function RootLayout({ children }) {
   return (

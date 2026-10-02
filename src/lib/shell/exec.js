@@ -572,5 +572,3 @@ export function createShell(data) {
 
   return { exec, runLine, complete, fs };
 }
-
-export { pstr };

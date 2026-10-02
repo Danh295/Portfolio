@@ -13,22 +13,21 @@
     "sync": "node scripts/sync-github.mjs",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d out --nojekyll",
-    "start": "next start",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "next": "^16.1.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "next": "^16.3.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "eslint": "^10.11.0",
-    "eslint-config-next": "^16.2.0",
+    "eslint-config-next": "^16.3.8",
     "espree": "^11.2.0",
     "gh-pages": "^6.3.0",
-    "prettier": "^3.8.3"
+    "prettier": "^3.9.9"
   },
   "homepage": "https://danh295.github.io/Portfolio/"
 }

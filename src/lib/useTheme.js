@@ -12,18 +12,23 @@ const listeners = new Set();
 
 const read = () => document.documentElement.dataset.theme !== "light";
 
+// layout.js declares a theme-color per OS scheme (for the first paint); once a theme is
+// chosen, both carry its colour so the browser chrome matches the page either way.
+const syncThemeColor = (dark) =>
+  document
+    .querySelectorAll('meta[name="theme-color"]')
+    .forEach((m) => m.setAttribute("content", dark ? "#121211" : "#F3F2EE"));
+
 function apply(dark) {
   document.documentElement.dataset.theme = dark ? "dark" : "light";
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", dark ? "#121211" : "#F3F2EE");
+  syncThemeColor(dark);
   listeners.forEach((l) => l());
 }
 
 function subscribe(cb) {
   listeners.add(cb);
   // The pre-paint script can run before Next adds <meta name="theme-color">: sync it now.
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", read() ? "#121211" : "#F3F2EE");
+  syncThemeColor(read());
   const mq = window.matchMedia(OS_LIGHT);
   const onOs = () => {
     let saved = null;
