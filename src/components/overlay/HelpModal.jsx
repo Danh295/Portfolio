@@ -31,7 +31,7 @@ export default function HelpModal({ onClose, keysOn, onToggleKeys }) {
             <span className={styles.dim}>[esc]</span> close
           </button>
         </div>
-        <div className={styles.list}>
+        <div className={styles.list} data-popup-scroll="">
           {shortcutRows(keysOn).map((k) => (
             <div key={k.key + k.desc} className={styles.row}>
               <span className={styles.key}>{k.key}</span>

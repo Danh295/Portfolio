@@ -13,6 +13,7 @@
 const cls = (ch) => (ch == null || /\s/.test(ch) ? 0 : /\w/.test(ch) ? 1 : 2);
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const firstNonBlank = (line) => Math.max(0, line.search(/\S/));
+const MAX_COUNT = 999;
 
 /** Open `lines` as buffer `name`. `reg` carries the unnamed register between files. */
 export function openBuffer(name, lines, reg = null) {
@@ -400,7 +401,9 @@ export function vimKey(S, key, ctrl = false) {
   }
 
   const visual = S.mode === "visual" || S.mode === "vline";
-  const n = Math.max(1, parseInt(S.count || "1", 10));
+  // Counts are capped, so a typo like 99999999999p can't build a giant buffer or loop
+  // for minutes.
+  const n = Math.min(MAX_COUNT, Math.max(1, parseInt(S.count || "1", 10)));
   const clear = { count: "", op: null, pending: "" };
 
   // counts
@@ -476,7 +479,10 @@ export function vimKey(S, key, ctrl = false) {
         // line above the gap, so put after it; otherwise put before the cursor.
         const cutS = cut(exit, R).state,
           after = R.linewise && R.r2 === S.lines.length - 1 && R.r1 > 0;
-        const placed = put({ ...cutS, reg: S.reg }, !after, 1).state;
+        let placed = put({ ...cutS, reg: S.reg }, !after, 1).state;
+        // Lines over the whole buffer: the cut left one empty line behind; drop it.
+        if (R.linewise && S.reg.linewise && R.r1 === 0 && R.r2 === S.lines.length - 1)
+          placed = { ...placed, lines: placed.lines.slice(0, -1) };
         return res({ state: { ...placed, reg: cutS.reg, undo: cutS.undo, msg: "" } });
       }
       case "o":

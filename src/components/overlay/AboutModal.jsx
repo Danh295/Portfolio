@@ -42,7 +42,7 @@ export default function AboutModal({ onClose }) {
             <span className={styles.dim}>[esc]</span> close
           </button>
         </div>
-        <div className={styles.body}>
+        <div className={styles.body} data-popup-scroll="">
           {PARAGRAPHS.map((lines, i) => (
             <p key={i} className={styles.p}>
               {lines.map((line, j) => (
