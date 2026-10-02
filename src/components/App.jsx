@@ -810,9 +810,11 @@ export default function App() {
     window.addEventListener("wheel", release, { passive: true });
     window.addEventListener("touchstart", release, { passive: true });
     window.addEventListener("pointerdown", release);
-    // Mouse/trackpad presses get the same flash as keyboard activation.
+    // A mouse press needs no flash: the pointer is already over the element, so its hover
+    // look holds while pressed and after the click. Touch has no hover, so it gets the flash.
     const onPress = (e) => {
-      if (e.button === 0 && e.target instanceof Element) pressFx(e.target.closest(PRESSABLE));
+      if (e.pointerType !== "mouse" && e.button === 0 && e.target instanceof Element)
+        pressFx(e.target.closest(PRESSABLE));
     };
     window.addEventListener("pointerdown", onPress);
     // A focused button activated by Enter/Space fires a click with detail 0: flash it too.
