@@ -13,8 +13,9 @@ const expFile = (e) => slugify(e.company) + ".log";
 /** ["projects", "hackathon"] → "~/projects/hackathon" */
 export const pstr = (parts) => (parts.length ? "~/" + parts.join("/") : "~");
 
-/** Resolve `p` against `cwd`. Handles ~, /, ., .. */
+/** Resolve `p` against `cwd`. Handles ~, /, /home/danny (what `pwd` prints), ., .. */
 export function resolve(cwd, p) {
+  if (p === "/home/danny" || p.startsWith("/home/danny/")) p = "~" + p.slice(11);
   const parts = p.startsWith("~") || p.startsWith("/") ? [] : [...cwd];
   p.replace(/^~/, "")
     .split("/")
@@ -78,27 +79,47 @@ export function createFs(data) {
     return n || null;
   }
 
-  // Exact path first; otherwise a bare project slug (or slug prefix) anywhere.
+  // `q` itself if it's in `list`, else the only item starting with it (null when none or
+  // several do).
+  const pick = (list, q) => {
+    if (list.includes(q)) return q;
+    const m = list.filter((x) => x.startsWith(q));
+    return m.length === 1 ? m[0] : null;
+  };
+  const slugs = projects.map((x) => x.slug),
+    roles = experience.map((e) => slugify(e.company)),
+    groups = skills.map((g) => g.label);
+
+  // Exact path first; otherwise a bare name from anywhere: a home file without its
+  // extension (`cat about`), a project slug or a unique prefix of one (`cat ppeo`), a
+  // role (`cat ieso`) or a skill group (`cat tools`). A path with a folder in it
+  // (`cat nope/a`) only matches exactly, and an ambiguous prefix (`cat p`) matches nothing.
   function findFile(cwd, p) {
     const parts = resolve(cwd, p),
       node = getNode(parts);
     if (node) return { node, parts };
-    const q = p
-        .split("/")
-        .pop()
-        .replace(/\.(md|log|txt)$/, ""),
-      pr = project(q) || (q && projects.find((x) => x.slug.startsWith(q)));
-    if (pr)
-      return { node: { t: "file", k: "proj", slug: pr.slug }, parts: projPath(pr).split("/") };
-    // bare role / skill-group names: `cat ieso`, `cat tools`
-    const ei = q ? experience.findIndex((e) => slugify(e.company).startsWith(q)) : -1;
-    if (ei >= 0) return { node: { t: "file", k: "exp", i: ei }, parts: expPath(ei).split("/") };
-    const gi = q ? skills.findIndex((g) => g.label.startsWith(q)) : -1;
-    if (gi >= 0)
-      return {
-        node: { t: "file", k: "skills", g: gi },
-        parts: ["skills", skills[gi].label + ".txt"],
-      };
+    if (p.includes("/")) return null;
+    const q = p.replace(/\.(md|log|txt)$/, "");
+    if (!q) return null;
+    const home = Object.keys(root.c).find(
+      (k) => root.c[k].t === "file" && k.replace(/^\./, "").replace(/\.[a-z]+$/, "") === q,
+    );
+    if (home) return { node: root.c[home], parts: [home] };
+    const slug = pick(slugs, q);
+    if (slug) {
+      const pr = project(slug);
+      return { node: { t: "file", k: "proj", slug }, parts: projPath(pr).split("/") };
+    }
+    const role = pick(roles, q);
+    if (role) {
+      const i = roles.indexOf(role);
+      return { node: { t: "file", k: "exp", i }, parts: expPath(i).split("/") };
+    }
+    const group = pick(groups, q);
+    if (group) {
+      const g = groups.indexOf(group);
+      return { node: { t: "file", k: "skills", g }, parts: ["skills", group + ".txt"] };
+    }
     return null;
   }
 

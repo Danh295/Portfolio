@@ -13,7 +13,8 @@
     "sync": "node scripts/sync-github.mjs",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d out --nojekyll",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
+    "test": "node --import ./test/register.mjs --test \"test/**/*.test.mjs\"",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
