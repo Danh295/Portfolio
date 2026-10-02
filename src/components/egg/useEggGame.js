@@ -67,7 +67,7 @@ const SIMMER_MS = 1600,
  * The egg minigame. One scene, drawn every animation frame into whichever target is
  * live: the terminal's inline egg (in terminal mode) or the hero egg. Everything
  * that changes per frame stays in refs; React state only holds the stage, result
- * and visitor stats.
+ * and the stats panel.
  */
 export function useEggGame({ reduce, clockMode, mode }) {
   const [stage, setStageState] = useState(0);
@@ -199,10 +199,9 @@ export function useEggGame({ reduce, clockMode, mode }) {
     if (g.word === "perfect" && !L.reduce)
       t.conf.push(...spawnConfetti(t.W, t.H, 140, EGG_GRID_SCALE));
     setTimer("");
-    setStats(null);
     setResult({ label: C.fmt(c) + " · " + g.word, hint: g.off + " · best " + C.fmt(best) });
     setStage(5);
-    countEgg(g.type, eggTypes).then(setStats);
+    setStats(countEgg(g.type, eggTypes));
   }, [setStage, setResult, setStats, setTimer]);
 
   // Terminal-mode status block under the inline egg.
@@ -487,7 +486,6 @@ export function useEggGame({ reduce, clockMode, mode }) {
   };
 
   return {
-    stage,
     crack,
     reset,
     handlers,
