@@ -56,8 +56,19 @@ CI (`.github/workflows/ci.yml`) runs `lint`, `format:check` and `build` on push/
 
 **Pages must serve the `gh-pages` branch (root), not `main`.** With Pages pointed at `main`, GitHub builds the repo source with Jekyll and serves a stub "Portfolio" page instead of the site. The site is live only after (1) Settings → Pages → Source = branch `gh-pages` / root, and (2) the Deploy workflow has run at least once (Actions → Deploy → Run workflow) or `npm run deploy` has been run.
 
+## Known gaps (2026-10 review)
+
+Open findings from the October 2026 review, by phase; delete each line when it lands.
+
+- **Phase 1 (correctness):** single-key shortcuts still act behind the help/about popups; uncapped vim counts can throw or hang; any key (Esc included) on the egg rules card starts a round; keys-off still blurs the focused button; the egg counter calls a third-party service (going device-only); stepping through projects adds a history entry per step; sitemap lists the redirect stubs with a daily-changing `lastmod`; no favicon link on the home page; deep links play the full intro.
+- **Phase 2 (process):** pushes to `main` don't deploy (daily/manual only; moving to the GitHub Pages artifact workflow); no tests (only `src/lib/shell/*` and `vim.js` import cleanly under plain node: `egg/game.js` and `skills.js` lack `.js` extensions, `github.js` and `egg/grid.js` use `@/`); shell path/completion edge cases; the sync's keep-previous fallback never applies on a fresh CI runner; no `.nvmrc`, Dependabot or `--max-warnings 0`.
+- **Phase 3 (accessibility):** type-in replaces real text with spaces until a section is reached (screen readers, find-in-page, crawlers); popups lack a focus trap; focus isn't restored on closing the shell or a project; j/k selection isn't announced; shell output has no live region; the egg start can't be reached with Tab; light `--mid` on `--soft` is 4.26:1.
+- **Phase 4 (SEO):** projects exist only at `#projects/<slug>` (not indexable); no Person JSON-LD; redirect stubs ship client JS.
+- **Phase 5 (performance):** all state lives in `App.jsx`, so every embedded-shell keystroke re-renders the whole page.
+
 ## Git Commits
 
+- Commit and push straight to `main`; no branches or PRs (personal project). Run `lint`, `format:check` and `build` first, plus a browser check for UI changes.
 - Never include a `Co-Authored-By` line in commit messages. Do not credit Claude or any AI as a co-author.
 
 <!-- BEGIN:nextjs-agent-rules -->
