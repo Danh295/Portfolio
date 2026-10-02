@@ -42,6 +42,19 @@ const EXP_LAST = (earlier) => (HAS_EARLY ? EXP_TOGGLE(earlier) : EXP_MAIN - 1);
 const SECTION_IDS = ["home", "projects", "experience", "skills"];
 // Keys that scroll the page natively; pressing one hands activeSec back to the scroll spy.
 const SCROLL_KEYS = new Set(["PageUp", "PageDown", "Home", "End", " "]);
+// While a popup is open, these scroll its list (marked data-popup-scroll) instead of the
+// page behind it: lines (±1), pages (±2) or the ends (±3); 0 just stops the page moving.
+const POPUP_SCROLL = {
+  ArrowDown: 1,
+  ArrowUp: -1,
+  ArrowLeft: 0,
+  ArrowRight: 0,
+  PageDown: 2,
+  PageUp: -2,
+  " ": 2,
+  Home: -3,
+  End: 3,
+};
 // Keys that move the gui selection.
 const NAV_KEYS = new Set([
   "j",
@@ -199,9 +212,12 @@ export default function App() {
     window.scrollTo({ top, behavior });
   };
 
-  const setHash = (h) => {
+  // Stepping between projects or leaving one replaces the entry, so Back leaves the
+  // project pages in one press and never reopens a project you just closed.
+  const setHash = (h, replace = false) => {
     try {
-      history.pushState(null, "", h);
+      if (replace) history.replaceState(null, "", h);
+      else history.pushState(null, "", h);
     } catch {
       // ignore (sandboxed iframes)
     }
@@ -212,14 +228,14 @@ export default function App() {
     if (!view) returnScroll.current = window.scrollY;
     setRulesOpen(false);
     setView(slug);
-    if (push) setHash("#projects/" + slug);
+    if (push) setHash("#projects/" + slug, !!view);
   };
 
   const goBack = () => {
     pendingSec.current = 1;
     setView(null);
     setActiveSec(1);
-    setHash("#projects");
+    setHash("#projects", true);
   };
 
   // Jump to section n, landing on its header unless `stop` names an element: a row
@@ -506,7 +522,14 @@ export default function App() {
   // side effects. The unnamed register is kept across files.
   const vimKey = (e) => {
     if (e.metaKey || e.altKey) return;
-    const r = vimStep(vim, e.key, e.ctrlKey);
+    let r;
+    try {
+      r = vimStep(vim, e.key, e.ctrlKey);
+    } catch {
+      // A vim bug must not break the page: swallow the key and keep the buffer.
+      e.preventDefault();
+      return;
+    }
     if (!r.handled) return;
     e.preventDefault();
     vimReg.current = r.state.reg;
@@ -538,6 +561,25 @@ export default function App() {
       )
         // Typing anywhere goes to the prompt.
         termInputRef.current?.focus({ preventScroll: true });
+      return;
+    }
+    // A popup (keys or more…) owns the keyboard: only Esc, the popup keys (? and m, which
+    // swap between them) and s (in the keys popup) work. Scroll keys scroll the popup, not
+    // the page behind it; Enter and Space still press a focused button inside it.
+    if ((help || aboutOpen) && !["Escape", "?", "m", "s"].includes(e.key)) {
+      const dir = POPUP_SCROLL[e.key];
+      if (dir === undefined || (e.key === " " && ae?.closest("a, button"))) return;
+      e.preventDefault();
+      const box = document.querySelector("[data-popup-scroll]");
+      if (!box || !dir) return;
+      const d = e.key === " " && e.shiftKey ? -2 : dir;
+      const by =
+        Math.abs(d) === 3
+          ? d * box.scrollHeight
+          : Math.abs(d) === 2
+            ? d * box.clientHeight * 0.45
+            : d * 40;
+      box.scrollBy({ top: by });
       return;
     }
     if (e.key === "`") {
@@ -576,20 +618,36 @@ export default function App() {
       if (e.key === "Enter") shellKey("embed", e);
       return;
     }
-    // The first-round rules card is up: any key proceeds (it says so).
-    const bareModifier = ["Shift", "Control", "Alt", "Meta", "CapsLock", "Tab"].includes(e.key);
+    // The first-round rules card is up: Enter, Space or any character key proceeds (it
+    // says so; with shortcuts off only Enter and Space do). Esc puts it away; arrows, Tab
+    // and the like keep their usual jobs.
     const eggRc = guiBoxRef.current?.getBoundingClientRect(),
       eggOnScreen = !!eggRc && eggRc.bottom > 80 && eggRc.top < window.innerHeight - 80;
-    if (egg.view.briefing && eggOnScreen && !view && !help && !aboutOpen && !bareModifier) {
-      e.preventDefault();
-      setActiveSec(0);
-      setHeroSel("egg");
-      startEgg();
-      return;
+    if (egg.view.briefing && eggOnScreen && !view && !help && !aboutOpen) {
+      const proceed = e.key === "Enter" || e.key === " " || (keysOn && e.key.length === 1);
+      if (e.key === "Escape") {
+        e.preventDefault();
+        egg.reset();
+        return;
+      }
+      if (proceed) {
+        e.preventDefault();
+        setActiveSec(0);
+        setHeroSel("egg");
+        startEgg();
+        return;
+      }
     }
     // Moving the selection with the keyboard drops focus left on a button by an earlier
     // click, so Enter/Space then act on the selection rather than that button.
-    if (NAV_KEYS.has(e.key) && ae && ae !== document.body && ae.closest("a, button")) ae.blur();
+    if (
+      NAV_KEYS.has(e.key) &&
+      (keysOn || e.key.length > 1) &&
+      ae &&
+      ae !== document.body &&
+      ae.closest("a, button")
+    )
+      ae.blur();
     // With the egg selected, Enter/Space play it even if a button kept focus from an
     // earlier click (e.g. the rules chip), so a timed press never goes elsewhere.
     const eggKey =
@@ -664,8 +722,14 @@ export default function App() {
                   : expOpen >= 0
                     ? setExpOpen(-1)
                     : (setSel(-1), setExpSel(-1), setHeroSel("head")),
-      "?": () => setHelp((h) => !h),
-      m: () => setAboutOpen((o) => !o),
+      "?": () => {
+        setAboutOpen(false);
+        setHelp((h) => !h);
+      },
+      m: () => {
+        setHelp(false);
+        setAboutOpen((o) => !o);
+      },
       i: () => !view && setRulesOpen((o) => !o),
       t: toggleTheme,
       h: goHome,
@@ -796,6 +860,11 @@ export default function App() {
       else if (scrollSpy.current) scrollSpy.current();
     };
     const onPop = () => {
+      // Back/forward leaves any popup, the embedded shell and the rules card behind.
+      setHelp(false);
+      setAboutOpen(false);
+      setTermOpen(false);
+      setRulesOpen(false);
       const r = parseHash(window.location.hash);
       if (r.slug) setView(r.slug);
       else {
@@ -1025,6 +1094,7 @@ export default function App() {
                     active={activeSec === 0}
                     heroSel={heroSel}
                     rulesOpen={rulesOpen}
+                    keysOn={keysOn}
                     onRules={() => {
                       setActiveSec(0);
                       setHeroSel("rules");

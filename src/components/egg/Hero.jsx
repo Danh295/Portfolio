@@ -25,6 +25,7 @@ export default function Hero({
   onRules,
   onStart,
   reduce,
+  keysOn = true,
 }) {
   // Hero stops: the heading (the section header: blinking cursor), then "more…" and
   // the egg's prompt (selected elements: inverted, no cursor).
@@ -187,7 +188,11 @@ export default function Hero({
                 ))}
                 <div className={styles.rulesGo}>
                   {view.briefing ? (
-                    "click or press any key to proceed"
+                    keysOn ? (
+                      "click or press any key to proceed"
+                    ) : (
+                      "click or press enter to proceed"
+                    )
                   ) : (
                     <>
                       <Hint className={styles.pressKey}>[i]</Hint>
