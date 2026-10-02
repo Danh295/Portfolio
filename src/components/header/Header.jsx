@@ -11,6 +11,7 @@ export default function Header({
   navRef,
   activeSec,
   dark,
+  shellOpen,
   onHome,
   onSection,
   onShell,
@@ -53,7 +54,8 @@ export default function Header({
             onClick={onShell}
             data-key="`"
             data-tip="embedded shell"
-            className={styles.btn}
+            className={shellOpen ? `${styles.btn} ${styles.btnOn}` : styles.btn}
+            aria-pressed={shellOpen}
           >
             <Hint className={styles.dim}>[`] </Hint>
             terminal

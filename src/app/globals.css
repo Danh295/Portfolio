@@ -184,8 +184,9 @@ html.kbd [role="tooltip"] {
   opacity: 0 !important;
 }
 
-/* Press feedback (src/lib/pressFx.js): a mouse click or the key that activates a button
-   flips it for a beat and drops it 1px, then it snaps back. */
+/* Press feedback (src/lib/pressFx.js): the key that activates a button, or a touch, flips
+   it for a beat and drops it 1px, then it snaps back. A mouse click doesn't use it: the
+   hover look simply holds while the button is pressed and stays after the click. */
 [data-pressed] {
   animation: press-fx 0.16s steps(1);
 }

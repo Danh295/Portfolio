@@ -81,6 +81,8 @@
   padding: 5px 10px;
 }
 
+/* Stays filled while its panel is open (the embedded shell), same look as hover. */
+.btnOn,
 :global(html:not(.kbd)) .btn:hover {
   background: var(--fg);
   color: var(--bg);
