@@ -16,5 +16,3 @@ export const site = {
   email: "hudanny295@gmail.com",
   resume: `${basePath}/Danny_s_Resume.pdf`,
 };
-
-export const withBasePath = (path) => `${basePath}${path}`;

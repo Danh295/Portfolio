@@ -27,15 +27,18 @@ export const about = [
   "eggs are the best.",
 ];
 
-// Key/value rows `whoami` prints after the intro.
+// Key/value rows `whoami` prints after the intro. studying/working/into come from the
+// hero's facts above, so the two can't drift; "seeking" is the longer terminal version.
+const fact = (key) => homeContent.facts.find((f) => f.key === key);
+const factText = (f) => f.value + (f.org || "");
 export const whoamiFacts = [
-  { k: "studying", v: "comp sci & BBA @ UW & WLU" },
-  { k: "working", v: "software solutions developer co-op @ IESO" },
+  { k: "studying", v: factText(fact("studying")) },
+  { k: "working", v: factText(fact("working")) },
   {
     k: "seeking",
     v: "fall 2027 co-op opportunities, open to toronto and remote, will consider relocating",
   },
-  { k: "into", v: "computer vision, image processing, machine learning, web dev, and eggs" },
+  { k: "into", v: factText(fact("into")) },
 ];
 
 // Skills section. A skill's bar is the share of projects whose tags include it
