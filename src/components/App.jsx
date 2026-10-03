@@ -836,6 +836,12 @@ export default function App() {
 
   /* ---------- effects ---------- */
 
+  // Tells the pre-paint script's fail-safe (layout.js) that hidden type-in text will be
+  // revealed by the app, so it must not un-hide it early.
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = "";
+  }, []);
+
   // Global listeners call through refs so they always see the latest render.
   useEffect(() => {
     keyHandler.current = handleKey;
