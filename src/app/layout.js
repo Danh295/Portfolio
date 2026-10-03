@@ -97,16 +97,25 @@ export const viewport = {
   ],
 };
 
+// Type-in (globals.css): text that hasn't typed in yet is hidden from the first paint,
+// only when motion is allowed. If the app never hydrates (a failed script), the text
+// comes back after 8s.
+const FX =
+  ui.headerFx === "none"
+    ? ""
+    : `try{var f=document.documentElement;if(!matchMedia("(prefers-reduced-motion: reduce)").matches){f.classList.add("fx");setTimeout(function(){if(!f.dataset.hydrated)f.classList.remove("fx")},8000)}}catch(e){}`;
+
 // Runs before first paint (and before hydration):
 // - Theme: the visitor's saved choice, else their OS setting (useTheme keeps it in sync).
 // - Mode: a reload returns to terminal mode if that's where the visitor was this session
 //   (App reads sessionStorage too); html.boot-term hides the gui until the terminal mounts.
+// - Type-in: html.fx (see FX above).
 // - Intro: on a visit where the boot intro will play, cover the page (html.boot-intro)
 //   from the very first frame, so the homepage doesn't flash before the intro mounts.
 // - A reload starts on the hero: drop the #section / #projects/<slug> hash pushed while
 //   browsing, and turn off browser scroll restoration (the app drives scrolling). Fresh
 //   visits keep their hash, so /#projects links and the redirect stubs still work.
-const BOOT = `try{if(localStorage.getItem("danny-keys")==="off")document.documentElement.dataset.keys="off"}catch(e){}try{var d=document.documentElement,t=localStorage.getItem("danny-theme");if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";d.dataset.theme=t;document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.content=t==="dark"?"#121211":"#F3F2EE"})}catch(e){}try{if(sessionStorage.getItem("danny-mode")==="term")document.documentElement.classList.add("boot-term")}catch(e){}try{history.scrollRestoration="manual";var n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="reload"&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}${INTRO_COVER}`;
+const BOOT = `try{if(localStorage.getItem("danny-keys")==="off")document.documentElement.dataset.keys="off"}catch(e){}try{var d=document.documentElement,t=localStorage.getItem("danny-theme");if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";d.dataset.theme=t;document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.content=t==="dark"?"#121211":"#F3F2EE"})}catch(e){}try{if(sessionStorage.getItem("danny-mode")==="term")document.documentElement.classList.add("boot-term")}catch(e){}try{history.scrollRestoration="manual";var n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="reload"&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}${FX}${INTRO_COVER}`;
 
 export default function RootLayout({ children }) {
   return (

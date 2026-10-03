@@ -50,6 +50,7 @@ export function useTextFx(ref, text, trigger, reduce, active = false, onStart = 
     if (!el || running.current) return; // already typing: let it finish
     if (isStill(reduce) || (once && played.has(key))) {
       delete el.dataset.typing;
+      delete el.dataset.fx;
       el.textContent = text;
       return;
     }
@@ -59,6 +60,8 @@ export function useTextFx(ref, text, trigger, reduce, active = false, onStart = 
         played.add(key);
         if (startCb.current) startCb.current();
       }
+      // Rendered data-fx="pending" (hidden by CSS until now); the effect takes it from here.
+      delete el.dataset.fx;
       running.current = runTextFx(el, text, ui.headerFx, () => (running.current = null));
     };
     if (trigger === "set") {
@@ -106,6 +109,7 @@ export function useTextFx(ref, text, trigger, reduce, active = false, onStart = 
       }
       if (el) {
         delete el.dataset.typing;
+        delete el.dataset.fx;
         el.textContent = text;
       }
     };

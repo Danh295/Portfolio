@@ -1,15 +1,19 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useRef } from "react";
-import { isPlayed, isStill, useTextFx } from "@/lib/useTextFx";
-import { blankText, restoreText, typeIn } from "@/lib/typeIn";
+import { useCallback, useEffect, useRef } from "react";
+import { isPlayed, useTextFx } from "@/lib/useTextFx";
+import { blankText, typeIn } from "@/lib/typeIn";
 import styles from "./SectionFrame.module.css";
 
 // Animated part of a frame label (e.g. "~/projects").
 function FxText({ text, trigger, reduce, active, onStart }) {
   const ref = useRef(null);
   useTextFx(ref, text, trigger, reduce, active, onStart);
-  return <span ref={ref}>{text}</span>;
+  return (
+    <span ref={ref} data-fx={isPlayed(trigger, text) ? undefined : "pending"}>
+      {text}
+    </span>
+  );
 }
 
 /**
@@ -17,8 +21,10 @@ function FxText({ text, trigger, reduce, active, onStart }) {
  * `prefix` is static, `title` gets the heading effect. The active frame's label shows a
  * blinking cursor while the header itself is selected (`caret`); it goes away when an
  * element inside the section is selected. The hero puts its cursor on the h1 instead.
- * With the "active" title effect, everything else in the frame starts blank too and
- * types in, top to bottom, the moment the header starts typing (once per page load).
+ * With the "active" title effect, everything else in the frame types in too, top to
+ * bottom, the moment the header starts typing (once per page load). Until then the frame
+ * is `data-fx="pending"`: its text is in the DOM (screen readers, find-in-page and
+ * crawlers read it) but CSS hides it (globals.css, html.fx), from the first paint.
  */
 export default function SectionFrame({
   as: Tag = "section",
@@ -37,39 +43,45 @@ export default function SectionFrame({
 }) {
   const frameRef = useRef(null),
     labelRef = useRef(null),
-    blanked = useRef(null), // text-node entries waiting to type in
     cancel = useRef(null);
-  const reveal = titleFx === "active";
+  const pending = titleFx === "active" && !isPlayed("active", title);
 
-  // Before first paint: blank the frame's content if its header hasn't played yet.
-  useLayoutEffect(() => {
-    if (!reveal || isPlayed("active", title) || isStill(reduce)) return;
-    const frame = frameRef.current;
-    blanked.current = blankText(frame, labelRef.current);
-    return () => {
-      if (cancel.current) cancel.current();
-      else if (blanked.current) restoreText(blanked.current);
-      cancel.current = blanked.current = null;
-    };
-  }, [reveal, title, reduce]);
-
+  // The header started typing: in one go, blank the frame's text (same-width spaces),
+  // un-hide it and type it back in. Unmounting mid-way restores the text.
   const onStart = useCallback(() => {
-    if (!blanked.current || !frameRef.current) return;
-    cancel.current = typeIn(blanked.current, frameRef.current);
-    blanked.current = null;
+    const frame = frameRef.current;
+    if (!frame || frame.dataset.fx !== "pending") return;
+    const entries = blankText(frame, labelRef.current);
+    delete frame.dataset.fx;
+    cancel.current = typeIn(entries, frame);
   }, []);
+  useEffect(
+    () => () => {
+      if (cancel.current) cancel.current();
+      cancel.current = null;
+    },
+    [],
+  );
 
   return (
     <Tag
       ref={frameRef}
       id={id}
       data-sec={sec}
+      data-fx={pending ? "pending" : undefined}
       aria-labelledby={id ? id + "-label" : undefined}
       className={`${styles.frame} ${className}`}
       {...rest}
     >
       {/* The label is the section's heading (screen readers skip the ┤ ├ decoration). */}
-      <h2 ref={labelRef} id={id ? id + "-label" : undefined} className={styles.label}>
+      {/* Named by its title: the typed text may still be blank, and the [1] key hint
+          isn't part of the name. */}
+      <h2
+        ref={labelRef}
+        id={id ? id + "-label" : undefined}
+        aria-label={title}
+        className={styles.label}
+      >
         <span aria-hidden="true">┤</span>{" "}
         <span
           className={active ? (caret ? `${styles.on} ${styles.caret}` : styles.on) : styles.off}

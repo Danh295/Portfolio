@@ -153,6 +153,19 @@ pre {
   outline-offset: 2px;
 }
 
+/* Type-in (SectionFrame, useTextFx): a section's text, a frame title or the hero h1 that
+   hasn't typed in yet is data-fx="pending". Its real text stays in the DOM (screen
+   readers, find-in-page, crawlers) and only its colour goes, so borders and fills stay
+   put. html.fx comes from the pre-paint script (layout.js) when motion is allowed, so
+   nothing flashes before hydration and nothing is hidden for reduced motion or no JS. */
+html.fx [data-fx="pending"]:not([data-sec]),
+html.fx [data-fx="pending"] > :not(h2),
+html.fx [data-fx="pending"] > :not(h2) *,
+html.fx [data-fx="pending"] > :not(h2) *::before,
+html.fx [data-fx="pending"] > :not(h2) *::after {
+  color: transparent !important;
+}
+
 /* Custom cursor (components/overlay/Cursor.jsx) replaces the native one everywhere,
    including its own I-beam over text fields. Only on mouse/trackpad devices. */
 html.cursor-custom,
