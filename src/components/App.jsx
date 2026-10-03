@@ -546,8 +546,10 @@ export default function App() {
     const ae = document.activeElement,
       typing = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA");
     if (mode === "term") {
-      if (vim) vimKey(e);
-      else if (
+      // vim takes every key, except Enter/Space on a focused button (e.g. [exit]).
+      if (vim) {
+        if (!((e.key === "Enter" || e.key === " ") && ae && ae.closest("a, button"))) vimKey(e);
+      } else if (
         !typing &&
         // A focused button or link handles its own Enter, as in the gui.
         ((e.key === "Enter" && !(ae && ae !== document.body && ae.closest("a, button"))) ||
@@ -1074,6 +1076,21 @@ export default function App() {
   // A popup (keys or more…) is modal: everything behind it is inert (no Tab, no clicks,
   // hidden from screen readers) until it closes.
   const popup = help || aboutOpen;
+  // The j/k selection is shown by colour only, so it's also read out (a polite live region).
+  const selName =
+    mode !== "gui" || view
+      ? ""
+      : activeSec === 1 && list[sel]
+        ? list[sel].title + ", project " + (sel + 1) + " of " + list.length
+        : activeSec === 2 && expSel >= 0
+          ? expSel === EXP_TOGGLE(expEarlier)
+            ? expEarlier
+              ? "hide earlier roles"
+              : "earlier roles"
+            : experienceEntries[expSel].title + " at " + experienceEntries[expSel].company
+          : activeSec === 0 && heroSel !== "head"
+            ? { more: "more about me", rules: "how to play", egg: "egg minigame" }[heroSel]
+            : "";
   const termCwd = pstr(sessions.term.cwd),
     embedCwd = pstr(sessions.embed.cwd);
 
@@ -1188,6 +1205,9 @@ export default function App() {
               )}
             </main>
             <BottomBar inert={popup} spark={spark} barRef={barRef} />
+            <div className="sr-only" aria-live="polite" aria-atomic="true">
+              {selName}
+            </div>
             {termOpen && (
               <MiniShell
                 inert={popup}

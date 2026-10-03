@@ -114,11 +114,24 @@ export default function Intro({ reduce, rootRef }) {
     };
     raf = requestAnimationFrame(step);
     const skip = () => end(fx === "boot");
+    // Keys belong to the intro while it plays: Esc, Enter or Space skip it, and nothing
+    // reaches the page underneath (its selection would move unseen). Browser shortcuts
+    // with cmd/ctrl still work.
+    const onKey = (e) => {
+      if (done || e.metaKey || e.ctrlKey) return;
+      e.stopImmediatePropagation();
+      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        skip();
+      }
+    };
     ov.addEventListener("click", skip);
+    window.addEventListener("keydown", onKey, true);
     return () => {
       done = true;
       cancelAnimationFrame(raf);
       ov.removeEventListener("click", skip);
+      window.removeEventListener("keydown", onKey, true);
       delete document.documentElement.dataset.loading;
     };
   }, [fx, rootRef]);

@@ -12,7 +12,7 @@
 :root[data-theme="light"] {
   --bg: #f3f2ee;
   --fg: #161615;
-  --mid: #6b6a66;
+  --mid: #64635f; /* ≥ 4.5:1 on --bg and --soft (test/contrast.test.mjs) */
   --line: #d4d2cc;
   --soft: #e6e4df;
   color-scheme: light;
@@ -192,8 +192,9 @@ html.boot-term [data-mode="gui"] {
 /* Keyboard mode (html.kbd, components/overlay/Cursor.jsx): hover effects are paused
    by gating every :hover rule on html:not(.kbd), and tooltips hide, until the mouse
    moves again. Clicks still land normally (no pointer-events trick, which swallowed a
-   click made without moving the pointer first). */
-html.kbd [role="tooltip"] {
+   click made without moving the pointer first). A tooltip shown for keyboard focus
+   (data-focus, Tooltip.jsx) stays. */
+html.kbd [role="tooltip"]:not([data-focus]) {
   opacity: 0 !important;
 }
 

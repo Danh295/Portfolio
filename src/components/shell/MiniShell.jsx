@@ -42,7 +42,9 @@ export default function MiniShell({
       </div>
       <div ref={bodyRef} onClick={focus} className={styles.body}>
         <div ref={contentRef} className={styles.content}>
-          <TermLines lines={session.lines} variant="embed" onRun={onRun} />
+          <div role="log" aria-label="shell output">
+            <TermLines lines={session.lines} variant="embed" onRun={onRun} />
+          </div>
           <div className={styles.promptRow}>
             <span className={styles.mid}>{cwd} %</span>
             <input
