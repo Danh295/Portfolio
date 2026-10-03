@@ -28,12 +28,16 @@ const plex = localFont({
 });
 
 // JetBrains Mono (OFL, fonts/OFL.txt) stays only as a per-glyph fallback for the few
-// symbols Plex lacks (■ □ ●). Same 0.6em advance, so mixed runs still line up.
+// symbols Plex lacks (■ □ ●). Same 0.6em advance, so mixed runs still line up. The file
+// is subset to just those three glyphs (2.5 KB instead of 92 KB; to add one, re-run
+// pyftsubset on the full font with --unicodes=… --flavor=woff2), and unicode-range keeps
+// the browser from fetching it for anything else.
 const mono = localFont({
   src: [{ path: "./fonts/JetBrainsMono-Regular.woff2", weight: "400", style: "normal" }],
   variable: "--font-mono",
   display: "swap",
   preload: false,
+  declarations: [{ prop: "unicode-range", value: "U+25A0-25A1, U+25CF" }],
 });
 
 export const metadata = {
