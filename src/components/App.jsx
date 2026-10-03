@@ -883,10 +883,16 @@ export default function App({ initialView = null }) {
       if (SCROLL_KEYS.has(e.key)) release();
       if (keyHandler.current) keyHandler.current(e);
     };
+    // The spy measures every section, so it runs at most once per frame.
+    let spyFrame = 0;
     const onScrollEv = () => {
       // Our own scroll is still moving: keep the lock until it settles.
       if (navLock.current.on) holdNav(navLock, 160);
-      else if (scrollSpy.current) scrollSpy.current();
+      else if (!spyFrame)
+        spyFrame = requestAnimationFrame(() => {
+          spyFrame = 0;
+          if (!navLock.current.on && scrollSpy.current) scrollSpy.current();
+        });
     };
     const onPop = () => {
       // Back/forward leaves any popup, the embedded shell and the rules card behind.
@@ -947,6 +953,7 @@ export default function App({ initialView = null }) {
     });
     return () => {
       cancelAnimationFrame(seed);
+      cancelAnimationFrame(spyFrame);
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("scroll", onScrollEv);
       window.removeEventListener("popstate", onPop);

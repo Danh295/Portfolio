@@ -263,6 +263,10 @@ export function useEggGame({ reduce, clockMode, mode }) {
       const el = inTerm ? termPre.current : guiPre.current,
         box = inTerm ? termBox.current : guiBox.current,
         fxBox = inTerm ? termFx.current : guiFx.current;
+      // Read layout before this frame writes anything (clock, callouts, the art), so the
+      // read never forces a synchronous layout.
+      const rc = box && box.getBoundingClientRect();
+      const onScreen = rc && rc.bottom > 0 && rc.top < window.innerHeight && !document.hidden;
       const H = FRAME_H,
         st = L.stage,
         now = performance.now();
@@ -361,8 +365,6 @@ export function useEggGame({ reduce, clockMode, mode }) {
       const jit = t.shake > 0.01 ? Math.sin(now * 0.09) * 0.03 * t.shake : 0;
       t.shake *= Math.pow(0.88, k);
 
-      const rc = box && box.getBoundingClientRect();
-      const onScreen = rc && rc.bottom > 0 && rc.top < window.innerHeight && !document.hidden;
       const painting = el && box && onScreen && odd;
       if (painting) {
         const W = colsFor(box.clientWidth - (inTerm ? 64 : 48), inTerm ? 540 : 600);
