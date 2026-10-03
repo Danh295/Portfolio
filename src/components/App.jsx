@@ -189,11 +189,17 @@ export default function App({ initialView = null }) {
     if (push) setUrl(projUrl(slug), !!view);
   };
 
-  const goBack = () => {
-    pendingSec.current = 1;
+  // Close the project page and land on section n once the list is back (useOnChange(view)
+  // below scrolls there). `replace`: swap the history entry instead of adding one.
+  const leaveProject = (n, replace = false) => {
+    pendingSec.current = n;
     setView(null);
+    setUrl(secUrl(n), replace);
+  };
+
+  const goBack = () => {
+    leaveProject(1, true);
     setActiveSec(1);
-    setUrl(secUrl(1), true);
   };
 
   // Jump to section n, landing on its header unless `stop` names an element: a row
@@ -204,20 +210,14 @@ export default function App({ initialView = null }) {
     setHeroSel(n === 0 && stop ? stop : "head");
     if (n === 1) setSel(stop ?? -1);
     if (n === 2) setExpSel(stop ?? -1);
-    if (view) {
-      pendingSec.current = n;
-      setView(null);
-      setUrl(secUrl(n));
-    } else scrollSec(n);
+    if (view) leaveProject(n);
+    else scrollSec(n);
   };
 
   // "[h] ~/danny" and the h key: the hero, from anywhere (a project page included).
   const goHome = () => {
-    if (view) {
-      pendingSec.current = 0;
-      setView(null);
-      setUrl(secUrl(0));
-    } else scrollSec(0);
+    if (view) leaveProject(0);
+    else scrollSec(0);
     setActiveSec(0);
     setHeroSel("head");
   };
@@ -292,11 +292,8 @@ export default function App({ initialView = null }) {
       setHeroSel("egg");
     }
     if (to != null) {
-      if (view) {
-        pendingSec.current = to;
-        setView(null);
-        setUrl(secUrl(to));
-      } else setTimeout(() => scrollSec(to), 50);
+      if (view) leaveProject(to);
+      else setTimeout(() => scrollSec(to), 50);
     }
   };
 
