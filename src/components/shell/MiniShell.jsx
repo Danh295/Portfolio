@@ -16,6 +16,7 @@ export default function MiniShell({
   onInput,
   onKey,
   onClose,
+  inert,
 }) {
   const contentRef = useRef(null);
   // Opens (and stays) at the latest prompt, even after earlier use.
@@ -26,7 +27,13 @@ export default function MiniShell({
       inputRef.current.focus({ preventScroll: true });
   };
   return (
-    <div ref={panelRef} className={styles.panel} role="dialog" aria-label="embedded shell">
+    <div
+      ref={panelRef}
+      className={styles.panel}
+      role="dialog"
+      aria-label="embedded shell"
+      inert={inert}
+    >
       <div className={styles.head}>
         <span>┤ danny@portfolio: {cwd} ├</span>
         <button type="button" onClick={onClose} data-key="Escape" className={styles.close}>

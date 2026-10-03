@@ -122,6 +122,10 @@ function alignTarget(el) {
   return Math.max(0, Math.min(max, el.getBoundingClientRect().top + window.scrollY - margin));
 }
 
+// Moves focus for screen readers without scrolling or a focus ring (keyboard users still
+// see the inverted selection).
+const focusQuiet = (el) => el?.focus({ preventScroll: true, focusVisible: false });
+
 // Runs `fn(prev)` after a render in which `value` changed (not on mount).
 function useOnChange(value, fn) {
   const prev = useRef(value);
@@ -1015,6 +1019,8 @@ export default function App() {
     fade(contentRef.current);
     if (view) {
       window.scrollTo(0, 0); // opened (or switched) a project: start at its top
+      // Screen readers follow focus: land on the project's title (the clicked row is gone).
+      focusQuiet(document.querySelector("[data-detail-title]"));
       return;
     }
     // Closed a project: go straight back, no scroll animation from the top. Back to the
@@ -1028,12 +1034,20 @@ export default function App() {
       holdNav(navLock, 400, saved);
       window.scrollTo({ top: saved, behavior: "auto" });
     } else if (n != null) scrollSec(n, "auto");
+    // Focus was on the project page, which is gone: put it on the selected row.
+    if (document.activeElement === document.body && sel >= 0)
+      focusQuiet(document.querySelector('[data-row="' + sel + '"]'));
   });
 
   useOnChange(filter, () => fade(listRef.current));
 
   useOnChange(termOpen, () => {
-    if (!termOpen) return;
+    // Closed: focus was in the shell, which is gone; hand it to the button that opens it.
+    if (!termOpen) {
+      if (document.activeElement === document.body)
+        focusQuiet(document.querySelector('nav [data-key="`"]'));
+      return;
+    }
     fade(embedPanelRef.current);
     embedInputRef.current?.focus({ preventScroll: true });
   });
@@ -1057,6 +1071,9 @@ export default function App() {
   /* ---------- render ---------- */
 
   const termEggRunning = sessions.term.lines.some((l) => l.t === "egg");
+  // A popup (keys or more…) is modal: everything behind it is inert (no Tab, no clicks,
+  // hidden from screen readers) until it closes.
+  const popup = help || aboutOpen;
   const termCwd = pstr(sessions.term.cwd),
     embedCwd = pstr(sessions.embed.cwd);
 
@@ -1066,6 +1083,7 @@ export default function App() {
         {mode === "gui" ? (
           <>
             <Header
+              inert={popup}
               navRef={navRef}
               activeSec={view ? 1 : activeSec}
               dark={dark}
@@ -1077,6 +1095,7 @@ export default function App() {
               onHelp={() => setHelp((h) => !h)}
             />
             <main
+              inert={popup}
               ref={contentRef}
               className={view ? `${styles.main} ${styles.mainDetail}` : styles.main}
               data-snap={view ? undefined : ""}
@@ -1168,9 +1187,10 @@ export default function App() {
                 </>
               )}
             </main>
-            <BottomBar spark={spark} barRef={barRef} />
+            <BottomBar inert={popup} spark={spark} barRef={barRef} />
             {termOpen && (
               <MiniShell
+                inert={popup}
                 session={sessions.embed}
                 cwd={embedCwd}
                 panelRef={embedPanelRef}

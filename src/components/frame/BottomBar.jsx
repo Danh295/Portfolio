@@ -2,9 +2,9 @@ import { site } from "@/config/site";
 import Hint from "@/components/Hint";
 import styles from "./BottomBar.module.css";
 
-export default function BottomBar({ spark, barRef }) {
+export default function BottomBar({ spark, barRef, inert }) {
   return (
-    <div ref={barRef} className={styles.bar}>
+    <footer ref={barRef} className={styles.bar} aria-label="links and activity" inert={inert}>
       <div className={styles.inner}>
         <a href={`mailto:${site.email}`} data-key="e" data-tip={site.email}>
           <Hint className={styles.key}>[e] </Hint>
@@ -34,6 +34,6 @@ export default function BottomBar({ spark, barRef }) {
           </span>
         )}
       </div>
-    </div>
+    </footer>
   );
 }
