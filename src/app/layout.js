@@ -117,6 +117,15 @@ const FX =
 //   visits keep their hash, so /#projects links and the redirect stubs still work.
 const BOOT = `try{if(localStorage.getItem("danny-keys")==="off")document.documentElement.dataset.keys="off"}catch(e){}try{var d=document.documentElement,t=localStorage.getItem("danny-theme");if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";d.dataset.theme=t;document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.content=t==="dark"?"#121211":"#F3F2EE"})}catch(e){}try{if(sessionStorage.getItem("danny-mode")==="term")document.documentElement.classList.add("boot-term")}catch(e){}try{history.scrollRestoration="manual";var n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="reload"&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}${FX}${INTRO_COVER}`;
 
+// Who the site is about, for search engines (schema.org Person).
+const PERSON = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Danny Hu",
+  url: `${site.url}/`,
+  sameAs: [site.github.profile, site.linkedin],
+};
+
 export default function RootLayout({ children }) {
   return (
     <html
@@ -128,7 +137,13 @@ export default function RootLayout({ children }) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: BOOT }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(PERSON) }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
