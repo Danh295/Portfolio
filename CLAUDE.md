@@ -63,7 +63,12 @@ npm run sync          # refresh the build-time GitHub snapshot
 
 ## Known gaps
 
-The October 2026 review's phases 1–5 have all landed. Left on purpose: the hero's egg header and footer keep fixed pixel heights (so the pot never jumps between game stages); they scale with page zoom but can clip under text-only zoom. Content placeholders (coursework `courses`, IESO details) show up as the `todo` test.
+From the October 2026 review, still open (optional; the re-render goal was met by the React Compiler, not by the split):
+
+- `App.jsx` (~1,040 lines) could still shed a `useProjectHistory` hook (open/step/leave + popstate), and `handleKey` is one large function (could split into terminal / popup / gui handlers).
+- Duplication: `HelpModal` and `AboutModal` repeat the scrim, box and focus code; `MiniShell` and `Terminal` repeat the prompt input.
+- Left on purpose: the hero's egg header and footer keep fixed pixel heights (so the pot never jumps between game stages); they scale with page zoom but can clip under text-only zoom.
+- Content placeholders (coursework `courses`, IESO details) show up as the `todo` test.
 
 ## Git Commits
 

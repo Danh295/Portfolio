@@ -737,7 +737,7 @@ export default function App({ initialView = null }) {
 
   useEffect(() => {
     const p = view && projects.find((x) => x.slug === view);
-    document.title = p ? p.title + " · " + site.name : site.title;
+    document.title = p ? p.title + " | " + site.name : site.title;
   }, [view]);
 
   const fade = (el) => {
