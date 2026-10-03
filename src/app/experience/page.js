@@ -1,21 +1,8 @@
-"use client";
+import Redirect from "@/components/Redirect";
 
-import { useEffect } from "react";
-import { site } from "@/config/site";
+// Old URL: the section lives on the home page (see components/Redirect.jsx).
+export const metadata = { robots: { index: false, follow: true } };
 
-const TARGET = `${site.basePath}/#experience`;
-
-export default function ExperienceRedirect() {
-  useEffect(() => {
-    window.location.replace(TARGET);
-  }, []);
-
-  return (
-    <>
-      <meta httpEquiv="refresh" content={`0;url=${TARGET}`} />
-      <p style={{ padding: "2rem", textAlign: "center" }}>
-        Redirecting to <a href={TARGET}>{TARGET}</a>…
-      </p>
-    </>
-  );
+export default function Page() {
+  return <Redirect section="experience" />;
 }

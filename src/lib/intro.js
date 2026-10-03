@@ -33,9 +33,9 @@ export function introPlan(fx, reduce) {
   // Read the media now, not the hook: during hydration useReducedMotion still reports the
   // server value (false), and this plan is cached on first call.
   const still = reduce || prefersReducedMotion();
-  // A deep link (/#projects, a redirect stub, a shared project link) goes straight to
-  // what it asked for instead of sitting through the boot screen.
-  const deep = !!window.location.hash;
+  // A deep link (/#projects, a redirect stub, a project page) goes straight to what it
+  // asked for instead of sitting through the boot screen.
+  const deep = !!window.location.hash || window.location.pathname.includes("/projects/");
   if (fx === "none" || still || seen || deep) {
     plan = { fx: "none", delay: 0, at: performance.now() };
     return plan;

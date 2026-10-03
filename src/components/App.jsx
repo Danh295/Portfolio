@@ -82,6 +82,20 @@ const BOOT_EMBED = [
 const newSession = (lines) => ({ lines, input: "", hist: [], hi: -1, cwd: [], pend: null });
 
 // "#projects" → { sec: 1 }, "#projects/recall" → { slug: "recall" }
+// URLs: a project is a real page, /Portfolio/projects/<slug>/ (pre-rendered by
+// app/projects/[slug]/page.js, so it can be indexed and shared); sections are hashes on
+// the home page, /Portfolio/#experience.
+const HOME_URL = site.basePath + "/";
+const secUrl = (n) => HOME_URL + "#" + SECTION_IDS[n];
+const projUrl = (slug) => site.basePath + "/projects/" + slug + "/";
+
+/** What the address bar points at: { slug } for a project, else { sec }. */
+function parseLocation() {
+  const m = window.location.pathname.match(/\/projects\/([^/]+)\/?$/);
+  if (m && projects.some((p) => p.slug === m[1])) return { slug: m[1] };
+  return parseHash(window.location.hash);
+}
+
 function parseHash(hash) {
   const h = hash.replace(/^#\/?/, "");
   const [head, slug] = h.split("/");
@@ -137,14 +151,15 @@ function useOnChange(value, fn) {
   });
 }
 
-export default function App() {
+/** `initialView`: the project slug a /projects/<slug>/ page starts on (pre-rendered). */
+export default function App({ initialView = null }) {
   const reduce = useReducedMotion();
   const [dark, setDark, toggleTheme] = useTheme();
   // Single-character shortcuts on/off (WCAG 2.1.4); Enter, Space, arrows and Esc always work.
   const [keysOn, setKeysOn, toggleKeys] = useKeysPref();
   const [mode, setMode] = useState("gui");
   const [filter, setFilter] = useState("all");
-  const [view, setView] = useState(null);
+  const [view, setView] = useState(initialView);
   const [sel, setSel] = useState(-1);
   const [expSel, setExpSel] = useState(-1);
   const [expOpen, setExpOpen] = useState(-1);
@@ -218,7 +233,7 @@ export default function App() {
 
   // Stepping between projects or leaving one replaces the entry, so Back leaves the
   // project pages in one press and never reopens a project you just closed.
-  const setHash = (h, replace = false) => {
+  const setUrl = (h, replace = false) => {
     try {
       if (replace) history.replaceState(null, "", h);
       else history.pushState(null, "", h);
@@ -232,14 +247,14 @@ export default function App() {
     if (!view) returnScroll.current = window.scrollY;
     setRulesOpen(false);
     setView(slug);
-    if (push) setHash("#projects/" + slug, !!view);
+    if (push) setUrl(projUrl(slug), !!view);
   };
 
   const goBack = () => {
     pendingSec.current = 1;
     setView(null);
     setActiveSec(1);
-    setHash("#projects", true);
+    setUrl(secUrl(1), true);
   };
 
   // Jump to section n, landing on its header unless `stop` names an element: a row
@@ -253,7 +268,7 @@ export default function App() {
     if (view) {
       pendingSec.current = n;
       setView(null);
-      setHash("#" + SECTION_IDS[n]);
+      setUrl(secUrl(n));
     } else scrollSec(n);
   };
 
@@ -262,7 +277,7 @@ export default function App() {
     if (view) {
       pendingSec.current = 0;
       setView(null);
-      setHash("#home");
+      setUrl(secUrl(0));
     } else scrollSec(0);
     setActiveSec(0);
     setHeroSel("head");
@@ -392,7 +407,7 @@ export default function App() {
       if (view) {
         pendingSec.current = to;
         setView(null);
-        setHash("#" + SECTION_IDS[to]);
+        setUrl(secUrl(to));
       } else setTimeout(() => scrollSec(to), 50);
     }
   };
@@ -877,7 +892,7 @@ export default function App() {
       setAboutOpen(false);
       setTermOpen(false);
       setRulesOpen(false);
-      const r = parseHash(window.location.hash);
+      const r = parseLocation();
       if (r.slug) setView(r.slug);
       else {
         pendingSec.current = r.sec;
@@ -916,9 +931,13 @@ export default function App() {
       }
       if (savedMode === "term") setMode("term");
       else document.documentElement.classList.remove("boot-term"); // never leave it hidden
-      const r = parseHash(window.location.hash);
-      if (r.slug) setView(r.slug);
-      else if (r.sec) {
+      const r = parseLocation();
+      if (r.slug) {
+        setView(r.slug);
+        // An old-style link (/#projects/<slug>): show the project's real URL instead.
+        if (!window.location.pathname.includes("/projects/"))
+          history.replaceState(null, "", projUrl(r.slug));
+      } else if (r.sec) {
         setActiveSec(r.sec);
         holdNav(navLock, 400);
         document.querySelector('[data-sec="' + r.sec + '"]')?.scrollIntoView({ block: "start" });
