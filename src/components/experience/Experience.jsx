@@ -42,19 +42,22 @@ export default function Experience({
               type="button"
               onClick={() => onToggle(i)}
               aria-expanded={open}
+              aria-current={sel ? "true" : undefined}
               className={sel ? styles.rowOn : styles.row}
             >
-              <div className={styles.dateCol}>
+              {/* Spans, not divs/p: a button may only hold phrasing content (they're grid
+                  items, so they lay out as blocks anyway). */}
+              <span className={styles.dateCol}>
                 <span className={styles.faded}>{e.date}</span>
                 {e.now && <span className={sel ? styles.nowOn : styles.now}>● now</span>}
-              </div>
-              <div className={styles.titleCol}>
+              </span>
+              <span className={styles.titleCol}>
                 <span className={styles.title}>{e.title}</span>
                 <span className={styles.company}>
                   <span className={styles.raw}>{e.company}</span> · {e.loc}
                 </span>
-              </div>
-              <p className={styles.summary}>{e.summary}</p>
+              </span>
+              <span className={styles.summary}>{e.summary}</span>
               <span className={styles.caret}>{open ? "−" : "+"}</span>
             </button>
             {open && (
@@ -83,6 +86,7 @@ export default function Experience({
             expEarlier ? experienceEntries.length : experienceEntries.length - early.length
           }
           data-tip={expEarlier ? "collapse" : "show student nonprofit roles"}
+          aria-current={earlierSel ? "true" : undefined}
           className={earlierSel ? `${styles.earlier} ${styles.earlierOn}` : styles.earlier}
         >
           <span>{early[early.length - 1].date}</span>

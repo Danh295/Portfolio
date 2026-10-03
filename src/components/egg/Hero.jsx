@@ -34,7 +34,14 @@ export default function Hero({
     eggOn = active && heroSel === "egg",
     rulesOn = active && heroSel === "rules";
   const h1 = useRef(null),
-    stageRef = useRef(null);
+    stageRef = useRef(null),
+    rulesRef = useRef(null);
+  const rulesUp = view.briefing || rulesOpen;
+  // The rules card takes focus while it's up, so screen readers read the rules (and its
+  // "any key" still works: keys go to the page's handler).
+  useEffect(() => {
+    if (rulesUp) rulesRef.current?.focus({ preventScroll: true, focusVisible: false });
+  }, [rulesUp]);
   useTextFx(h1, homeContent.heading, "load", reduce);
 
   // The ASCII frame is EGG_PX tall. When the hero is sized to the viewport, shrink
@@ -160,24 +167,26 @@ export default function Hero({
           {/* Overlays over the pot (pointer-events: none, so drags still reach it). */}
           {startOverlay && (
             <div className={styles.overlay}>
-              <span
+              <button
+                type="button"
                 className={
                   eggOn
                     ? `${styles.box} ${styles.pressStart} ${styles.pressStartOn}`
                     : `${styles.box} ${styles.pressStart}`
                 }
-                role="button"
-                tabIndex={-1}
                 data-egg=""
                 onClick={onStart}
+                onFocus={onSelectEgg}
               >
                 click or <span className={styles.pressKey}>[↲]</span> to start
-              </span>
+              </button>
             </div>
           )}
-          {(view.briefing || rulesOpen) && (
+          {rulesUp && (
             <div className={styles.overlay}>
               <div
+                ref={rulesRef}
+                tabIndex={-1}
                 data-clickable=""
                 className={styles.rules}
                 role="dialog"

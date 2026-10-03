@@ -10,7 +10,7 @@ export default function Skills({ skills, active, reduce }) {
       sec={3}
       prefix={<Hint>[3] </Hint>}
       title="~/skills"
-      right={"bar = share of " + projects.length + " projects · hover for details"}
+      right={"bar = share of " + projects.length + " projects · hover or tab for details"}
       active={active}
       reduce={reduce}
       className={styles.skills}
@@ -20,10 +20,23 @@ export default function Skills({ skills, active, reduce }) {
           <div key={g.label} className={styles.group}>
             <span className={styles.label}>{g.label}/</span>
             {g.items.map((s) => (
-              <div key={s.name} data-tip={s.tip} className={styles.row}>
+              // Focusable so keyboard users get the tooltip too; screen readers read the
+              // details instead of the bar glyphs.
+              <div
+                key={s.name}
+                data-tip={s.tip}
+                data-tip-focus=""
+                tabIndex={0}
+                className={styles.row}
+              >
                 <span className={styles.raw}>{s.name}</span>
-                <span className={s.coursework ? styles.course : styles.bar}>{s.bar}</span>
-                <span className={styles.count}>{s.count}</span>
+                <span className={s.coursework ? styles.course : styles.bar} aria-hidden="true">
+                  {s.bar}
+                </span>
+                <span className={styles.count} aria-hidden="true">
+                  {s.count}
+                </span>
+                <span className="sr-only">{s.coursework ? "coursework, " + s.tip : s.tip}</span>
               </div>
             ))}
           </div>

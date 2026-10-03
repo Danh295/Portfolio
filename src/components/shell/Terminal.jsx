@@ -54,7 +54,7 @@ export default function Terminal({
       ) : (
         <div ref={bodyRef} onClick={focus} className={styles.body}>
           <div ref={contentRef} className={styles.content}>
-            <pre className={styles.banner} aria-label="danny hu">
+            <pre className={styles.banner} role="img" aria-label="danny hu">
               {BANNER}
             </pre>
             <div className={styles.mid}>
@@ -65,15 +65,17 @@ export default function Terminal({
               <span className={styles.fg}>exit</span> or <span className={styles.fg}>ctrl-d</span>{" "}
               leaves
             </div>
-            <TermLines
-              lines={session.lines}
-              variant="term"
-              onRun={onRun}
-              eggHandlers={eggHandlers}
-              eggPreRef={eggPreRef}
-              eggFxRef={eggFxRef}
-              eggStatusRef={eggStatusRef}
-            />
+            <div role="log" aria-label="terminal output">
+              <TermLines
+                lines={session.lines}
+                variant="term"
+                onRun={onRun}
+                eggHandlers={eggHandlers}
+                eggPreRef={eggPreRef}
+                eggFxRef={eggFxRef}
+                eggStatusRef={eggStatusRef}
+              />
+            </div>
             {/* While ./egg runs there is no prompt; the input stays (invisible) to take keys. */}
             <div className={running ? styles.promptHidden : styles.promptRow}>
               {!running && <span className={styles.prompt}>danny@portfolio {cwd} %</span>}

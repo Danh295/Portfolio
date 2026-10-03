@@ -81,6 +81,7 @@ export default function ProjectList({
               key={p.slug}
               type="button"
               data-row={i}
+              aria-current={on ? "true" : undefined}
               onClick={() => onOpen(p.slug)}
               data-tip={p.purpose}
               className={on ? styles.rowOn : styles.row}
