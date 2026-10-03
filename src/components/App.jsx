@@ -22,24 +22,26 @@ import { site } from "@/config/site";
 import { ui } from "@/config/ui";
 import { projects, projectFolders } from "@/data/projects";
 import { experienceEntries } from "@/data/experience";
-import { shell, skills, pstr } from "@/lib/shell";
-import { SHORTCUT_CMDS } from "@/lib/shell/spec";
+import { skills, pstr } from "@/lib/shell";
 import { spark } from "@/lib/github";
+import { useShell } from "@/components/shell/useShell";
 import { useTheme } from "@/lib/useTheme";
 import { useKeysPref } from "@/lib/useKeysPref";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { openBuffer, vimKey as vimStep } from "@/lib/vim";
+import {
+  alignTarget,
+  focusQuiet,
+  freeNav,
+  holdNav,
+  parseLocation,
+  projUrl,
+  secUrl,
+} from "@/lib/nav";
+import { useOnChange } from "@/lib/useOnChange";
+import { EXP_MAIN, EXP_TOGGLE, HAS_EARLY, stepSelection } from "@/lib/selection";
 import styles from "./App.module.css";
 
-const EXP_MAIN = ((i) => (i < 0 ? experienceEntries.length : i))(
-  experienceEntries.findIndex((e) => e.early),
-);
-const HAS_EARLY = EXP_MAIN < experienceEntries.length;
-// The "earlier · n roles" toggle is a j/k stop after the rows it sits below: right
-// after the main roles when folded, after the early roles when unfolded.
-const EXP_TOGGLE = (earlier) => (HAS_EARLY ? (earlier ? experienceEntries.length : EXP_MAIN) : -1);
-const EXP_LAST = (earlier) => (HAS_EARLY ? EXP_TOGGLE(earlier) : EXP_MAIN - 1);
-const SECTION_IDS = ["home", "projects", "experience", "skills"];
 // Read once per page load, not per render (a render must not read the clock).
 const YEAR = new Date().getFullYear();
 // Keys that scroll the page natively; pressing one hands activeSec back to the scroll spy.
@@ -71,88 +73,6 @@ const NAV_KEYS = new Set([
   "ArrowRight",
 ]);
 
-const bootCtx = { cwd: [], spark, hist: [] };
-const BOOT_TERM = [
-  ...shell.exec("whoami", "term", bootCtx).out,
-  ...shell.exec("ls", "term", bootCtx).out,
-  { t: "hint", text: "tree projects" },
-];
-const BOOT_EMBED = [
-  { t: "dim", text: "zsh-ish shell · type help · ` or esc closes" },
-  { t: "hint", text: "./app --mode terminal" },
-];
-const newSession = (lines) => ({ lines, input: "", hist: [], hi: -1, cwd: [], pend: null });
-
-// "#projects" → { sec: 1 }, "#projects/recall" → { slug: "recall" }
-// URLs: a project is a real page, /Portfolio/projects/<slug>/ (pre-rendered by
-// app/projects/[slug]/page.js, so it can be indexed and shared); sections are hashes on
-// the home page, /Portfolio/#experience.
-const HOME_URL = site.basePath + "/";
-const secUrl = (n) => HOME_URL + "#" + SECTION_IDS[n];
-const projUrl = (slug) => site.basePath + "/projects/" + slug + "/";
-
-/** What the address bar points at: { slug } for a project, else { sec }. */
-function parseLocation() {
-  const m = window.location.pathname.match(/\/projects\/([^/]+)\/?$/);
-  if (m && projects.some((p) => p.slug === m[1])) return { slug: m[1] };
-  return parseHash(window.location.hash);
-}
-
-function parseHash(hash) {
-  const h = hash.replace(/^#\/?/, "");
-  const [head, slug] = h.split("/");
-  if (head === "projects" && slug && projects.some((p) => p.slug === slug)) return { slug };
-  // Older links pointed at a project as /#<slug>.
-  if (!slug && projects.some((p) => p.slug === head)) return { slug: head };
-  const sec = SECTION_IDS.indexOf(head);
-  return { sec: sec < 0 ? 0 : sec };
-}
-
-// Keyboard/programmatic navigation owns activeSec while its scroll is in flight.
-// `hold` locks the scroll spy for `ms` (extended by each scroll event, so it lasts until
-// the scroll settles); `free` hands control back at once (user wheel/touch/keys).
-// Without it, the spy's "at the page bottom → last section" rule steals j/k when the
-// last sections are shorter than the viewport.
-// `target` is the scrollY a programmatic scroll is heading to, so a follow-up
-// ensureVisible can measure against where the page will land, not where it is mid-flight.
-function holdNav(lock, ms, target) {
-  lock.current.on = true;
-  if (target !== undefined) lock.current.target = target;
-  clearTimeout(lock.current.t);
-  lock.current.t = setTimeout(() => {
-    lock.current.on = false;
-    lock.current.target = null;
-  }, ms);
-}
-
-function freeNav(lock) {
-  lock.current.on = false;
-  lock.current.target = null;
-  clearTimeout(lock.current.t);
-}
-
-// scrollY that parks `el` just under the nav (its scroll-margin-top), within page bounds.
-function alignTarget(el) {
-  const margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0,
-    max = document.documentElement.scrollHeight - window.innerHeight;
-  return Math.max(0, Math.min(max, el.getBoundingClientRect().top + window.scrollY - margin));
-}
-
-// Moves focus for screen readers without scrolling or a focus ring (keyboard users still
-// see the inverted selection).
-const focusQuiet = (el) => el?.focus({ preventScroll: true, focusVisible: false });
-
-// Runs `fn(prev)` after a render in which `value` changed (not on mount).
-function useOnChange(value, fn) {
-  const prev = useRef(value);
-  useEffect(() => {
-    if (Object.is(prev.current, value)) return;
-    const p = prev.current;
-    prev.current = value;
-    fn(p);
-  });
-}
-
 /** `initialView`: the project slug a /projects/<slug>/ page starts on (pre-rendered). */
 export default function App({ initialView = null }) {
   const reduce = useReducedMotion();
@@ -177,11 +97,6 @@ export default function App({ initialView = null }) {
   const [heroSel, setHeroSel] = useState("head");
   const [rulesOpen, setRulesOpen] = useState(false);
   const [vim, setVim] = useState(null);
-  const [pressedTab, setPressedTab] = useState(-1);
-  const [sessions, setSessions] = useState(() => ({
-    term: newSession(BOOT_TERM),
-    embed: newSession(BOOT_EMBED),
-  }));
 
   const egg = useEggGame({ reduce, clockMode: ui.eggClock, mode });
 
@@ -209,11 +124,33 @@ export default function App({ initialView = null }) {
     returnScroll = useRef(null),
     vimReg = useRef(null),
     keyHandler = useRef(null),
-    runRef = useRef(null),
-    autoType = useRef(null),
+    fxRef = useRef(null),
     navRef = useRef(null),
     barRef = useRef(null),
     scrollSpy = useRef(null);
+
+  // Both shells (state, commands, keys); their page effects come back through applyFx,
+  // defined below and reached through fxRef.
+  const {
+    sessions,
+    pressedTab,
+    termEggRunning,
+    run,
+    shellKey,
+    typeRun,
+    quitEgg,
+    stopAutoType,
+    patchSession,
+    setTermInput,
+  } = useShell({
+    keysOn,
+    reduce,
+    egg,
+    vimOpen: !!vim,
+    termInputRef,
+    onFx: (k, fx) => fxRef.current(k, fx),
+    onExit: (k) => (k === "term" ? toGui() : setTermOpen(false)),
+  });
 
   const list = useMemo(
     () => projects.filter((p) => filter === "all" || p.category === filter),
@@ -310,7 +247,7 @@ export default function App({ initialView = null }) {
       // storage blocked: reloads start in the gui
     }
     // Leaving the terminal with ./egg still running quits it, as closing a shell would.
-    if (m === "gui" && sessions.term.lines.some((l) => l.t === "egg")) quitEgg();
+    if (m === "gui" && termEggRunning) quitEgg();
     setMode(m);
     setTermOpen(false);
     if (m === "gui") setVim(null);
@@ -320,59 +257,8 @@ export default function App({ initialView = null }) {
 
   /* ---------- shell ---------- */
 
-  const retireEgg = (lines, text) => lines.map((l) => (l.t === "egg" ? { t: "dim", text } : l));
-
-  const patchSession = (k, o) => setSessions((s) => ({ ...s, [k]: { ...s[k], ...o } }));
-  const appendLines = (k, extra, o = {}) =>
-    setSessions((s) => ({ ...s, [k]: { ...s[k], ...o, lines: [...s[k].lines, ...extra] } }));
-
-  // `typed`: the line came from the prompt. Clicks and shortcuts pass false.
-  const run = (k, raw, typed = false) => {
-    const T = sessions[k];
-    if (T.pend && typed) {
-      const yes = /^y(es)?$/i.test(raw.trim()),
-        pend = T.pend;
-      appendLines(
-        k,
-        [
-          { t: "cmd", text: raw.trim(), cwd: pstr(T.cwd) },
-          { t: "dim", text: yes ? "opening mail…" : "cancelled" },
-        ],
-        { pend: null, input: "" },
-      );
-      if (yes) window.location.assign(pend.href);
-      return;
-    }
-    // A click or shortcut while `mail`'s y/N is waiting answers "no", then runs.
-    const cancelled = T.pend ? [{ t: "dim", text: "cancelled" }] : [];
-    const { out, fx, cwd } = shell.runLine(raw, k, {
-      cwd: T.cwd,
-      spark,
-      hist: T.hist,
-      keys: keysOn,
-    });
-    const tr = raw.trim(),
-      hadEgg = T.lines.some((l) => l.t === "egg");
-    setSessions((s) => {
-      const TT = s[k];
-      // Any other command puts a running inline egg away (and resets the game below).
-      const prev = hadEgg
-        ? retireEgg(TT.lines, fx.egg ? "(egg session moved below)" : "^C")
-        : TT.lines;
-      return {
-        ...s,
-        [k]: {
-          ...TT,
-          lines: fx.clear ? out : [...prev, ...cancelled, ...out],
-          input: "",
-          hist: tr ? [...TT.hist, tr] : TT.hist,
-          hi: -1,
-          cwd,
-          pend: fx.pend || null,
-        },
-      };
-    });
-    if (hadEgg && !fx.egg) egg.reset();
+  // What a shell command does to the page (src/components/shell/useShell.js runs it).
+  const applyFx = (k, fx) => {
     if (fx.theme) setDark(fx.theme === "dark");
     if (fx.keys) setKeysOn(fx.keys === "on");
     if (fx.mode) switchMode(fx.mode);
@@ -411,129 +297,6 @@ export default function App({ initialView = null }) {
         setView(null);
         setUrl(secUrl(to));
       } else setTimeout(() => scrollSec(to), 50);
-    }
-  };
-
-  const complete = (k) => {
-    const T = sessions[k],
-      r = shell.complete(T.input, T.cwd);
-    if (!r) return;
-    const o = r.input != null ? { input: r.input } : {};
-    if (r.matches)
-      appendLines(
-        k,
-        [
-          { t: "cmd", text: T.input, cwd: pstr(T.cwd) },
-          { t: "txt", text: r.matches.join("   ") },
-        ],
-        o,
-      );
-    else patchSession(k, o);
-  };
-
-  // ./egg in terminal mode behaves like a foreground program: no prompt until ctrl-c.
-  const quitEgg = () => {
-    setSessions((s) => ({
-      ...s,
-      term: { ...s.term, lines: retireEgg(s.term.lines, "^C"), input: "", pend: null },
-    }));
-    egg.reset();
-  };
-
-  const stopAutoType = () => {
-    clearTimeout(autoType.current);
-    autoType.current = null;
-    setPressedTab(-1);
-  };
-
-  // Bottom-bar shortcut (digit key or click): flash the tab, type the command into
-  // the prompt, then run it.
-  const typeRun = (i) => {
-    const cmd = SHORTCUT_CMDS[i];
-    if (!cmd || autoType.current || vim) return; // vim owns the screen until :q
-    if (sessions.term.lines.some((l) => l.t === "egg")) quitEgg();
-    termInputRef.current?.focus({ preventScroll: true });
-    setPressedTab(i);
-    const finish = () => {
-      stopAutoType();
-      runRef.current("term", cmd);
-    };
-    if (reduce) {
-      patchSession("term", { input: cmd });
-      autoType.current = setTimeout(finish, 120);
-      return;
-    }
-    let n = 0;
-    const step = () => {
-      n += 1;
-      patchSession("term", { input: cmd.slice(0, n) });
-      autoType.current = setTimeout(n < cmd.length ? step : finish, n < cmd.length ? 38 : 240);
-    };
-    autoType.current = setTimeout(step, 110);
-  };
-
-  const shellKey = (k, e) => {
-    if (e.nativeEvent?.isComposing || e.isComposing || e.keyCode === 229) return; // IME
-    const T = sessions[k],
-      plain = !e.ctrlKey && !e.metaKey && !e.altKey,
-      hasEgg = T.lines.some((l) => l.t === "egg");
-    if (k === "term" && autoType.current) {
-      // A shortcut is typing itself out: ctrl-c cancels it, other keys wait.
-      if (e.metaKey) return;
-      e.preventDefault();
-      if (e.ctrlKey && e.key === "c") {
-        stopAutoType();
-        appendLines(k, [{ t: "cmd", text: T.input + "^C", cwd: pstr(T.cwd) }], { input: "" });
-      }
-      return;
-    }
-    if (k === "term" && hasEgg) {
-      // The egg owns the keyboard: Enter plays, ctrl-c quits, everything else is ignored.
-      if (e.metaKey) return;
-      e.preventDefault();
-      if (e.key === "Enter") egg.crack();
-      else if (e.ctrlKey && e.key === "c") quitEgg();
-      return;
-    }
-    if (
-      k === "term" &&
-      keysOn &&
-      plain &&
-      !T.input &&
-      /^[0-9]$/.test(e.key) &&
-      SHORTCUT_CMDS[+e.key]
-    ) {
-      e.preventDefault();
-      typeRun(+e.key);
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      run(k, T.input, true);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      const hi = Math.min(T.hist.length - 1, T.hi + 1);
-      if (hi >= 0) patchSession(k, { hi, input: T.hist[T.hist.length - 1 - hi] });
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      if (T.hi < 0) return; // already at the fresh prompt: keep what's typed
-      const hi = T.hi - 1;
-      patchSession(k, { hi, input: hi >= 0 ? T.hist[T.hist.length - 1 - hi] : "" });
-    } else if (e.key === "Tab") {
-      e.preventDefault();
-      complete(k);
-    } else if (e.ctrlKey && e.key === "l") {
-      e.preventDefault();
-      patchSession(k, { lines: [] });
-    } else if (e.ctrlKey && e.key === "c") {
-      e.preventDefault();
-      appendLines(k, [{ t: "cmd", text: T.input + "^C", cwd: pstr(T.cwd) }], {
-        input: "",
-        pend: null,
-      });
-    } else if (e.ctrlKey && e.key === "d" && !T.input) {
-      // EOF on an empty prompt leaves the shell.
-      e.preventDefault();
-      if (k === "term") toGui();
-      else setTermOpen(false);
     }
   };
 
@@ -724,9 +487,24 @@ export default function App({ initialView = null }) {
         else setExpOpen(expOpen === expSel ? -1 : expSel);
       }
     };
-    const lastExp = EXP_LAST(expEarlier);
-    // Hero stops in order; the rules chip joins once the rules have been seen.
-    const heroStops = ["head", "more", ...(egg.view.rulesSeen ? ["rules"] : []), "egg"];
+    // j/k: one step of the selection model (src/lib/selection.js).
+    const step = (dir) => {
+      if (!home) return;
+      const r = stepSelection(dir, {
+        activeSec,
+        heroSel,
+        sel,
+        expSel,
+        expEarlier,
+        rulesSeen: egg.view.rulesSeen,
+        listLength: list.length,
+      });
+      if (!r) return;
+      if (r.goSec) goSec(...r.goSec);
+      else if (r.heroSel) setHeroSel(r.heroSel);
+      else if (r.sel != null) setSel(r.sel);
+      else if (r.expSel != null) setExpSel(r.expSel);
+    };
     const home = !view,
       idx = projects.findIndex((p) => p.slug === view),
       open = (u) => window.open(u, "_blank", "noopener");
@@ -765,34 +543,8 @@ export default function App({ initialView = null }) {
         setFilter(projectFolders[(projectFolders.indexOf(filter) + 1) % projectFolders.length]);
         setSel(-1);
       },
-      j: () => {
-        if (!home) return;
-        if (activeSec === 0) {
-          const i = heroStops.indexOf(heroSel);
-          if (i < heroStops.length - 1) setHeroSel(heroStops[i + 1]);
-          else goSec(1);
-        } else if (activeSec === 1) {
-          if (sel >= list.length - 1) goSec(2);
-          else setSel(sel + 1);
-        } else if (activeSec === 2) {
-          if (expSel >= lastExp) goSec(3);
-          else setExpSel(expSel + 1);
-        }
-      },
-      k: () => {
-        if (!home) return;
-        if (activeSec === 3) goSec(2, lastExp);
-        else if (activeSec === 2) {
-          if (expSel < 0) goSec(1, list.length - 1);
-          else setExpSel(expSel - 1);
-        } else if (activeSec === 1) {
-          if (sel < 0) goSec(0, "egg");
-          else setSel(sel - 1);
-        } else if (activeSec === 0) {
-          const i = heroStops.indexOf(heroSel);
-          if (i > 0) setHeroSel(heroStops[i - 1]);
-        }
-      },
+      j: () => step(1),
+      k: () => step(-1),
       Enter: () => {
         if (!home || help || termOpen || aboutOpen) return;
         // On the hero heading, Enter jumps to the egg; otherwise it activates the
@@ -868,7 +620,7 @@ export default function App({ initialView = null }) {
   // Global listeners call through refs so they always see the latest render.
   useEffect(() => {
     keyHandler.current = handleKey;
-    runRef.current = run;
+    fxRef.current = applyFx;
     scrollSpy.current = onScroll;
   });
 
@@ -986,8 +738,6 @@ export default function App({ initialView = null }) {
     return () => ro.disconnect();
   }, [mode]);
 
-  useEffect(() => () => clearTimeout(autoType.current), []);
-
   useEffect(() => {
     const p = view && projects.find((x) => x.slug === view);
     document.title = p ? p.title + " · " + site.name : site.title;
@@ -1100,7 +850,6 @@ export default function App({ initialView = null }) {
 
   /* ---------- render ---------- */
 
-  const termEggRunning = sessions.term.lines.some((l) => l.t === "egg");
   // A popup (keys or more…) is modal: everything behind it is inert (no Tab, no clicks,
   // hidden from screen readers) until it closes.
   const popup = help || aboutOpen;
@@ -1291,9 +1040,7 @@ export default function App({ initialView = null }) {
             keysOn={keysOn}
             onShortcut={typeRun}
             onRun={(c) => run("term", c)}
-            onInput={(v) => {
-              if (!termEggRunning && !autoType.current) patchSession("term", { input: v });
-            }}
+            onInput={setTermInput}
             onKey={(e) => shellKey("term", e)}
             onExit={toGui}
           />
