@@ -17,9 +17,10 @@ export default function Header({
   onShell,
   onTheme,
   onHelp,
+  inert,
 }) {
   return (
-    <nav ref={navRef} className={styles.nav}>
+    <nav ref={navRef} className={styles.nav} aria-label="site" inert={inert}>
       <div className={styles.inner}>
         <button
           type="button"

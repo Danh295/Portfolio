@@ -70,7 +70,13 @@ export default function ProjectDetail({ slug, reduce, onBack, onOpen }) {
         </span>
         <div className={styles.head}>
           <span className={styles.no}>{pad(idx + 1)}</span>
-          <h1 ref={h1} className={styles.h1} aria-label={p.title} />
+          <h1
+            ref={h1}
+            className={styles.h1}
+            aria-label={p.title}
+            tabIndex={-1}
+            data-detail-title=""
+          />
         </div>
         <div className={styles.meta}>
           {meta.map(([k, v]) => (
