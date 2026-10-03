@@ -63,6 +63,38 @@ const SIMMER_MS = 1600,
   READY_MS = 900,
   START_HOLD_MS = 600;
 
+// Terminal-mode status block under the inline egg. `L` is the hook's live state, `t` the
+// scene (both refs' contents), so it's pure and the frame loop can call it freely.
+function statusText(L, t) {
+  const C = clockConfig(L.clockMode),
+    ES = eggStages[L.stage] || eggStages[0],
+    rs = L.result || { label: "", hint: "" };
+  const lines = [
+    "┤ " +
+      fillTimes(ES.title === "{r}" ? rs.label : ES.title, C) +
+      " ├  " +
+      fillTimes(ES.sub === "{b}" ? rs.hint : ES.sub, C),
+  ];
+  if (t.announce) lines.push("   " + t.announce);
+  else if (L.stage >= 1 && L.stage <= 3) lines.push("   " + t.tx);
+  if (L.stats && L.stage === 5) {
+    const sv = statsView(L.stats, eggTypes);
+    lines.push("", sv.head);
+    sv.rows.forEach((r) => lines.push(r.name.padEnd(14) + r.bar + "  " + r.n));
+  }
+  lines.push(
+    "",
+    L.stage === 5
+      ? "[enter] or click to play again · [ctrl-c] quit"
+      : L.stage === 0
+        ? "[enter] or click the pot to start · [ctrl-c] quit"
+        : L.stage === 2
+          ? "[enter] or click to pull the eggs · [ctrl-c] quit"
+          : "… · [ctrl-c] quit",
+  );
+  return lines.join("\n");
+}
+
 /**
  * The egg minigame. One scene, drawn every animation frame into whichever target is
  * live: the terminal's inline egg (in terminal mode) or the hero egg. Everything
@@ -204,38 +236,6 @@ export function useEggGame({ reduce, clockMode, mode }) {
     setStats(countEgg(g.type, eggTypes));
   }, [setStage, setResult, setStats, setTimer]);
 
-  // Terminal-mode status block under the inline egg.
-  const statusText = () => {
-    const L = live.current,
-      C = clockConfig(L.clockMode),
-      ES = eggStages[L.stage] || eggStages[0],
-      rs = L.result || { label: "", hint: "" };
-    const lines = [
-      "┤ " +
-        fillTimes(ES.title === "{r}" ? rs.label : ES.title, C) +
-        " ├  " +
-        fillTimes(ES.sub === "{b}" ? rs.hint : ES.sub, C),
-    ];
-    if (getScene().announce) lines.push("   " + getScene().announce);
-    else if (L.stage >= 1 && L.stage <= 3) lines.push("   " + getScene().tx);
-    if (L.stats && L.stage === 5) {
-      const sv = statsView(L.stats, eggTypes);
-      lines.push("", sv.head);
-      sv.rows.forEach((r) => lines.push(r.name.padEnd(14) + r.bar + "  " + r.n));
-    }
-    lines.push(
-      "",
-      L.stage === 5
-        ? "[enter] or click to play again · [ctrl-c] quit"
-        : L.stage === 0
-          ? "[enter] or click the pot to start · [ctrl-c] quit"
-          : L.stage === 2
-            ? "[enter] or click to pull the eggs · [ctrl-c] quit"
-            : "… · [ctrl-c] quit",
-    );
-    return lines.join("\n");
-  };
-
   // The frame loop. Physics every frame, paint every other frame. At rest (stage 0 or 5)
   // it idles while there's nothing to show: the pot is off screen or the tab hidden, or
   // reduced motion has frozen it and the last frame is painted. Any scroll, resize, key,
@@ -369,7 +369,7 @@ export function useEggGame({ reduce, clockMode, mode }) {
         t.W = W;
         t.H = H;
         if (inTerm && termStatus.current) {
-          const tx = statusText();
+          const tx = statusText(live.current, getScene());
           if (termStatus.current.textContent !== tx) termStatus.current.textContent = tx;
         }
         paint(
@@ -429,8 +429,6 @@ export function useEggGame({ reduce, clockMode, mode }) {
       window.removeEventListener("popstate", run);
       document.removeEventListener("visibilitychange", run);
     };
-    // statusText only reads refs
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [crack, finish, setStage, setTimer]);
 
   const handlers = {

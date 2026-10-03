@@ -40,6 +40,8 @@ const HAS_EARLY = EXP_MAIN < experienceEntries.length;
 const EXP_TOGGLE = (earlier) => (HAS_EARLY ? (earlier ? experienceEntries.length : EXP_MAIN) : -1);
 const EXP_LAST = (earlier) => (HAS_EARLY ? EXP_TOGGLE(earlier) : EXP_MAIN - 1);
 const SECTION_IDS = ["home", "projects", "experience", "skills"];
+// Read once per page load, not per render (a render must not read the clock).
+const YEAR = new Date().getFullYear();
 // Keys that scroll the page natively; pressing one hands activeSec back to the scroll spy.
 const SCROLL_KEYS = new Set(["PageUp", "PageDown", "Home", "End", " "]);
 // While a popup is open, these scroll its list (marked data-popup-scroll) instead of the
@@ -1113,23 +1115,112 @@ export default function App({ initialView = null }) {
   const termCwd = pstr(sessions.term.cwd),
     embedCwd = pstr(sessions.embed.cwd);
 
+  // The gui's big pieces are built up front, not inside the mode/view conditionals
+  // below: React Compiler caches each element on its own inputs, so a keystroke in the
+  // embedded shell (which only changes `sessions`) re-renders none of them.
+  const header = (
+    <Header
+      inert={popup}
+      navRef={navRef}
+      activeSec={view ? 1 : activeSec}
+      dark={dark}
+      shellOpen={termOpen}
+      onHome={goHome}
+      onSection={goSec}
+      onShell={() => setTermOpen((o) => !o)}
+      onTheme={toggleTheme}
+      onHelp={() => setHelp((h) => !h)}
+    />
+  );
+  const hero = (
+    <Hero
+      view={egg.view}
+      handlers={egg.handlers}
+      boxRef={guiBoxRef}
+      clockRef={guiClockRef}
+      preRef={guiPreRef}
+      fxRef={guiFxRef}
+      active={activeSec === 0}
+      heroSel={heroSel}
+      rulesOpen={rulesOpen}
+      keysOn={keysOn}
+      onRules={() => {
+        setActiveSec(0);
+        setHeroSel("rules");
+        setRulesOpen((o) => !o);
+      }}
+      announceRef={guiAnnounceRef}
+      onSelectEgg={() => {
+        setActiveSec(0);
+        setHeroSel("egg");
+      }}
+      onStart={() => {
+        setActiveSec(0);
+        setHeroSel("egg");
+        startEgg();
+      }}
+      onMore={() => {
+        setActiveSec(0);
+        setHeroSel("more");
+        setAboutOpen(true);
+      }}
+      reduce={reduce}
+    />
+  );
+  const projectList = (
+    <ProjectList
+      list={list}
+      filter={filter}
+      sel={sel}
+      active={activeSec === 1}
+      reduce={reduce}
+      listRef={listRef}
+      onFilter={(key) => {
+        setFilter(key);
+        setSel(-1);
+        setActiveSec(1);
+      }}
+      onOpen={(slug) => openProject(slug)}
+    />
+  );
+  const experience = (
+    <Experience
+      expSel={expSel}
+      expOpen={expOpen}
+      expEarlier={expEarlier}
+      active={activeSec === 2}
+      reduce={reduce}
+      onToggle={(i) => {
+        setExpSel(i);
+        setActiveSec(2);
+        setExpOpen(expOpen === i ? -1 : i);
+      }}
+      earlierSel={active2Toggle}
+      onToggleEarlier={() => {
+        setActiveSec(2);
+        toggleEarlier();
+      }}
+    />
+  );
+  const tail = (
+    <div className={styles.tail}>
+      <Skills skills={skills} active={activeSec === 3} reduce={reduce} />
+      <div className={styles.foot}>
+        <span suppressHydrationWarning>© {YEAR} danny hu · soft-boiled in waterloo</span>
+        <span>
+          [↑/↓] sections<Hint> · [?] all keys · [`] shell</Hint>
+        </span>
+      </div>
+    </div>
+  );
+  const bottomBar = <BottomBar inert={popup} spark={spark} barRef={barRef} />;
+
   return (
     <>
       <div ref={rootRef} data-mode={mode} className={styles.root}>
         {mode === "gui" ? (
           <>
-            <Header
-              inert={popup}
-              navRef={navRef}
-              activeSec={view ? 1 : activeSec}
-              dark={dark}
-              shellOpen={termOpen}
-              onHome={goHome}
-              onSection={goSec}
-              onShell={() => setTermOpen((o) => !o)}
-              onTheme={toggleTheme}
-              onHelp={() => setHelp((h) => !h)}
-            />
+            {header}
             <main
               inert={popup}
               ref={contentRef}
@@ -1145,85 +1236,14 @@ export default function App({ initialView = null }) {
                 />
               ) : (
                 <>
-                  <Hero
-                    view={egg.view}
-                    handlers={egg.handlers}
-                    boxRef={guiBoxRef}
-                    clockRef={guiClockRef}
-                    preRef={guiPreRef}
-                    fxRef={guiFxRef}
-                    active={activeSec === 0}
-                    heroSel={heroSel}
-                    rulesOpen={rulesOpen}
-                    keysOn={keysOn}
-                    onRules={() => {
-                      setActiveSec(0);
-                      setHeroSel("rules");
-                      setRulesOpen((o) => !o);
-                    }}
-                    announceRef={guiAnnounceRef}
-                    onSelectEgg={() => {
-                      setActiveSec(0);
-                      setHeroSel("egg");
-                    }}
-                    onStart={() => {
-                      setActiveSec(0);
-                      setHeroSel("egg");
-                      startEgg();
-                    }}
-                    onMore={() => {
-                      setActiveSec(0);
-                      setHeroSel("more");
-                      setAboutOpen(true);
-                    }}
-                    reduce={reduce}
-                  />
-                  <ProjectList
-                    list={list}
-                    filter={filter}
-                    sel={sel}
-                    active={activeSec === 1}
-                    reduce={reduce}
-                    listRef={listRef}
-                    onFilter={(key) => {
-                      setFilter(key);
-                      setSel(-1);
-                      setActiveSec(1);
-                    }}
-                    onOpen={(slug) => openProject(slug)}
-                  />
-                  <Experience
-                    expSel={expSel}
-                    expOpen={expOpen}
-                    expEarlier={expEarlier}
-                    active={activeSec === 2}
-                    reduce={reduce}
-                    onToggle={(i) => {
-                      setExpSel(i);
-                      setActiveSec(2);
-                      setExpOpen(expOpen === i ? -1 : i);
-                    }}
-                    earlierSel={active2Toggle}
-                    onToggleEarlier={() => {
-                      setActiveSec(2);
-                      toggleEarlier();
-                    }}
-                  />
-                  <div className={styles.tail}>
-                    <Skills skills={skills} active={activeSec === 3} reduce={reduce} />
-                    <div className={styles.foot}>
-                      <span suppressHydrationWarning>
-                        © {new Date().getFullYear()} danny hu · soft-boiled in waterloo
-                      </span>
-                      <span>
-                        [↑/↓] sections<Hint> · [?] all keys · [`] shell</Hint>
-                      </span>
-                    </div>
-                  </div>
+                  {hero}
+                  {projectList}
+                  {experience}
+                  {tail}
                 </>
               )}
             </main>
-            <BottomBar inert={popup} spark={spark} barRef={barRef} />
+            {bottomBar}
             <div className="sr-only" aria-live="polite" aria-atomic="true">
               {selName}
             </div>
