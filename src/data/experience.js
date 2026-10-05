@@ -1,13 +1,18 @@
+import { isCurrent } from "@/lib/dates";
+
+// When the site was built (next.config.mjs; under node tests, now).
+const BUILT = new Date(process.env.BUILD_DATE ?? Date.now());
+
 // Newest first. `early: true` roles are folded into one "earlier · n roles" toggle row.
 // Casing is stored exactly as displayed (nothing transforms it): the site's voice is
 // lowercase, including locations; companies, products and acronyms keep their casing.
-export const experienceEntries = [
+// `now` (the "● now" badge, the hero's "working" fact) comes from `date` at build time.
+const entries = [
   {
     title: "software solutions developer (co-op)",
     company: "IESO",
     loc: "mississauga, on",
     date: "sep 2026 – dec 2026",
-    now: true,
     summary: "working on Python proofs of concept and data pipelines, along with SQL databases",
     details: [
       "building Python proofs of concept",
@@ -70,3 +75,5 @@ export const experienceEntries = [
     ],
   },
 ];
+
+export const experienceEntries = entries.map((e) => ({ ...e, now: isCurrent(e.date, BUILT) }));

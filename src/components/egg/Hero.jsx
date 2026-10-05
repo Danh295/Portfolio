@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import SectionFrame from "@/components/frame/SectionFrame";
 import Hint from "@/components/Hint";
 import { homeContent } from "@/data/home";
-import { isPlayed, useTextFx } from "@/lib/useTextFx";
+import { usePlayed, useTextFx } from "@/lib/useTextFx";
 import { EGG_PX } from "@/lib/egg/grid";
 import EggCanvas from "./EggCanvas";
 import styles from "./Hero.module.css";
@@ -43,6 +43,7 @@ export default function Hero({
     if (rulesUp) rulesRef.current?.focus({ preventScroll: true, focusVisible: false });
   }, [rulesUp]);
   useTextFx(h1, homeContent.heading, "load", reduce);
+  const headPlayed = usePlayed("load", homeContent.heading);
 
   // The ASCII frame is EGG_PX tall. When the hero is sized to the viewport, shrink
   // the frame to whatever height the stage has left instead of overflowing it.
@@ -88,7 +89,7 @@ export default function Hero({
             ref={h1}
             className={headOn ? `${styles.h1} ${styles.caret}` : styles.h1}
             aria-label={homeContent.heading}
-            data-fx={isPlayed("load", homeContent.heading) ? undefined : "pending"}
+            data-fx={headPlayed ? undefined : "pending"}
           >
             {homeContent.heading}
           </h1>

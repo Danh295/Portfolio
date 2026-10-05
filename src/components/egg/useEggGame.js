@@ -17,6 +17,8 @@ import { EGG_ROWS, EGG_GRID_SCALE, colsFor } from "@/lib/egg/grid";
 import { paint } from "@/lib/egg/paint";
 
 const FRAME_H = EGG_ROWS;
+// Events that end a drag of the pot, caught on the document (see endDrag).
+const DRAG_END = ["pointerup", "pointercancel"];
 
 const freshScene = () => ({
   boil: 0,
@@ -418,6 +420,12 @@ export function useEggGame({ reduce, clockMode, mode }) {
     const WAKE = ["scroll", "keydown", "pointerdown"],
       opts = { capture: true, passive: true };
     for (const ev of WAKE) document.addEventListener(ev, run, opts);
+    // A drag ends wherever the button comes up: if the pot unmounted mid-drag (a project
+    // opened, Back), its own pointerup never comes, and a stuck drag keeps the loop awake.
+    const endDrag = () => {
+      getScene().drag = null;
+    };
+    for (const ev of DRAG_END) document.addEventListener(ev, endDrag, opts);
     window.addEventListener("resize", run);
     window.addEventListener("popstate", run);
     document.addEventListener("visibilitychange", run);
@@ -427,6 +435,7 @@ export function useEggGame({ reduce, clockMode, mode }) {
       wake.current = () => {};
       document.removeEventListener("mousemove", onMove);
       for (const ev of WAKE) document.removeEventListener(ev, run, opts);
+      for (const ev of DRAG_END) document.removeEventListener(ev, endDrag, opts);
       window.removeEventListener("resize", run);
       window.removeEventListener("popstate", run);
       document.removeEventListener("visibilitychange", run);

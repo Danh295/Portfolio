@@ -12,11 +12,13 @@
 // - In CI the Pages workflow restores the previous snapshot from the actions cache first,
 //   so "keep the previous snapshot" works there too.
 // - Never fails the build: on errors the previous snapshot is kept (or an empty one
-//   written), and the UI hides whatever is missing. Never fakes data.
+//   written), and the UI hides whatever is missing. Never fakes data. A repo GitHub says
+//   is gone (404) is dropped instead of kept forever.
 //
 // Usage: node scripts/sync-github.mjs [--if-stale]   (--if-stale: skip if < 6h old)
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { buckets, mergeRepos, reposIn } from "./github-snapshot.mjs";
 
 const USER = "Danh295";
 const OUT = new URL("../src/data/github.generated.json", import.meta.url);
@@ -48,19 +50,12 @@ async function api(path, init = {}) {
     headers: { ...headers, ...(init.headers || {}) },
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
-  if (!r.ok) throw new Error(`${path}: ${r.status}`);
+  if (!r.ok) throw Object.assign(new Error(`${path}: ${r.status}`), { status: r.status });
   return r.json();
 }
 
 // "owner/name" for every GitHub repo linked from a project.
-function projectRepos() {
-  const src = readFileSync(PROJECTS, "utf8"),
-    repos = new Set();
-  for (const m of src.matchAll(/github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?["/#?]/g))
-    repos.add(`${m[1]}/${m[2]}`);
-  for (const m of src.matchAll(/repoUrl\("([\w.-]+)"\)/g)) repos.add(`${USER}/${m[1]}`);
-  return [...repos];
-}
+const projectRepos = () => reposIn(readFileSync(PROJECTS, "utf8"), USER);
 
 async function repoInfo(full) {
   const r = await api(`/repos/${full}`);
@@ -70,16 +65,6 @@ async function repoInfo(full) {
     language: r.language,
     url: r.html_url,
   };
-}
-
-// 12 rolling 7-day windows ending now, oldest first. `items` are [time ms, count].
-function buckets(items, now = Date.now()) {
-  const w = new Array(12).fill(0);
-  for (const [t, n] of items) {
-    const i = Math.floor((now - t) / WEEK_MS);
-    if (i >= 0 && i < 12) w[11 - i] += n;
-  }
-  return w;
 }
 
 // Contribution calendar for just the last 12 weeks (plus a day for the time zone edge).
@@ -123,19 +108,12 @@ async function main() {
     }
   }
 
-  const repos = {},
-    list = projectRepos();
-  let failed = 0;
+  const list = projectRepos();
   const results = await Promise.allSettled(list.map(repoInfo));
   results.forEach((r, i) => {
-    const full = list[i];
-    if (r.status === "fulfilled") repos[full] = r.value;
-    else {
-      failed++;
-      if (prev?.repos?.[full]) repos[full] = prev.repos[full];
-      console.warn("github sync: " + full + ": " + r.reason.message);
-    }
+    if (r.status === "rejected") console.warn("github sync: " + list[i] + ": " + r.reason.message);
   });
+  const { repos, failed } = mergeRepos(list, results, prev?.repos);
 
   let activity = null,
     activityFresh = false;
@@ -168,7 +146,7 @@ async function main() {
   write(snap);
   console.log(
     `github sync: ${Object.keys(repos).length} repos, activity ${activity ? activity.kind : "none"}` +
-      (failed ? `, ${failed} failed (kept previous)` : ""),
+      (failed ? `, ${failed} failed (kept previous unless gone)` : ""),
   );
 }
 

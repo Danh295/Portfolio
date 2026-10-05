@@ -1,3 +1,8 @@
+import { experienceEntries } from "@/data/experience";
+
+// Companies with a current role: the "working" fact shows only while its org is one.
+const workingAt = experienceEntries.filter((e) => e.now).map((e) => e.company);
+
 // Hero copy (GUI) and the about/whoami text the terminal prints.
 export const homeContent = {
   prompt: "$ whoami",
@@ -13,7 +18,7 @@ export const homeContent = {
       value: "computer vision, image processing, machine learning, web dev, and eggs",
       note: "(i like eating eggs)",
     },
-  ],
+  ].filter((f) => f.key !== "working" || workingAt.includes(f.org)),
 };
 
 // ~/about.txt (`about` / `cat about.txt` in the shell). `whoami` prints homeContent.intro.
@@ -33,7 +38,7 @@ const fact = (key) => homeContent.facts.find((f) => f.key === key);
 const factText = (f) => f.value + (f.org || "");
 export const whoamiFacts = [
   { k: "studying", v: factText(fact("studying")) },
-  { k: "working", v: factText(fact("working")) },
+  ...(fact("working") ? [{ k: "working", v: factText(fact("working")) }] : []),
   {
     k: "seeking",
     v: "fall 2027 co-op opportunities, open to toronto and remote, will consider relocating",
