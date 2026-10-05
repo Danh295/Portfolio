@@ -59,6 +59,9 @@ const POPUP_SCROLL = {
   Home: -3,
   End: 3,
 };
+// Keys that toggle, open or activate something: a held key acts once, not at key-repeat
+// speed (a held t would strobe the whole page between themes). Moving keys still repeat.
+const NO_REPEAT = new Set([..."?msitf`eglr", "Enter", "Escape", "Backspace"]);
 // Keys that move the gui selection.
 const NAV_KEYS = new Set([
   "j",
@@ -346,6 +349,10 @@ export default function App({ initialView = null }) {
         termInputRef.current?.focus({ preventScroll: true });
       return;
     }
+    if (e.repeat && !typing && NO_REPEAT.has(e.key)) {
+      e.preventDefault();
+      return;
+    }
     // A popup (keys or more…) owns the keyboard: only Esc, the popup keys (? and m, which
     // swap between them) and s (in the keys popup) work. Scroll keys scroll the popup, not
     // the page behind it; Enter and Space still press a focused button inside it.
@@ -565,13 +572,13 @@ export default function App({ initialView = null }) {
     // scrolls the page as usual). With the egg selected, both always play it.
     if (eggKey) {
       e.preventDefault();
-      activate();
+      if (!e.repeat) activate();
       return;
     }
     if (e.key === " ") {
       if (selectedEl()) {
         e.preventDefault();
-        activate();
+        if (!e.repeat) activate();
       }
       return;
     }
@@ -611,7 +618,7 @@ export default function App({ initialView = null }) {
   // Tells the pre-paint script's fail-safe (layout.js) that hidden type-in text will be
   // revealed by the app, so it must not un-hide it early.
   useEffect(() => {
-    document.documentElement.dataset.hydrated = "";
+    document.documentElement.dataset.hydrated = "1";
   }, []);
 
   // Global listeners call through refs so they always see the latest render.
