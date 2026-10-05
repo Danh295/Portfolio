@@ -11,7 +11,9 @@ export const SECTION_IDS = ["home", "projects", "experience", "skills"];
 // the home page, /Portfolio/#experience.
 const HOME_URL = site.basePath + "/";
 export const secUrl = (n) => HOME_URL + "#" + SECTION_IDS[n];
-export const projUrl = (slug) => site.basePath + "/projects/" + slug + "/";
+/** A project page's path without the basePath (for site.url + …); projUrl adds it. */
+export const projPath = (slug) => "/projects/" + slug + "/";
+export const projUrl = (slug) => site.basePath + projPath(slug);
 
 const isSlug = (s) => projects.some((p) => p.slug === s);
 

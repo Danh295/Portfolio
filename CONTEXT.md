@@ -27,7 +27,7 @@ _Avoid_: splash, loader
 ## Keyboard
 
 **Stop**:
-A place the j/k selection can land: a section header, a hero element (`more…`, the egg), or a project or experience row.
+A place the j/k selection can land: a section header, a hero element (`more…`, the rules chip, the egg), or a project or experience row.
 _Avoid_: focus target, item
 
 **Selection**:
@@ -35,7 +35,7 @@ The current stop, shown inverted (no cursor) and announced by the live region. I
 _Avoid_: focus, highlight, cursor
 
 **Keyboard mode**:
-`html.kbd`, set by any keypress and cleared by a real mouse move. It pauses hover styling.
+`html.kbd`, set by any keypress and cleared by a real mouse move or any click. It pauses hover styling.
 _Avoid_: keyboard focus mode
 
 **Keys off**:

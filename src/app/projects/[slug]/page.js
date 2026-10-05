@@ -1,6 +1,7 @@
 import App from "@/components/App";
 import { site } from "@/config/site";
 import { projects } from "@/data/projects";
+import { projPath } from "@/lib/nav";
 
 // One pre-rendered page per project, so each can be indexed and shared:
 // /Portfolio/projects/<slug>/. It's the same app, opened on that project; moving around
@@ -14,7 +15,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const p = projects.find((x) => x.slug === slug);
-  const url = `${site.url}/projects/${slug}/`;
+  const url = site.url + projPath(slug);
   const title = `${p.title} | ${site.name}`;
   return {
     title,
