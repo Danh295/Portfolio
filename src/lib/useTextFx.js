@@ -1,18 +1,35 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react";
 import { ui } from "@/config/ui";
 import { INTRO_END, introWait } from "@/lib/intro";
 import { runTextFx } from "@/lib/textFx";
 import { prefersReducedMotion } from "@/lib/useReducedMotion";
 
 // Headings that have started their one-time effect this page load. Survives remounts
-// (e.g. opening and closing a project), so each plays exactly once per load.
+// (e.g. opening and closing a project), so each plays exactly once per load. A small
+// external store, so a render reads it through usePlayed (never the Set directly).
 const played = new Set();
+const listeners = new Set();
+const markPlayed = (key) => {
+  played.add(key);
+  listeners.forEach((l) => l());
+};
+const subscribe = (l) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
 const BLANK = " ";
 
-/** Whether a one-time heading has already played this load (e.g. to skip related fx). */
-export const isPlayed = (trigger, text) => played.has(trigger + ":" + text);
+/** Whether a one-time heading has already played this load (false on the server). */
+export function usePlayed(trigger, text) {
+  const key = trigger + ":" + text;
+  return useSyncExternalStore(
+    subscribe,
+    () => played.has(key),
+    () => false,
+  );
+}
 
 export const isStill = (reduce) => reduce || ui.headerFx === "none" || prefersReducedMotion();
 
@@ -57,8 +74,10 @@ export function useTextFx(ref, text, trigger, reduce, active = false, onStart = 
     const start = () => {
       if (once) {
         if (played.has(key)) return;
-        played.add(key);
+        // onStart first (SectionFrame un-hides and types its frame), then tell usePlayed
+        // readers, so no re-render can drop data-fx="pending" before onStart sees it.
         if (startCb.current) startCb.current();
+        markPlayed(key);
       }
       // Rendered data-fx="pending" (hidden by CSS until now); the effect takes it from here.
       delete el.dataset.fx;

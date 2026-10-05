@@ -29,7 +29,26 @@ test("experience: required fields, unique companies (they become file names)", (
 
 test("whoami facts come from the hero's facts", () => {
   const working = homeContent.facts.find((f) => f.key === "working");
-  assert.equal(whoamiFacts.find((f) => f.k === "working").v, working.value + working.org);
+  const row = whoamiFacts.find((f) => f.k === "working");
+  if (working) assert.equal(row.v, working.value + working.org);
+  else assert.equal(row, undefined, "no working row once the role has ended");
+});
+
+// The hero's "working … @ <org>" is tied to an experience entry by company name (it shows
+// only while that role is current), so a typo would hide it silently.
+test("the working fact names an experience entry's company", async () => {
+  const src = await import("node:fs").then((fs) =>
+    fs.readFileSync(new URL("../src/data/home.js", import.meta.url), "utf8"),
+  );
+  const org = src.match(/key: "working",[^}]*org: "([^"]+)"/)?.[1];
+  assert.ok(org, "home.js has a working fact");
+  assert.ok(
+    experienceEntries.some((e) => e.company === org),
+    org + " is no experience entry's company",
+  );
+  const working = homeContent.facts.find((f) => f.key === "working");
+  const current = experienceEntries.some((e) => e.now && e.company === org);
+  assert.equal(!!working, current, "shown exactly while the role is current");
 });
 
 test("skills match tags exactly or as a prefix word", () => {

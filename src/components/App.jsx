@@ -129,7 +129,8 @@ export default function App({ initialView = null }) {
     fxRef = useRef(null),
     navRef = useRef(null),
     barRef = useRef(null),
-    scrollSpy = useRef(null);
+    scrollSpy = useRef(null),
+    tabFocus = useRef(null); // the element the Tab key last moved focus to
 
   // Both shells (state, commands, keys); their page effects come back through applyFx,
   // defined below and reached through fxRef.
@@ -424,13 +425,22 @@ export default function App({ initialView = null }) {
       if (e.key === "Enter") shellKey("embed", e);
       return;
     }
+    // A link or button reached with Tab keeps its Enter/Space, even with the egg selected
+    // or the rules card up. Focus a click left behind (or a quiet focus move) doesn't, so
+    // the egg still gets those keys. (Not :focus-visible: Chrome turns that on for a
+    // clicked button at the first keypress, before this handler runs.)
+    const tabbed =
+      (e.key === "Enter" || e.key === " ") &&
+      !!ae?.closest("a, button, summary, select") &&
+      ae === tabFocus.current;
     // The first-round rules card is up: Enter, Space or any character key proceeds (it
     // says so; with shortcuts off only Enter and Space do). Esc puts it away; arrows, Tab
     // and the like keep their usual jobs.
     const eggRc = guiBoxRef.current?.getBoundingClientRect(),
       eggOnScreen = !!eggRc && eggRc.bottom > 80 && eggRc.top < window.innerHeight - 80;
     if (egg.view.briefing && eggOnScreen && !view && !help && !aboutOpen) {
-      const proceed = e.key === "Enter" || e.key === " " || (keysOn && e.key.length === 1);
+      const proceed =
+        (e.key === "Enter" || e.key === " " || (keysOn && e.key.length === 1)) && !tabbed;
       if (e.key === "Escape") {
         e.preventDefault();
         egg.reset();
@@ -458,6 +468,7 @@ export default function App({ initialView = null }) {
     // earlier click (e.g. the rules chip), so a timed press never goes elsewhere.
     const eggKey =
       (e.key === "Enter" || e.key === " ") &&
+      !tabbed &&
       !view &&
       !help &&
       !termOpen &&
@@ -678,6 +689,20 @@ export default function App({ initialView = null }) {
         pressFx(e.target.closest(PRESSABLE));
     };
     window.addEventListener("pointerdown", onPress);
+    // Remember what Tab focused (see `tabbed` in handleKey); a click or script focus clears it.
+    let tabbing = false;
+    const onAnyKey = (e) => {
+      tabbing = e.key === "Tab";
+    };
+    const onPointer = () => {
+      tabbing = false;
+    };
+    const onFocusIn = (e) => {
+      tabFocus.current = tabbing ? e.target : null;
+    };
+    window.addEventListener("keydown", onAnyKey, true);
+    window.addEventListener("pointerdown", onPointer, true);
+    window.addEventListener("focusin", onFocusIn);
     // A focused button activated by Enter/Space fires a click with detail 0: flash it too.
     const onKeyClick = (e) => {
       if (e.detail === 0 && e.target instanceof Element) pressFx(e.target.closest(PRESSABLE));
@@ -717,6 +742,9 @@ export default function App({ initialView = null }) {
       window.removeEventListener("touchstart", release);
       window.removeEventListener("pointerdown", release);
       window.removeEventListener("pointerdown", onPress);
+      window.removeEventListener("keydown", onAnyKey, true);
+      window.removeEventListener("pointerdown", onPointer, true);
+      window.removeEventListener("focusin", onFocusIn);
       window.removeEventListener("click", onKeyClick, true);
       freeNav(navLock);
     };

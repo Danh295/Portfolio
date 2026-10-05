@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { isPlayed, useTextFx } from "@/lib/useTextFx";
+import { usePlayed, useTextFx } from "@/lib/useTextFx";
 import { blankText, typeIn } from "@/lib/typeIn";
 import styles from "./SectionFrame.module.css";
 
@@ -9,8 +9,9 @@ import styles from "./SectionFrame.module.css";
 function FxText({ text, trigger, reduce, active, onStart }) {
   const ref = useRef(null);
   useTextFx(ref, text, trigger, reduce, active, onStart);
+  const played = usePlayed(trigger, text);
   return (
-    <span ref={ref} data-fx={isPlayed(trigger, text) ? undefined : "pending"}>
+    <span ref={ref} data-fx={played ? undefined : "pending"}>
       {text}
     </span>
   );
@@ -44,7 +45,8 @@ export default function SectionFrame({
   const frameRef = useRef(null),
     labelRef = useRef(null),
     cancel = useRef(null);
-  const pending = titleFx === "active" && !isPlayed("active", title);
+  const titlePlayed = usePlayed("active", title);
+  const pending = titleFx === "active" && !titlePlayed;
 
   // The header started typing: in one go, blank the frame's text (same-width spaces),
   // un-hide it and type it back in. Unmounting mid-way restores the text.
