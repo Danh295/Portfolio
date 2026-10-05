@@ -1,5 +1,6 @@
 import { site } from "@/config/site";
 import { projects } from "@/data/projects";
+import { projPath } from "@/lib/nav";
 
 export const dynamic = "force-static";
 
@@ -11,7 +12,7 @@ export default function sitemap() {
   return [
     { url: `${site.url}/`, changeFrequency: "monthly", priority: 1 },
     ...projects.map((p) => ({
-      url: `${site.url}/projects/${p.slug}/`,
+      url: site.url + projPath(p.slug),
       changeFrequency: "yearly",
       priority: 0.7,
     })),

@@ -35,10 +35,11 @@ import {
   freeNav,
   holdNav,
   parseLocation,
+  parsePath,
   projUrl,
-  secUrl,
 } from "@/lib/nav";
 import { useOnChange } from "@/lib/useOnChange";
+import { useProjectHistory } from "@/lib/useProjectHistory";
 import { EXP_MAIN, EXP_TOGGLE, HAS_EARLY, stepSelection } from "@/lib/selection";
 import styles from "./App.module.css";
 
@@ -123,8 +124,6 @@ export default function App({ initialView = null }) {
     embedInputRef = useRef(null),
     termInputRef = useRef(null);
   const navLock = useRef({ on: false, t: 0, target: null }),
-    pendingSec = useRef(null),
-    returnScroll = useRef(null),
     vimReg = useRef(null),
     keyHandler = useRef(null),
     fxRef = useRef(null),
@@ -173,37 +172,54 @@ export default function App({ initialView = null }) {
     window.scrollTo({ top, behavior });
   };
 
-  // Stepping between projects or leaving one replaces the entry, so Back leaves the
-  // project pages in one press and never reopens a project you just closed.
-  const setUrl = (h, replace = false) => {
-    try {
-      if (replace) history.replaceState(null, "", h);
-      else history.pushState(null, "", h);
-    } catch {
-      // ignore (sandboxed iframes)
-    }
+  // Leaving a project page for the section list ({ scrollTo }: the list position it was
+  // opened from; { sec }: a section aligned under the nav). State first, from the leave
+  // or Back/Forward itself: the active section, and a keyboard selection follows the
+  // project last shown (←/→ may have moved on from the row that opened it).
+  const leaveState = (land, prevSlug) => {
+    if (land.sec != null) setActiveSec(land.sec);
+    const row = list.findIndex((p) => p.slug === prevSlug);
+    if (sel >= 0 && row >= 0) setSel(row);
+  };
+  // Then, once the list is back: scroll there (a restored position's scroll event lets the
+  // spy pick the active section) and move focus, which was on the page that is gone, to
+  // that project's row.
+  const landOnList = (land, prevSlug) => {
+    if (land.scrollTo != null) window.scrollTo({ top: land.scrollTo, behavior: "auto" });
+    else scrollSec(land.sec, "auto");
+    // A project outside the current filter has no row: fall back to the selected one.
+    const row = list.findIndex((p) => p.slug === prevSlug);
+    const focusRow = row >= 0 ? row : sel;
+    if (focusRow >= 0 && document.activeElement === document.body)
+      focusQuiet(document.querySelector('[data-row="' + focusRow + '"]'));
   };
 
-  const openProject = (slug, push = true) => {
-    // Remember where the list was, so closing the project puts it back exactly there.
-    if (!view) returnScroll.current = window.scrollY;
+  // Back/Forward leaves any popup, the embedded shell and the rules card behind.
+  const closeOverlays = () => {
+    setHelp(false);
+    setAboutOpen(false);
+    setTermOpen(false);
     setRulesOpen(false);
-    setView(slug);
-    if (push) setUrl(projUrl(slug), !!view);
   };
 
-  // Close the project page and land on section n once the list is back (useOnChange(view)
-  // below scrolls there). `replace`: swap the history entry instead of adding one.
-  const leaveProject = (n, replace = false) => {
-    pendingSec.current = n;
-    setView(null);
-    setUrl(secUrl(n), replace);
+  const { openProject: openView, leaveProject } = useProjectHistory({
+    view,
+    setView,
+    onLeave: leaveState,
+    onLand: landOnList,
+    onPop: closeOverlays,
+  });
+
+  const openProject = (slug) => {
+    setRulesOpen(false);
+    // Stepping with ←/→ keeps a keyboard selection on the project being shown (←/→ walk
+    // every project; one outside the current filter leaves the selection where it was).
+    const row = list.findIndex((p) => p.slug === slug);
+    if (view && sel >= 0 && row >= 0) setSel(row);
+    openView(slug);
   };
 
-  const goBack = () => {
-    leaveProject(1, true);
-    setActiveSec(1);
-  };
+  const goBack = () => leaveProject(1, "back");
 
   // Jump to section n, landing on its header unless `stop` names an element: a row
   // index for work (1) / experience (2), or a hero stop ("more" | "egg") for 0.
@@ -650,23 +666,8 @@ export default function App({ initialView = null }) {
           if (!navLock.current.on && scrollSpy.current) scrollSpy.current();
         });
     };
-    const onPop = () => {
-      // Back/forward leaves any popup, the embedded shell and the rules card behind.
-      setHelp(false);
-      setAboutOpen(false);
-      setTermOpen(false);
-      setRulesOpen(false);
-      const r = parseLocation();
-      if (r.slug) setView(r.slug);
-      else {
-        pendingSec.current = r.sec;
-        setView(null);
-        setActiveSec(r.sec);
-      }
-    };
     window.addEventListener("keydown", onKey);
     window.addEventListener("scroll", onScrollEv, { passive: true });
-    window.addEventListener("popstate", onPop);
     window.addEventListener("wheel", release, { passive: true });
     window.addEventListener("touchstart", release, { passive: true });
     window.addEventListener("pointerdown", release);
@@ -699,8 +700,8 @@ export default function App({ initialView = null }) {
       if (r.slug) {
         setView(r.slug);
         // An old-style link (/#projects/<slug>): show the project's real URL instead.
-        if (!window.location.pathname.includes("/projects/"))
-          history.replaceState(null, "", projUrl(r.slug));
+        if (!parsePath(window.location.pathname, "").slug)
+          history.replaceState(history.state, "", projUrl(r.slug));
       } else if (r.sec) {
         setActiveSec(r.sec);
         holdNav(navLock, 400);
@@ -712,7 +713,6 @@ export default function App({ initialView = null }) {
       cancelAnimationFrame(spyFrame);
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("scroll", onScrollEv);
-      window.removeEventListener("popstate", onPop);
       window.removeEventListener("wheel", release);
       window.removeEventListener("touchstart", release);
       window.removeEventListener("pointerdown", release);
@@ -807,20 +807,7 @@ export default function App({ initialView = null }) {
       focusQuiet(document.querySelector("[data-detail-title]"));
       return;
     }
-    // Closed a project: go straight back, no scroll animation from the top. Back to the
-    // projects list restores the exact position it was opened from; any other section
-    // is aligned under the nav.
-    const n = pendingSec.current,
-      saved = returnScroll.current;
-    pendingSec.current = null;
-    returnScroll.current = null;
-    if (n === 1 && saved != null) {
-      holdNav(navLock, 400, saved);
-      window.scrollTo({ top: saved, behavior: "auto" });
-    } else if (n != null) scrollSec(n, "auto");
-    // Focus was on the project page, which is gone: put it on the selected row.
-    if (document.activeElement === document.body && sel >= 0)
-      focusQuiet(document.querySelector('[data-row="' + sel + '"]'));
+    // Closed: useProjectHistory lands the list (landOnList), with no scroll animation.
   });
 
   useOnChange(filter, () => fade(listRef.current));

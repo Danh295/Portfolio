@@ -1,6 +1,7 @@
 // Once-per-session intro. The decision is made on first call (client only) and
 // cached, so the intro overlay and the heading effects agree on the delay.
 
+import { parsePath } from "@/lib/nav";
 import { prefersReducedMotion } from "@/lib/useReducedMotion";
 
 const KEY = "danny-intro";
@@ -35,7 +36,7 @@ export function introPlan(fx, reduce) {
   const still = reduce || prefersReducedMotion();
   // A deep link (/#projects, a redirect stub, a project page) goes straight to what it
   // asked for instead of sitting through the boot screen.
-  const deep = !!window.location.hash || window.location.pathname.includes("/projects/");
+  const deep = !!window.location.hash || !!parsePath(window.location.pathname, "").slug;
   if (fx === "none" || still || seen || deep) {
     plan = { fx: "none", delay: 0, at: performance.now() };
     return plan;
