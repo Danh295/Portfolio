@@ -1,4 +1,5 @@
 import { site } from "@/config/site";
+import styles from "./Redirect.module.css";
 
 /**
  * Body of the old /projects/, /experience/ and /skills/ URLs: static export has no
@@ -10,7 +11,7 @@ export default function Redirect({ section }) {
   return (
     <>
       <meta httpEquiv="refresh" content={`0;url=${to}`} />
-      <p style={{ padding: "2rem", textAlign: "center" }}>
+      <p className={styles.moved}>
         moved to <a href={to}>~/{section}</a>
       </p>
     </>
