@@ -123,27 +123,6 @@
   color: var(--mid);
 }
 
-.earlier {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr) 24px;
-  gap: 20px;
-  padding: 14px 8px;
-  text-align: left;
-  font-size: 13px;
-  color: var(--mid);
-}
-
-:global(html:not(.kbd)) .earlier:hover {
-  background: var(--soft);
-}
-
-/* Selected with j/k: same inverted look as a selected role. */
-.earlier.earlierOn {
-  background: var(--fg);
-  color: var(--bg);
-}
-
 @media (max-width: 760px) {
   .exp {
     padding: 12px 12px;
@@ -172,17 +151,8 @@
     grid-row: 1;
   }
 
-  .details,
-  .earlier {
-    grid-template-columns: minmax(0, 1fr) 20px;
-    gap: 8px 12px;
-  }
-
   .details {
     grid-template-columns: 1fr;
-  }
-
-  .earlier > :first-child {
-    display: none;
+    gap: 8px 12px;
   }
 }

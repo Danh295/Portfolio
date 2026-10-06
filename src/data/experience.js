@@ -3,7 +3,7 @@ import { isCurrent } from "@/lib/dates";
 // When the site was built (next.config.mjs; under node tests, now).
 const BUILT = new Date(process.env.BUILD_DATE ?? Date.now());
 
-// Newest first. `early: true` roles are folded into one "earlier · n roles" toggle row.
+// Newest first, all shown.
 // Casing is stored exactly as displayed (nothing transforms it): the site's voice is
 // lowercase, including locations; companies, products and acronyms keep their casing.
 // `now` (the "● now" badge, the hero's "working" fact) comes from `date` at build time.
@@ -49,7 +49,6 @@ const entries = [
   {
     title: "operations executive member",
     company: "Opportunify",
-    early: true,
     loc: "ontario, canada",
     date: "2022 – 2023",
     summary:
@@ -63,7 +62,6 @@ const entries = [
   {
     title: "chief operations officer",
     company: "Untapped Valley",
-    early: true,
     loc: "ontario, canada",
     date: "2022 – 2023",
     summary:

@@ -30,7 +30,6 @@ const BASE = {
   sel: -1,
   expSel: -1,
   expOpen: -1,
-  expEarlier: false,
   rulesOpen: false,
   rulesSeen: false,
   briefing: false,
@@ -278,15 +277,12 @@ test("every keys-popup row is a routed key, and every one-character shortcut has
   assert.ok(!listed.has("Backspace"));
 });
 
-test("pressing a stop flashes its element", async () => {
-  const { EXP_TOGGLE } = await import("@/lib/selection");
+test("pressing a stop flashes its element", () => {
   const flash = (over) => route({ key: " ", ...over }).flashSelected;
   assert.equal(flash({ heroSel: "more" }), '[data-key="m"]');
   assert.equal(flash({ heroSel: "rules" }), '[data-key="i"]');
   assert.equal(flash({ activeSec: 1, sel: 0 }), '[data-row="0"]');
   assert.equal(flash({ activeSec: 2, expSel: 1 }), '[data-exprow="1"] > button');
-  if (EXP_TOGGLE(false) >= 0)
-    assert.equal(flash({ activeSec: 2, expSel: EXP_TOGGLE(false) }), "[data-earlier]");
   assert.deepEqual(route({ key: " ", activeSec: 2, expSel: 1, expOpen: 1 }).i, -1, "folds");
 });
 

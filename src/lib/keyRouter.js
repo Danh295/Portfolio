@@ -12,7 +12,7 @@
 //   flashSelected  a selector: flash the selected element (before acting, since acting
 //                  can remove it, e.g. a project row)
 
-import { EXP_TOGGLE, stepSelection } from "@/lib/selection";
+import { stepSelection } from "@/lib/selection";
 
 // While a popup is open, these scroll its list ([data-popup-scroll]) instead of the page
 // behind it: lines (±1), pages (±2) or the ends (±3); 0 just stops the page moving.
@@ -204,8 +204,6 @@ function selection(f) {
   if (f.activeSec === 1 && f.sel >= 0 && f.sel < f.listLength)
     return { el: `[data-row="${f.sel}"]`, act: { do: "openProject", row: f.sel } };
   if (f.activeSec === 2 && f.expSel >= 0) {
-    if (f.expSel === EXP_TOGGLE(f.expEarlier))
-      return { el: "[data-earlier]", act: { do: "toggleEarlier" } };
     const i = f.expOpen === f.expSel ? -1 : f.expSel;
     return { el: `[data-exprow="${f.expSel}"] > button`, act: { do: "setExpOpen", i } };
   }
