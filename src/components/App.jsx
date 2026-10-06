@@ -22,7 +22,7 @@ import { site } from "@/config/site";
 import { ui } from "@/config/ui";
 import { projects, projectFolders } from "@/data/projects";
 import { experienceEntries } from "@/data/experience";
-import { skills, pstr } from "@/lib/shell";
+import { skills } from "@/lib/shell";
 import { spark } from "@/lib/github";
 import { useShell } from "@/components/shell/useShell";
 import { useTheme } from "@/lib/useTheme";
@@ -758,8 +758,6 @@ export default function App({ initialView = null }) {
           : activeSec === 0 && heroSel !== "head"
             ? { more: "more about me", rules: "how to play", egg: "egg minigame" }[heroSel]
             : "";
-  const termCwd = pstr(sessions.term.cwd),
-    embedCwd = pstr(sessions.embed.cwd);
 
   // The gui's big pieces are built up front, not inside the mode/view conditionals
   // below: React Compiler caches each element on its own inputs, so a keystroke in the
@@ -897,7 +895,6 @@ export default function App({ initialView = null }) {
               <MiniShell
                 inert={popup}
                 session={sessions.embed}
-                cwd={embedCwd}
                 panelRef={embedPanelRef}
                 inputRef={embedInputRef}
                 onRun={(c) => run("embed", c)}
@@ -914,7 +911,6 @@ export default function App({ initialView = null }) {
         ) : (
           <Terminal
             session={sessions.term}
-            cwd={termCwd}
             bodyRef={termBodyRef}
             inputRef={termInputRef}
             vim={vim}

@@ -98,8 +98,11 @@ test("histStep: ↑ with no history does nothing", () => {
   assert.equal(histStep([], -1, 1), null);
 });
 
-test("histStep: ↓ from the newest entry is back at an empty fresh prompt", () => {
+test("histStep: ↓ steps to the next newer entry", () => {
   assert.deepEqual(histStep(HIST, 1, -1), { hi: 0, input: "pwd" });
+});
+
+test("histStep: ↓ from the newest entry is back at an empty fresh prompt", () => {
   assert.deepEqual(histStep(HIST, 0, -1), { hi: -1, input: "" });
 });
 
