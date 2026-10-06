@@ -8,36 +8,45 @@ export const ui = {
 };
 
 // The `?` overlay.
+// `label` is what the row shows; `keys` are the event keys it stands for (each one routed by
+// src/lib/keyRouter.js; test/keys.test.mjs checks the two lists match).
 // `always`: the row's keys work with single-key shortcuts off (src/lib/useKeysPref.js);
-// `offKey`: the row says this instead while they're off (← / → keep moving). Rows with
+// `offLabel`: the row says this instead while they're off (← / → keep moving). Rows with
 // neither go away while off.
 export const shortcuts = [
-  { key: "↑ / ↓", desc: "previous / next section", always: true },
-  { key: "1 / 2 / 3", desc: "jump to projects / experience / skills" },
+  { label: "↑ / ↓", keys: ["ArrowUp", "ArrowDown"], desc: "previous / next section", always: true },
+  { label: "1 / 2 / 3", keys: ["1", "2", "3"], desc: "jump to projects / experience / skills" },
   {
-    key: "j / k  ← / →",
+    label: "j / k  ← / →",
+    keys: ["j", "k", "ArrowLeft", "ArrowRight"],
     desc: "move: section header → its items → next section",
-    offKey: "← / →",
+    offLabel: "← / →",
   },
   {
-    key: "enter / space",
+    label: "enter / space",
+    keys: ["Enter", " "],
     desc: "press the selected item (egg, more…, project, role)",
     always: true,
   },
-  { key: "f", desc: "cycle project folder" },
-  { key: "← / →", desc: "on a project: prev / next project", always: true },
-  { key: "esc", desc: "back · close", always: true },
-  { key: "h", desc: "home" },
-  { key: "m", desc: "more… (about me)" },
-  { key: "i", desc: "egg rules" },
-  { key: "t", desc: "toggle theme" },
-  { key: "`", desc: "shell" },
-  { key: "e g l r", desc: "email · GitHub · LinkedIn · resume" },
-  { key: "?", desc: "this list" },
+  { label: "f", keys: ["f"], desc: "cycle project folder" },
+  {
+    label: "← / →",
+    keys: ["ArrowLeft", "ArrowRight"],
+    desc: "on a project: prev / next project",
+    always: true,
+  },
+  { label: "esc", keys: ["Escape"], desc: "back · close", always: true },
+  { label: "h", keys: ["h"], desc: "home" },
+  { label: "m", keys: ["m"], desc: "more… (about me)" },
+  { label: "i", keys: ["i"], desc: "egg rules" },
+  { label: "t", keys: ["t"], desc: "toggle theme" },
+  { label: "`", keys: ["`"], desc: "shell" },
+  { label: "e g l r", keys: ["e", "g", "l", "r"], desc: "email · GitHub · LinkedIn · resume" },
+  { label: "?", keys: ["?"], desc: "this list" },
 ];
 
 /** The rows to show: all of them, or (shortcuts off) only the ones that still work. */
 export function shortcutRows(keysOn) {
-  const rows = keysOn ? shortcuts : shortcuts.filter((r) => r.always || r.offKey);
-  return rows.map((r) => ({ key: (!keysOn && r.offKey) || r.key, desc: r.desc }));
+  const rows = keysOn ? shortcuts : shortcuts.filter((r) => r.always || r.offLabel);
+  return rows.map((r) => ({ key: (!keysOn && r.offLabel) || r.label, desc: r.desc }));
 }
