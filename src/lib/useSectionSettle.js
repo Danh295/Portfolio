@@ -7,6 +7,8 @@ import { settleTarget, settleDuration, easeOut } from "@/lib/scrollSettle";
 // Mouse and trackpad only: touch scrolls freely.
 const FINE = "(hover: hover) and (pointer: fine)";
 const SCROLL_KEYS = new Set(["PageUp", "PageDown", "Home", "End", " ", "ArrowUp", "ArrowDown"]);
+// Keys that step about a screen: they stop at the first boundary they cross.
+const PAGE_KEYS = new Set(["PageUp", "PageDown", " "]);
 // No scrollend (Safari): a scroll has stopped after this long without a scroll event.
 const IDLE_MS = 150;
 // After a scroll stops, a further wheel or scroll within this long cancels the settle, so
@@ -43,7 +45,9 @@ export function useSectionSettle({ enabled, reduce, navLockRef }) {
     if (!enabled || !window.matchMedia(FINE).matches) return;
     const nativeEnd = "onscrollend" in window;
     let armedAt = -Infinity,
+      pageFrom = null,
       held = false,
+      onBar = false,
       dir = 0,
       lastY = window.scrollY,
       idle = 0,
@@ -77,7 +81,7 @@ export function useSectionSettle({ enabled, reduce, navLockRef }) {
       if (window.scrollY !== lastY) dir = Math.sign(window.scrollY - lastY);
       lastY = window.scrollY;
       const rests = measureRests();
-      const to = rests && settleTarget({ y: window.scrollY, dir, rests });
+      const to = rests && settleTarget({ y: window.scrollY, dir, rests, from: pageFrom });
       if (to != null && Math.abs(to - window.scrollY) >= 1) tweenTo(to);
     };
     const settleSoon = () => {
@@ -85,9 +89,11 @@ export function useSectionSettle({ enabled, reduce, navLockRef }) {
       grace = setTimeout(settle, GRACE_MS);
     };
 
-    const arm = () => {
+    // A scroll the user starts takes over from a settle in flight.
+    const arm = (from = null) => {
       stopTween();
       armedAt = performance.now();
+      pageFrom = from;
     };
     // Wheel listeners are passive, so the compositor may scroll (and, for an unanimated
     // scroll, end) before the wheel event reaches us: check again once it has. Any scroll
@@ -97,19 +103,29 @@ export function useSectionSettle({ enabled, reduce, navLockRef }) {
       settleSoon();
     };
     const onKey = (e) => {
-      stopTween();
-      if (SCROLL_KEYS.has(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) arm();
+      if (!SCROLL_KEYS.has(e.key) || e.metaKey || e.ctrlKey || e.altKey) return;
+      arm(PAGE_KEYS.has(e.key) ? window.scrollY : null);
     };
+    // A primary press holds the settle off until it's released (a drag-select may be
+    // autoscrolling). On a classic scrollbar (right of the content box) it's a scroll:
+    // overlay scrollbars can't be told apart from the page, so their drags don't settle.
     const onPointerDown = (e) => {
-      stopTween();
+      if (e.button !== 0) return;
       held = true;
-      // On the page's own scrollbar (to the right of the content box).
-      if (e.clientX >= document.documentElement.clientWidth) arm();
+      onBar = e.clientX >= document.documentElement.clientWidth;
+      if (onBar) arm();
     };
     const onPointerUp = () => {
       if (!held) return;
       held = false;
+      if (onBar) arm(); // however long the drag took
+      onBar = false;
       settleSoon();
+    };
+    // A context menu or leaving the window can swallow the release.
+    const unhold = () => {
+      held = false;
+      onBar = false;
     };
     const onScroll = () => {
       const y = window.scrollY;
@@ -133,6 +149,8 @@ export function useSectionSettle({ enabled, reduce, navLockRef }) {
     window.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
+    window.addEventListener("contextmenu", unhold);
+    window.addEventListener("blur", unhold);
     window.addEventListener("scroll", onScroll, { passive: true });
     if (nativeEnd) window.addEventListener("scrollend", onScrollEnd);
     return () => {
@@ -145,6 +163,8 @@ export function useSectionSettle({ enabled, reduce, navLockRef }) {
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("contextmenu", unhold);
+      window.removeEventListener("blur", unhold);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("scrollend", onScrollEnd);
     };
