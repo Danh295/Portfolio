@@ -95,3 +95,7 @@ export const SHORTCUT_CMDS = [
 ];
 
 export const CMDS = Object.keys(SPEC);
+
+// A prompt as both shells print it (live and in the log): terminal mode names the host.
+export const promptText = (variant, cwd) =>
+  (variant === "term" ? "danny@portfolio " : "") + cwd + " %";

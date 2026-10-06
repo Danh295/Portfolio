@@ -7,9 +7,8 @@ import { useEffect, useRef } from "react";
  * - on first render, and when the content or pane resizes, unless the user scrolled up;
  * - always when `output` changes (a command ran), like a real terminal.
  * `bodyRef` is the scroll container, `contentRef` wraps everything inside it.
- * `remountKey` re-attaches after the pane is swapped out (e.g. vim closing).
  */
-export function useStickToBottom(bodyRef, contentRef, output, remountKey) {
+export function useStickToBottom(bodyRef, contentRef, output) {
   const pinned = useRef(true);
 
   useEffect(() => {
@@ -32,7 +31,7 @@ export function useStickToBottom(bodyRef, contentRef, output, remountKey) {
       ro.disconnect();
       body.removeEventListener("scroll", onScroll);
     };
-  }, [bodyRef, contentRef, remountKey]);
+  }, [bodyRef, contentRef]);
 
   // New output always brings the prompt back into view.
   useEffect(() => {

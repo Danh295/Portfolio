@@ -1,4 +1,5 @@
 import EggCanvas from "@/components/egg/EggCanvas";
+import { promptText } from "@/lib/shell/spec";
 import styles from "./TermLines.module.css";
 
 /**
@@ -16,7 +17,6 @@ export default function TermLines({
   eggStatusRef,
 }) {
   const v = variant === "term" ? styles.term : styles.embed;
-  const prompt = variant === "term" ? "danny@portfolio " : "";
   return lines.map((l, i) => {
     const key = i;
     const run = l.cmd ? () => onRun(l.cmd) : l.t === "hint" ? () => onRun(l.text) : undefined;
@@ -24,10 +24,7 @@ export default function TermLines({
       case "cmd":
         return (
           <div key={key} className={`${styles.cmd} ${v}`}>
-            <span className={styles.mid}>
-              {prompt}
-              {l.cwd} %
-            </span>
+            <span className={styles.mid}>{promptText(variant, l.cwd)}</span>
             <span>{l.text}</span>
           </div>
         );

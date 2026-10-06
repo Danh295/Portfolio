@@ -94,7 +94,6 @@ export default function App({ initialView = null }) {
     termBoxRef: termBodyRef,
   } = egg;
   const embedPanelRef = useRef(null),
-    embedBodyRef = useRef(null),
     embedInputRef = useRef(null),
     termInputRef = useRef(null);
   const navLock = useRef({ on: false, t: 0, target: null }),
@@ -900,7 +899,6 @@ export default function App({ initialView = null }) {
                 session={sessions.embed}
                 cwd={embedCwd}
                 panelRef={embedPanelRef}
-                bodyRef={embedBodyRef}
                 inputRef={embedInputRef}
                 onRun={(c) => run("embed", c)}
                 onInput={(v) => patchSession("embed", { input: v })}
