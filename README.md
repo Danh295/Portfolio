@@ -38,4 +38,4 @@ public/           # the resume PDF
 
 ## Deploying
 
-Every push to `main` is checked (lint, format, tests, build) and deployed to GitHub Pages by `.github/workflows/pages.yml`, which also runs daily to refresh the build-time GitHub snapshot and can be started by hand (`gh workflow run pages.yml`). Pull requests get the same checks from `.github/workflows/ci.yml`.
+Every push to `main` is checked (lint, format, tests, build) and deployed to GitHub Pages by `.github/workflows/pages.yml`, which also runs daily to refresh the build-time GitHub snapshot and can be started by hand (`gh workflow run pages.yml`).
