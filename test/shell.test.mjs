@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "@/lib/shell/fs";
 import { shell } from "@/lib/shell";
+import { histStep } from "@/lib/shell/history";
 
 const run = (line, cwd = []) => shell.runLine(line, "embed", { cwd });
 const errs = (r) => r.out.filter((l) => l.t === "err").map((l) => l.text);
@@ -80,4 +81,29 @@ test("unknown commands and odd input don't throw", () => {
     "constructor",
   ])
     assert.doesNotThrow(() => run(line), line);
+});
+
+// ↑/↓ prompt history (hi: how far back from the newest entry; -1 is the fresh prompt).
+const HIST = ["ls", "cd projects", "pwd"];
+
+test("histStep: ↑ from the fresh prompt recalls the newest entry", () => {
+  assert.deepEqual(histStep(HIST, -1, 1), { hi: 0, input: "pwd" });
+});
+
+test("histStep: ↑ at the oldest entry stays there (and recalls it again)", () => {
+  assert.deepEqual(histStep(HIST, 2, 1), { hi: 2, input: "ls" });
+});
+
+test("histStep: ↑ with no history does nothing", () => {
+  assert.equal(histStep([], -1, 1), null);
+});
+
+test("histStep: ↓ from the newest entry is back at an empty fresh prompt", () => {
+  assert.deepEqual(histStep(HIST, 1, -1), { hi: 0, input: "pwd" });
+  assert.deepEqual(histStep(HIST, 0, -1), { hi: -1, input: "" });
+});
+
+test("histStep: ↓ at the fresh prompt keeps what's typed", () => {
+  assert.equal(histStep(HIST, -1, -1), null);
+  assert.equal(histStep([], -1, -1), null);
 });

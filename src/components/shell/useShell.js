@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import { shell, pstr } from "@/lib/shell";
 import { SHORTCUT_CMDS } from "@/lib/shell/spec";
+import { histStep } from "@/lib/shell/history";
 import { spark } from "@/lib/github";
 
 const bootCtx = { cwd: [], spark, hist: [] };
@@ -188,15 +189,10 @@ export function useShell({ keysOn, reduce, egg, vimOpen, termInputRef, onFx, onE
     } else if (e.key === "Enter") {
       e.preventDefault();
       run(k, T.input, true);
-    } else if (e.key === "ArrowUp") {
+    } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
       e.preventDefault();
-      const hi = Math.min(T.hist.length - 1, T.hi + 1);
-      if (hi >= 0) patchSession(k, { hi, input: T.hist[T.hist.length - 1 - hi] });
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      if (T.hi < 0) return; // already at the fresh prompt: keep what's typed
-      const hi = T.hi - 1;
-      patchSession(k, { hi, input: hi >= 0 ? T.hist[T.hist.length - 1 - hi] : "" });
+      const step = histStep(T.hist, T.hi, e.key === "ArrowUp" ? 1 : -1);
+      if (step) patchSession(k, step);
     } else if (e.key === "Tab") {
       e.preventDefault();
       complete(k);
