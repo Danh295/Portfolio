@@ -11,8 +11,17 @@ export const DEAD_ZONE = 40;
  * `rests` are each section's free scrollY range [lo, hi], in order: lo parks its header
  * under the nav, hi shows its end at the bottom of the screen (= lo when it fits; the last
  * section's hi is Infinity). Returns a scrollY, or null to leave the page where it is.
+ * `from` (a page key's start) caps the step at the first boundary it crossed: the next
+ * header going down, the previous section's end going up.
  */
-export function settleTarget({ y, dir, rests, dead = DEAD_ZONE }) {
+export function settleTarget({ y, dir, rests, from = null, dead = DEAD_ZONE }) {
+  if (from != null) {
+    const crossed =
+      y > from
+        ? rests.map(([lo]) => lo).find((lo) => lo > from + 1 && lo < y - 1)
+        : rests.map(([, hi]) => hi).findLast((hi) => hi < from - 1 && hi > y + 1);
+    if (crossed != null) return crossed;
+  }
   if (rests.some(([lo, hi]) => y >= lo - 1 && y <= hi + 1)) return null;
   for (let i = 0; i < rests.length - 1; i++) {
     const top = rests[i][1],
