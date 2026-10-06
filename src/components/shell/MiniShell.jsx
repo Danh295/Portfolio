@@ -1,8 +1,6 @@
 "use client";
 
-import { useRef } from "react";
-import { useStickToBottom } from "@/lib/useStickToBottom";
-import TermLines from "./TermLines";
+import ShellPane from "./ShellPane";
 import styles from "./MiniShell.module.css";
 
 /** The embedded shell panel opened with ` in gui mode. */
@@ -10,7 +8,6 @@ export default function MiniShell({
   session,
   cwd,
   panelRef,
-  bodyRef,
   inputRef,
   onRun,
   onInput,
@@ -18,14 +15,6 @@ export default function MiniShell({
   onClose,
   inert,
 }) {
-  const contentRef = useRef(null);
-  // Opens (and stays) at the latest prompt, even after earlier use.
-  useStickToBottom(bodyRef, contentRef, session.lines);
-
-  const focus = () => {
-    if (inputRef.current && window.getSelection().isCollapsed)
-      inputRef.current.focus({ preventScroll: true });
-  };
   return (
     <div
       ref={panelRef}
@@ -40,28 +29,14 @@ export default function MiniShell({
           <span className={styles.dim}>[esc]</span> close
         </button>
       </div>
-      <div ref={bodyRef} onClick={focus} className={styles.body}>
-        <div ref={contentRef} className={styles.content}>
-          <div role="log" aria-label="shell output">
-            <TermLines lines={session.lines} variant="embed" onRun={onRun} />
-          </div>
-          <div className={styles.promptRow}>
-            <span className={styles.mid}>{cwd} %</span>
-            <input
-              ref={inputRef}
-              value={session.input}
-              onChange={(e) => onInput(e.target.value.replaceAll("`", ""))}
-              onKeyDown={onKey}
-              placeholder="help"
-              aria-label="shell input"
-              autoComplete="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              className={styles.input}
-            />
-          </div>
-        </div>
-      </div>
+      <ShellPane
+        variant="embed"
+        session={session}
+        inputRef={inputRef}
+        onRun={onRun}
+        onInput={onInput}
+        onKey={onKey}
+      />
     </div>
   );
 }

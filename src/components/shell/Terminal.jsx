@@ -1,11 +1,9 @@
 "use client";
 
-import { useRef } from "react";
 import { BANNER } from "@/lib/ascii/banner";
 import Hint from "@/components/Hint";
 import { SHORTCUT_CMDS } from "@/lib/shell/spec";
-import { useStickToBottom } from "@/lib/useStickToBottom";
-import TermLines from "./TermLines";
+import ShellPane from "./ShellPane";
 import Vim from "./Vim";
 import styles from "./Terminal.module.css";
 
@@ -31,15 +29,6 @@ export default function Terminal({
   onKey,
   onExit,
 }) {
-  const contentRef = useRef(null);
-
-  // Keep the prompt (or the running egg) in view, unless the user scrolled up.
-  useStickToBottom(bodyRef, contentRef, session.lines, !!vim);
-
-  const focus = () => {
-    if (inputRef.current && window.getSelection().isCollapsed)
-      inputRef.current.focus({ preventScroll: true });
-  };
   return (
     <div className={styles.term}>
       <div className={styles.head}>
@@ -52,48 +41,32 @@ export default function Terminal({
       {vim ? (
         <Vim vim={vim} boxRef={vimRef} />
       ) : (
-        <div ref={bodyRef} onClick={focus} className={styles.body}>
-          <div ref={contentRef} className={styles.content}>
-            <pre className={styles.banner} role="img" aria-label="danny hu">
-              {BANNER}
-            </pre>
-            <div className={styles.mid}>
-              zsh 5.9 · danny@portfolio · type <span className={styles.fg}>help</span> for commands
-            </div>
-            <div className={`${styles.mid} ${styles.intro}`}>
-              [tab] completes · [↑↓] history · <Hint>[0–9] shortcuts · </Hint>
-              <span className={styles.fg}>exit</span> or <span className={styles.fg}>ctrl-d</span>{" "}
-              leaves
-            </div>
-            <div role="log" aria-label="terminal output">
-              <TermLines
-                lines={session.lines}
-                variant="term"
-                onRun={onRun}
-                eggHandlers={eggHandlers}
-                eggPreRef={eggPreRef}
-                eggFxRef={eggFxRef}
-                eggStatusRef={eggStatusRef}
-              />
-            </div>
-            {/* While ./egg runs there is no prompt; the input stays (invisible) to take keys. */}
-            <div className={running ? styles.promptHidden : styles.promptRow}>
-              {!running && <span className={styles.prompt}>danny@portfolio {cwd} %</span>}
-              <input
-                ref={inputRef}
-                value={session.input}
-                onChange={(e) => onInput(e.target.value.replaceAll("`", ""))}
-                onKeyDown={onKey}
-                placeholder="try: ls"
-                aria-label="terminal input"
-                autoComplete="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                className={styles.input}
-              />
-            </div>
+        <ShellPane
+          variant="term"
+          session={session}
+          inputRef={inputRef}
+          bodyRef={bodyRef}
+          promptHidden={running}
+          onRun={onRun}
+          onInput={onInput}
+          onKey={onKey}
+          eggHandlers={eggHandlers}
+          eggPreRef={eggPreRef}
+          eggFxRef={eggFxRef}
+          eggStatusRef={eggStatusRef}
+        >
+          <pre className={styles.banner} role="img" aria-label="danny hu">
+            {BANNER}
+          </pre>
+          <div className={styles.mid}>
+            zsh 5.9 · danny@portfolio · type <span className={styles.fg}>help</span> for commands
           </div>
-        </div>
+          <div className={`${styles.mid} ${styles.intro}`}>
+            [tab] completes · [↑↓] history · <Hint>[0–9] shortcuts · </Hint>
+            <span className={styles.fg}>exit</span> or <span className={styles.fg}>ctrl-d</span>{" "}
+            leaves
+          </div>
+        </ShellPane>
       )}
 
       <div className={styles.tabs}>

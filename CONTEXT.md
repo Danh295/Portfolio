@@ -63,6 +63,10 @@ _Avoid_: mini terminal, popup shell
 **Session**:
 One shell's output, history and input. There are two: `term` and `embed`.
 
+**Shell pane**:
+The output log and the prompt under it (`ShellPane`), pinned to the latest prompt. Terminal mode and the embedded shell each frame one.
+_Avoid_: console, terminal view
+
 ## Motion
 
 **Type-in**:

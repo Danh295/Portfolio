@@ -37,45 +37,6 @@
   opacity: 0.6;
 }
 
-.mid {
-  color: var(--mid);
-  flex: none;
-}
-
-.body {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  padding: 14px 16px;
-  line-height: 1.55;
-  cursor: text;
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.promptRow {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  padding-top: 10px;
-}
-
-.input {
-  flex: 1;
-  min-width: 0;
-  background: transparent;
-  border: 0;
-  outline: none;
-  color: var(--fg);
-  font: inherit;
-  caret-color: var(--fg);
-  padding: 0;
-}
-
 @media (max-width: 600px) {
   .panel {
     right: 12px;

@@ -1,0 +1,69 @@
+/* The scroll box. Its frame (MiniShell's panel, Terminal's screen) is a flex column, so it
+   takes the space left between the frame's header and footer; min-height: 0 lets it shrink
+   to that instead of pushing a footer (terminal mode's shortcut bar) off screen. */
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  cursor: text;
+}
+
+.embed {
+  padding: 14px 16px;
+  line-height: 1.55;
+}
+
+.term {
+  padding: 28px 32px 20px;
+  line-height: 1.6;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.term .content {
+  gap: 3px;
+}
+
+.promptRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 10px;
+}
+
+.term .promptRow {
+  gap: 10px;
+  padding-top: 14px;
+}
+
+.prompt {
+  color: var(--mid);
+  flex: none;
+}
+
+.promptHidden {
+  height: 0;
+  overflow: hidden;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--fg);
+  font: inherit;
+  caret-color: var(--fg);
+  padding: 0;
+}
+
+@media (max-width: 600px) {
+  .term {
+    padding: 20px 16px;
+  }
+}
