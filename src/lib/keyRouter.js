@@ -103,9 +103,12 @@ function gui(f) {
   const { key } = f;
   if (f.repeat && !f.typing && KEYS[key]?.noRepeat) return { prevent: true };
   if (onPopup(f) && !POPUP_KEYS.has(key)) return popup(f);
-  if (key === "`") return f.keysOn ? { prevent: true, do: "toggleShell", flashKey: "`" } : null;
+  const mod = f.meta || f.ctrl || f.alt;
+  // A plain ` toggles the embedded shell, even from its own input.
+  if (key === "`" && !mod)
+    return f.keysOn ? { prevent: true, do: "toggleShell", flashKey: "`" } : null;
   if (f.typing) return key === "Escape" ? { do: "closeShell", blur: true } : null;
-  if (f.meta || f.ctrl || f.alt) return null;
+  if (mod) return null;
   if (f.help && key === "s") return { prevent: true, do: "toggleKeys", flashKey: "s" };
   // The embedded shell is open but its input lost focus (e.g. after selecting output to
   // copy): typing goes back to its prompt instead of firing shortcuts.
@@ -133,8 +136,14 @@ function gui(f) {
   return blur ? { ...d, blur: true } : d;
 }
 
-// The popup branch: scroll keys scroll its list.
+// The popup branch: scroll keys scroll its list. Cmd+↑/↓ jump to its ends (they'd
+// scroll the inert page behind it); every other combination is the browser's (Alt/Cmd+←/→
+// are Back/Forward).
 function popup(f) {
+  if (f.meta || f.ctrl || f.alt) {
+    const end = f.meta && !f.ctrl && !f.alt && { ArrowDown: 3, ArrowUp: -3 }[f.key];
+    return end ? { prevent: true, do: "scrollPopup", dir: end } : null;
+  }
   const dir = POPUP_SCROLL[f.key];
   if (dir === undefined || (f.key === " " && f.onButton)) return null;
   if (!dir) return { prevent: true };

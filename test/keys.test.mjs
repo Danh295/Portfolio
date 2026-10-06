@@ -86,8 +86,6 @@ test("a popup open: scroll keys scroll it, other keys do nothing", () => {
   assert.equal(pop({ key: "Enter" }), null);
   assert.equal(pop({ key: "t" }), null, "no shortcuts behind a popup");
   assert.equal(route({ aboutOpen: true, key: "j" }), null);
-  // (pinned) today modifiers don't get past the popup: Alt+← is swallowed.
-  assert.deepEqual(pop({ key: "ArrowLeft", alt: true }), { prevent: true });
   // Esc, ? and m reach the shortcut table; s flips shortcuts in the keys popup.
   assert.equal(pop({ key: "Escape" }).do, "closeHelp");
   assert.equal(pop({ key: "m" }).do, "toggleAbout");
@@ -99,8 +97,10 @@ test("` toggles the embedded shell (shortcuts on only), even from its own input"
   assert.deepEqual(route({ key: "`" }), { prevent: true, do: "toggleShell", flashKey: "`" });
   assert.deepEqual(route({ key: "`", typing: true, termOpen: true }).do, "toggleShell");
   assert.equal(route({ key: "`", keysOn: false }), null);
-  // (pinned) today Ctrl+` toggles it too.
-  assert.equal(route({ key: "`", ctrl: true }).do, "toggleShell");
+  // Only a plain `: Ctrl/Cmd/Alt+` are the browser's (or the OS's).
+  assert.equal(route({ key: "`", ctrl: true }), null);
+  assert.equal(route({ key: "`", meta: true }), null);
+  assert.equal(route({ key: "`", alt: true, typing: true, termOpen: true }), null);
 });
 
 test("typing in an input: only Esc acts (closes the shell, drops focus)", () => {
@@ -288,4 +288,27 @@ test("pressing a stop flashes its element", async () => {
   if (EXP_TOGGLE(false) >= 0)
     assert.equal(flash({ activeSec: 2, expSel: EXP_TOGGLE(false) }), "[data-earlier]");
   assert.deepEqual(route({ key: " ", activeSec: 2, expSel: 1, expOpen: 1 }).i, -1, "folds");
+});
+
+// With a popup open, Back/Forward still work, and the "jump to the end" combos scroll the
+// popup's list, not the inert page behind it.
+test("a popup open: modifier combos", () => {
+  const pop = (over) => route({ help: true, ...over });
+  for (const key of ["ArrowLeft", "ArrowRight"]) {
+    assert.equal(pop({ key, alt: true }), null, "Alt+" + key + " (Back/Forward)");
+    assert.equal(pop({ key, meta: true }), null, "Cmd+" + key + " (Back/Forward)");
+  }
+  assert.deepEqual(pop({ key: "ArrowDown", meta: true }), {
+    prevent: true,
+    do: "scrollPopup",
+    dir: 3,
+  });
+  assert.deepEqual(pop({ key: "ArrowUp", meta: true }), {
+    prevent: true,
+    do: "scrollPopup",
+    dir: -3,
+  });
+  assert.equal(pop({ key: "PageDown", ctrl: true }), null, "Ctrl+PageDown switches tabs");
+  assert.equal(pop({ key: "t", meta: true }), null);
+  assert.equal(route({ aboutOpen: true, key: "ArrowLeft", alt: true }), null);
 });
