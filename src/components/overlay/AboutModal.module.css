@@ -1,53 +1,10 @@
-.scrim {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  background: rgba(10, 10, 10, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
+/* The frame is Popup.module.css; this is the more… popup's size and content. */
 .box {
-  background: var(--bg);
-  color: var(--fg);
-  border: 1px solid var(--fg);
-  width: min(640px, 100%);
-  max-height: min(80vh, 720px);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
-/* The same header bar as the embedded shell: an unbroken top border, the label inside
-   it, and the close button on the right. */
-.head {
-  flex: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--fg);
-  font-size: 12px;
-}
-
-.close {
-  border: 1px solid var(--line);
-  padding: 2px 8px;
-}
-
-:global(html:not(.kbd)) .close:hover {
-  background: var(--fg);
-  color: var(--bg);
-}
-
-.dim {
-  opacity: 0.6;
+  max-width: 640px;
+  --popup-max-h: min(80vh, 720px);
 }
 
 .body {
-  overflow: auto;
   padding: 16px 28px 8px;
   text-transform: none;
 }
@@ -60,7 +17,6 @@
 }
 
 .foot {
-  flex: none;
   padding: 12px 28px 16px;
   border-top: 1px solid var(--line);
   font-size: 12px;

@@ -1,57 +1,9 @@
-.scrim {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  background: rgba(10, 10, 10, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
+/* The frame is Popup.module.css; this is the keys popup's size and content. */
 .box {
-  background: var(--bg);
-  color: var(--fg);
-  border: 1px solid var(--fg);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
-  width: min(540px, 100%);
-  position: relative;
-  font-size: 13px;
+  max-width: 540px;
 }
 
-.box:focus {
-  outline: none;
-}
-
-/* The same header bar as the embedded shell: an unbroken top border, the label inside
-   it, and the close button on the right. */
-.head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--fg);
-  font-size: 12px;
-}
-
-.close {
-  border: 1px solid var(--line);
-  padding: 2px 8px;
-}
-
-:global(html:not(.kbd)) .close:hover {
-  background: var(--fg);
-  color: var(--bg);
-}
-
-.dim {
-  opacity: 0.6;
-}
-
-/* Short viewports: the list scrolls inside the box (the header and footer stay). */
 .list {
-  max-height: calc(100dvh - 220px);
-  overflow-y: auto;
   padding: 6px 24px 0;
 }
 
@@ -69,6 +21,10 @@
 
 .desc {
   color: var(--mid);
+}
+
+.dim {
+  opacity: 0.6;
 }
 
 .toggleRow {
@@ -96,7 +52,7 @@
   font-size: 12px;
 }
 
-.foot {
+.closeHint {
   padding: 12px 24px 18px;
   color: var(--mid);
   font-size: 12px;
