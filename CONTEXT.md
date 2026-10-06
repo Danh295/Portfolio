@@ -17,7 +17,7 @@ The detail view for one project, a real pre-rendered URL (`/Portfolio/projects/<
 _Avoid_: modal, detail popup, project route
 
 **Popup**:
-The keys popup or the more… popup. While one is open it owns the keyboard and the page behind it is inert.
+The keys popup or the more… popup, both drawn by one frame (`Popup.jsx`). While one is open it owns the keyboard and the page behind it is inert.
 _Avoid_: modal, dialog, overlay (the overlay folder also holds the intro, cursor and tooltip)
 
 **Intro**:

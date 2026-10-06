@@ -1,0 +1,65 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: rgba(10, 10, 10, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* Width comes from each popup (className), its height cap from --popup-max-h. The body
+   scrolls; the head and foot stay. */
+.box {
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--fg);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-height: var(--popup-max-h, calc(100dvh - 48px));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+}
+
+.box:focus {
+  outline: none;
+}
+
+/* The same header bar as the embedded shell: an unbroken top border, the label inside
+   it, and the close button on the right. */
+.head {
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--fg);
+  font-size: 12px;
+}
+
+.close {
+  border: 1px solid var(--line);
+  padding: 2px 8px;
+}
+
+:global(html:not(.kbd)) .close:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.dim {
+  opacity: 0.6;
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.foot {
+  flex: none;
+}
