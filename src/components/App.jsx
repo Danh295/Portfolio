@@ -40,7 +40,7 @@ import {
 } from "@/lib/nav";
 import { useOnChange } from "@/lib/useOnChange";
 import { useProjectHistory } from "@/lib/useProjectHistory";
-import { EXP_MAIN, EXP_TOGGLE, HAS_EARLY } from "@/lib/selection";
+import { useSectionSettle } from "@/lib/useSectionSettle";
 import { routeKey } from "@/lib/keyRouter";
 import styles from "./App.module.css";
 
@@ -63,7 +63,6 @@ export default function App({ initialView = null }) {
   const [sel, setSel] = useState(-1);
   const [expSel, setExpSel] = useState(-1);
   const [expOpen, setExpOpen] = useState(-1);
-  const [expEarlier, setExpEarlier] = useState(false);
   const [activeSec, setActiveSec] = useState(0);
   const [termOpen, setTermOpen] = useState(false);
   const [help, setHelp] = useState(false);
@@ -215,17 +214,6 @@ export default function App({ initialView = null }) {
     setHeroSel("head");
   };
 
-  // Fold/unfold the early roles, keeping the selection on the toggle (whose index
-  // moves) or on a visible row.
-  const toggleEarlier = () => {
-    const next = !expEarlier;
-    setExpEarlier(next);
-    if (!next && experienceEntries[expOpen]?.early) setExpOpen(-1);
-    if (expSel === EXP_TOGGLE(expEarlier) || (!next && expSel >= EXP_MAIN))
-      setExpSel(EXP_TOGGLE(next));
-  };
-  const active2Toggle = activeSec === 2 && HAS_EARLY && expSel === EXP_TOGGLE(expEarlier);
-
   // Starting or advancing the egg puts the rules card away (it would sit over the pot).
   const startEgg = () => {
     setRulesOpen(false);
@@ -263,11 +251,7 @@ export default function App({ initialView = null }) {
     if (fx.sec != null && !fx.open) setActiveSec(fx.sec);
     if (k === "embed") {
       if (fx.open) openProject(fx.open);
-      if (fx.exp != null && fx.sec === 2) {
-        // A folded "earlier" role unfolds so its row can be selected.
-        if (experienceEntries[fx.exp]?.early) setExpEarlier(true);
-        setExpSel(fx.exp);
-      }
+      if (fx.exp != null && fx.sec === 2) setExpSel(fx.exp);
       if (fx.filter) {
         setFilter(fx.filter);
         setSel(-1);
@@ -345,7 +329,6 @@ export default function App({ initialView = null }) {
       sel,
       expSel,
       expOpen,
-      expEarlier,
       rulesOpen,
       rulesSeen: egg.view.rulesSeen,
       briefing: egg.view.briefing,
@@ -416,9 +399,6 @@ export default function App({ initialView = null }) {
         break;
       case "openProjectIdx":
         openProject(projects[d.idx].slug);
-        break;
-      case "toggleEarlier":
-        toggleEarlier();
         break;
       case "setExpOpen":
         setExpOpen(d.i);
@@ -641,6 +621,15 @@ export default function App({ initialView = null }) {
     return () => ro.disconnect();
   }, [mode]);
 
+  // Scrolling the section list is free inside a section and settles onto the next header
+  // once it crosses a boundary (src/lib/useSectionSettle.js). Not on project pages, the
+  // terminal or behind a popup.
+  useSectionSettle({
+    enabled: mode === "gui" && !view && !(help || aboutOpen),
+    reduce,
+    navLockRef: navLock,
+  });
+
   useEffect(() => {
     const p = view && projects.find((x) => x.slug === view);
     document.title = p ? p.title + " | " + site.name : site.title;
@@ -750,11 +739,7 @@ export default function App({ initialView = null }) {
       : activeSec === 1 && list[sel]
         ? list[sel].title + ", project " + (sel + 1) + " of " + list.length
         : activeSec === 2 && expSel >= 0
-          ? expSel === EXP_TOGGLE(expEarlier)
-            ? expEarlier
-              ? "hide earlier roles"
-              : "earlier roles"
-            : experienceEntries[expSel].title + " at " + experienceEntries[expSel].company
+          ? experienceEntries[expSel].title + " at " + experienceEntries[expSel].company
           : activeSec === 0 && heroSel !== "head"
             ? { more: "more about me", rules: "how to play", egg: "egg minigame" }[heroSel]
             : "";
@@ -831,18 +816,12 @@ export default function App({ initialView = null }) {
     <Experience
       expSel={expSel}
       expOpen={expOpen}
-      expEarlier={expEarlier}
       active={activeSec === 2}
       reduce={reduce}
       onToggle={(i) => {
         setExpSel(i);
         setActiveSec(2);
         setExpOpen(expOpen === i ? -1 : i);
-      }}
-      earlierSel={active2Toggle}
-      onToggleEarlier={() => {
-        setActiveSec(2);
-        toggleEarlier();
       }}
     />
   );
@@ -869,7 +848,6 @@ export default function App({ initialView = null }) {
               inert={popup}
               ref={contentRef}
               className={view ? `${styles.main} ${styles.mainDetail}` : styles.main}
-              data-snap={view ? undefined : ""}
             >
               {view ? (
                 <ProjectDetail

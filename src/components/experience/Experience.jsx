@@ -4,18 +4,7 @@ import { experienceEntries } from "@/data/experience";
 import { pad } from "@/lib/format";
 import styles from "./Experience.module.css";
 
-const early = experienceEntries.filter((e) => e.early);
-
-export default function Experience({
-  expSel,
-  expOpen,
-  expEarlier,
-  earlierSel,
-  active,
-  reduce,
-  onToggle,
-  onToggleEarlier,
-}) {
+export default function Experience({ expSel, expOpen, active, reduce, onToggle }) {
   return (
     <SectionFrame
       id="experience"
@@ -33,7 +22,6 @@ export default function Experience({
       className={styles.exp}
     >
       {experienceEntries.map((e, i) => {
-        if (e.early && !expEarlier) return null;
         const sel = expSel === i && active,
           open = expOpen === i;
         return (
@@ -76,29 +64,6 @@ export default function Experience({
           </div>
         );
       })}
-      {early.length > 0 && (
-        <button
-          type="button"
-          onClick={onToggleEarlier}
-          aria-expanded={expEarlier}
-          data-earlier=""
-          data-exprow={
-            expEarlier ? experienceEntries.length : experienceEntries.length - early.length
-          }
-          data-tip={expEarlier ? "collapse" : "show student nonprofit roles"}
-          aria-current={earlierSel ? "true" : undefined}
-          className={earlierSel ? `${styles.earlier} ${styles.earlierOn}` : styles.earlier}
-        >
-          <span>{early[early.length - 1].date}</span>
-          <span>
-            {expEarlier ? "hide earlier roles" : "earlier · " + early.length + " roles · "}
-            {!expEarlier && (
-              <span className={styles.raw}>{early.map((e) => e.company).join(", ")}</span>
-            )}
-          </span>
-          <span>{expEarlier ? "−" : "+"}</span>
-        </button>
-      )}
     </SectionFrame>
   );
 }
