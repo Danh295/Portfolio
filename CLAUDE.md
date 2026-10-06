@@ -82,6 +82,10 @@ From the October 2026 review, still open (optional; the re-render goal was met b
 
 Work is tracked in `TODO.MD` (local and gitignored; no GitHub issues). See `docs/agents/issue-tracker.md`.
 
+### Triage labels
+
+The five roles map to `TODO.MD` sections (`ideas`, `needs danny`, `up next (claude)`, `left on purpose`). See `docs/agents/triage-labels.md`.
+
 ### Domain docs
 
 Single-context: `CONTEXT.md` at the root (the site's vocabulary), ADRs in `docs/adr/` when one gets written. See `docs/agents/domain.md`.
