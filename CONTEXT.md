@@ -42,6 +42,10 @@ _Avoid_: keyboard focus mode
 Single-character shortcuts disabled (WCAG 2.1.4), saved as `danny-keys`. Hints for one-character keys are hidden.
 _Avoid_: shortcuts disabled, hotkeys off
 
+**Key router**:
+The pure module (`src/lib/keyRouter.js`) that decides what every keydown does, from the facts of the key and the page. App only reads those facts and applies the decision.
+_Avoid_: key handler, keymap, shortcut handler
+
 **Hint**:
 A visible `[x]` key label next to a control (`<Hint>`).
 _Avoid_: shortcut label, badge

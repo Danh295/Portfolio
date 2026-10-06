@@ -40,42 +40,16 @@ import {
 } from "@/lib/nav";
 import { useOnChange } from "@/lib/useOnChange";
 import { useProjectHistory } from "@/lib/useProjectHistory";
-import { EXP_MAIN, EXP_TOGGLE, HAS_EARLY, stepSelection } from "@/lib/selection";
+import { EXP_MAIN, EXP_TOGGLE, HAS_EARLY } from "@/lib/selection";
+import { routeKey } from "@/lib/keyRouter";
 import styles from "./App.module.css";
 
 // Read once per page load, not per render (a render must not read the clock).
 const YEAR = new Date().getFullYear();
 // Keys that scroll the page natively; pressing one hands activeSec back to the scroll spy.
 const SCROLL_KEYS = new Set(["PageUp", "PageDown", "Home", "End", " "]);
-// While a popup is open, these scroll its list (marked data-popup-scroll) instead of the
-// page behind it: lines (±1), pages (±2) or the ends (±3); 0 just stops the page moving.
-const POPUP_SCROLL = {
-  ArrowDown: 1,
-  ArrowUp: -1,
-  ArrowLeft: 0,
-  ArrowRight: 0,
-  PageDown: 2,
-  PageUp: -2,
-  " ": 2,
-  Home: -3,
-  End: 3,
-};
-// Keys that toggle, open or activate something: a held key acts once, not at key-repeat
-// speed (a held t would strobe the whole page between themes). Moving keys still repeat.
-const NO_REPEAT = new Set([..."?msitf`eglr", "Enter", "Escape", "Backspace"]);
-// Keys that move the gui selection.
-const NAV_KEYS = new Set([
-  "j",
-  "k",
-  "h",
-  "1",
-  "2",
-  "3",
-  "ArrowUp",
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowRight",
-]);
+// What the g / l / r shortcuts open.
+const LINKS = { github: site.github.profile, linkedin: site.linkedin, resume: site.resume };
 
 /** `initialView`: the project slug a /projects/<slug>/ page starts on (pre-rendered). */
 export default function App({ initialView = null }) {
@@ -339,289 +313,186 @@ export default function App({ initialView = null }) {
     setVim(r.quit ? null : r.state);
   };
 
-  const handleKey = (e) => {
+  // The facts of one keydown for the key router (src/lib/keyRouter.js decides): the key,
+  // where focus is, and the page's state.
+  const keyFacts = (e) => {
     const ae = document.activeElement,
-      typing = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA");
-    if (mode === "term") {
-      // vim takes every key, except Enter/Space on a focused button (e.g. [exit]).
-      if (vim) {
-        if (!((e.key === "Enter" || e.key === " ") && ae && ae.closest("a, button"))) vimKey(e);
-      } else if (
-        !typing &&
-        // A focused button or link handles its own Enter, as in the gui.
-        ((e.key === "Enter" && !(ae && ae !== document.body && ae.closest("a, button"))) ||
-          (e.ctrlKey && e.key === "c" && window.getSelection().isCollapsed))
-      ) {
+      focused = ae && ae !== document.body ? ae : null,
+      onControl = !!focused?.closest("a, button, summary, select"),
+      eggRc = guiBoxRef.current?.getBoundingClientRect();
+    return {
+      key: e.key,
+      repeat: e.repeat,
+      shift: e.shiftKey,
+      meta: e.metaKey,
+      ctrl: e.ctrlKey,
+      alt: e.altKey,
+      typing: !!ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA"),
+      onButton: !!focused?.closest("a, button"),
+      onControl,
+      tabFocused: onControl && ae === tabFocus.current,
+      selectionCollapsed: window.getSelection()?.isCollapsed ?? true,
+      mode,
+      vim: !!vim,
+      help,
+      aboutOpen,
+      termOpen,
+      keysOn,
+      view,
+      viewIdx: projects.findIndex((p) => p.slug === view),
+      projectCount: projects.length,
+      activeSec,
+      heroSel,
+      sel,
+      expSel,
+      expOpen,
+      expEarlier,
+      rulesOpen,
+      rulesSeen: egg.view.rulesSeen,
+      briefing: egg.view.briefing,
+      eggOnScreen: !!eggRc && eggRc.bottom > 80 && eggRc.top < window.innerHeight - 80,
+      listLength: list.length,
+      filterIdx: projectFolders.indexOf(filter),
+      folderCount: projectFolders.length,
+    };
+  };
+
+  // Carries out the router's decision. No conditions on the page's state here: those are
+  // the router's (a different situation is a different decision).
+  const applyKey = (d, e) => {
+    if (!d) return;
+    if (d.blur) document.activeElement?.blur();
+    if (d.prevent) e.preventDefault();
+    if (d.flashSelected) pressFx(document.querySelector(d.flashSelected));
+    switch (d.do) {
+      case "vim":
+        vimKey(e);
+        break;
+      case "termShell":
         termInputRef.current?.focus({ preventScroll: true });
         shellKey("term", e);
-      } else if (
-        !typing &&
-        !e.metaKey &&
-        !e.ctrlKey &&
-        !e.altKey &&
-        e.key.length === 1 &&
-        !(e.key === " " && ae && ae.closest("button, a"))
-      )
-        // Typing anywhere goes to the prompt.
+        break;
+      case "focusTerm":
         termInputRef.current?.focus({ preventScroll: true });
-      return;
-    }
-    if (e.repeat && !typing && NO_REPEAT.has(e.key)) {
-      e.preventDefault();
-      return;
-    }
-    // A popup (keys or more…) owns the keyboard: only Esc, the popup keys (? and m, which
-    // swap between them) and s (in the keys popup) work. Scroll keys scroll the popup, not
-    // the page behind it; Enter and Space still press a focused button inside it.
-    if ((help || aboutOpen) && !["Escape", "?", "m", "s"].includes(e.key)) {
-      const dir = POPUP_SCROLL[e.key];
-      if (dir === undefined || (e.key === " " && ae?.closest("a, button"))) return;
-      e.preventDefault();
-      const box = document.querySelector("[data-popup-scroll]");
-      if (!box || !dir) return;
-      const d = e.key === " " && e.shiftKey ? -2 : dir;
-      const by =
-        Math.abs(d) === 3
-          ? d * box.scrollHeight
-          : Math.abs(d) === 2
-            ? d * box.clientHeight * 0.45
-            : d * 40;
-      box.scrollBy({ top: by });
-      return;
-    }
-    if (e.key === "`") {
-      if (!keysOn) return; // the header's terminal button still works
-      e.preventDefault();
-      setTermOpen((o) => !o);
-      pressFx(document.querySelector('[data-key="`"]'));
-      return;
-    }
-    if (typing) {
-      if (e.key === "Escape") {
-        setTermOpen(false);
-        ae.blur();
+        break;
+      case "scrollPopup": {
+        // Lines (±1), pages (±2) or the ends (±3) of the popup's list.
+        const box = document.querySelector("[data-popup-scroll]"),
+          n = Math.abs(d.dir);
+        if (box)
+          box.scrollBy({
+            top: d.dir * (n === 3 ? box.scrollHeight : n === 2 ? box.clientHeight * 0.45 : 40),
+          });
+        break;
       }
-      return;
-    }
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    // In the keys popup, s flips the shortcuts on/off (its toggle button says so).
-    if (help && e.key === "s") {
-      e.preventDefault();
-      toggleKeys();
-      pressFx(document.querySelector('[data-key="s"]'));
-      return;
-    }
-    // The embedded shell is open but its input lost focus (e.g. after selecting output
-    // to copy): typing goes back to its prompt instead of firing gui shortcuts. Enter
-    // still activates a focused control; Esc closes the shell below.
-    if (
-      termOpen &&
-      !help &&
-      !aboutOpen &&
-      (e.key.length === 1 || e.key === "Backspace" || e.key === "Enter") &&
-      !((e.key === " " || e.key === "Enter") && ae && ae.closest("button, a"))
-    ) {
-      embedInputRef.current?.focus({ preventScroll: true });
-      if (e.key === "Enter") shellKey("embed", e);
-      return;
-    }
-    // A link or button reached with Tab keeps its Enter/Space, even with the egg selected
-    // or the rules card up. Focus a click left behind (or a quiet focus move) doesn't, so
-    // the egg still gets those keys. (Not :focus-visible: Chrome turns that on for a
-    // clicked button at the first keypress, before this handler runs.)
-    const tabbed =
-      (e.key === "Enter" || e.key === " ") &&
-      !!ae?.closest("a, button, summary, select") &&
-      ae === tabFocus.current;
-    // The first-round rules card is up: Enter, Space or any character key proceeds (it
-    // says so; with shortcuts off only Enter and Space do). Esc puts it away; arrows, Tab
-    // and the like keep their usual jobs.
-    const eggRc = guiBoxRef.current?.getBoundingClientRect(),
-      eggOnScreen = !!eggRc && eggRc.bottom > 80 && eggRc.top < window.innerHeight - 80;
-    if (egg.view.briefing && eggOnScreen && !view && !help && !aboutOpen) {
-      const proceed =
-        (e.key === "Enter" || e.key === " " || (keysOn && e.key.length === 1)) && !tabbed;
-      if (e.key === "Escape") {
-        e.preventDefault();
+      case "toggleShell":
+        setTermOpen((o) => !o);
+        break;
+      case "toggleKeys":
+        toggleKeys();
+        break;
+      case "focusEmbed":
+        embedInputRef.current?.focus({ preventScroll: true });
+        if (d.enter) shellKey("embed", e);
+        break;
+      case "resetEgg":
         egg.reset();
-        return;
-      }
-      if (proceed) {
-        e.preventDefault();
+        break;
+      case "proceedRules":
         setActiveSec(0);
         setHeroSel("egg");
         startEgg();
-        return;
-      }
-    }
-    // Moving the selection with the keyboard drops focus left on a button by an earlier
-    // click, so Enter/Space then act on the selection rather than that button.
-    if (
-      NAV_KEYS.has(e.key) &&
-      (keysOn || e.key.length > 1) &&
-      ae &&
-      ae !== document.body &&
-      ae.closest("a, button")
-    )
-      ae.blur();
-    // With the egg selected, Enter/Space play it even if a button kept focus from an
-    // earlier click (e.g. the rules chip), so a timed press never goes elsewhere.
-    const eggKey =
-      (e.key === "Enter" || e.key === " ") &&
-      !tabbed &&
-      !view &&
-      !help &&
-      !termOpen &&
-      !aboutOpen &&
-      activeSec === 0 &&
-      heroSel === "egg";
-    // Leave Enter/Space on focused links and buttons to the browser.
-    if (
-      !eggKey &&
-      (e.key === "Enter" || e.key === " ") &&
-      ae &&
-      ae !== document.body &&
-      ae.closest("a, button, summary, select")
-    )
-      return;
-    // The egg plays only while its frame is on screen.
-    const playEgg = () => {
-      if (eggOnScreen) startEgg();
-    };
-    // The element Enter/Space act on in the gui: the selected hero stop, project row or
-    // experience row (null on a section header or with an overlay up).
-    const selectedEl = () => {
-      if (view || help || termOpen || aboutOpen) return null;
-      if (activeSec === 0) {
-        if (heroSel === "more") return document.querySelector('[data-key="m"]');
-        if (heroSel === "rules") return document.querySelector('[data-key="i"]');
-        if (heroSel === "egg") return document.querySelector("[data-egg]");
-        return null;
-      }
-      if (activeSec === 1 && list[sel]) return document.querySelector('[data-row="' + sel + '"]');
-      if (activeSec === 2 && expSel >= 0)
-        return expSel === EXP_TOGGLE(expEarlier)
-          ? document.querySelector("[data-earlier]")
-          : document.querySelector('[data-exprow="' + expSel + '"] > button');
-      return null;
-    };
-    const activate = () => {
-      if (view || help || termOpen || aboutOpen) return;
-      pressFx(selectedEl());
-      if (activeSec === 0) {
-        if (heroSel === "more") return setAboutOpen(true);
-        if (heroSel === "rules") return setRulesOpen((o) => !o);
-        if (heroSel === "egg") playEgg();
-      } else if (activeSec === 1 && list[sel]) openProject(list[sel].slug);
-      else if (activeSec === 2 && expSel >= 0) {
-        if (expSel === EXP_TOGGLE(expEarlier)) toggleEarlier();
-        else setExpOpen(expOpen === expSel ? -1 : expSel);
-      }
-    };
-    // j/k: one step of the selection model (src/lib/selection.js).
-    const step = (dir) => {
-      if (!home) return;
-      const r = stepSelection(dir, {
-        activeSec,
-        heroSel,
-        sel,
-        expSel,
-        expEarlier,
-        rulesSeen: egg.view.rulesSeen,
-        listLength: list.length,
-      });
-      if (!r) return;
-      if (r.goSec) goSec(...r.goSec);
-      else if (r.heroSel) setHeroSel(r.heroSel);
-      else if (r.sel != null) setSel(r.sel);
-      else if (r.expSel != null) setExpSel(r.expSel);
-    };
-    const home = !view,
-      idx = projects.findIndex((p) => p.slug === view),
-      open = (u) => window.open(u, "_blank", "noopener");
-    const map = {
-      Escape: () =>
-        help
-          ? setHelp(false)
-          : aboutOpen
-            ? setAboutOpen(false)
-            : rulesOpen && !view
-              ? setRulesOpen(false)
-              : termOpen
-                ? setTermOpen(false)
-                : view
-                  ? goBack()
-                  : expOpen >= 0
-                    ? setExpOpen(-1)
-                    : (setSel(-1), setExpSel(-1), setHeroSel("head")),
-      "?": () => {
+        break;
+      case "startEgg":
+        startEgg();
+        break;
+      case "openAbout":
+        setAboutOpen(true);
+        break;
+      case "toggleRules":
+        setRulesOpen((o) => !o);
+        break;
+      case "openProject":
+        openProject(list[d.row].slug);
+        break;
+      case "openProjectIdx":
+        openProject(projects[d.idx].slug);
+        break;
+      case "toggleEarlier":
+        toggleEarlier();
+        break;
+      case "setExpOpen":
+        setExpOpen(d.i);
+        break;
+      case "closeHelp":
+        setHelp(false);
+        break;
+      case "closeAbout":
+        setAboutOpen(false);
+        break;
+      case "closeRules":
+        setRulesOpen(false);
+        break;
+      case "closeShell":
+        setTermOpen(false);
+        break;
+      case "goBack":
+        goBack();
+        break;
+      case "collapseExp":
+        setExpOpen(-1);
+        break;
+      case "clearSelection":
+        setSel(-1);
+        setExpSel(-1);
+        setHeroSel("head");
+        break;
+      case "toggleHelp":
         setAboutOpen(false);
         setHelp((h) => !h);
-      },
-      m: () => {
+        break;
+      case "toggleAbout":
         setHelp(false);
         setAboutOpen((o) => !o);
-      },
-      i: () => !view && setRulesOpen((o) => !o),
-      t: toggleTheme,
-      h: goHome,
-      1: () => goSec(1),
-      2: () => goSec(2),
-      3: () => goSec(3),
-      ArrowDown: () => goSec(Math.min(3, activeSec + 1)),
-      ArrowUp: () => goSec(Math.max(0, activeSec - 1)),
-      f: () => {
-        setFilter(projectFolders[(projectFolders.indexOf(filter) + 1) % projectFolders.length]);
+        break;
+      case "toggleTheme":
+        toggleTheme();
+        break;
+      case "goHome":
+        goHome();
+        break;
+      case "goSec":
+        goSec(d.n, d.stop);
+        break;
+      case "selectHero":
+        setHeroSel(d.heroSel);
+        break;
+      case "selectRow":
+        setSel(d.sel);
+        break;
+      case "selectExp":
+        setExpSel(d.expSel);
+        break;
+      case "setFilter":
+        setFilter(projectFolders[d.idx]);
         setSel(-1);
-      },
-      j: () => step(1),
-      k: () => step(-1),
-      Enter: () => {
-        if (!home || help || termOpen || aboutOpen) return;
-        // On the hero heading, Enter jumps to the egg; otherwise it activates the
-        // selected element.
-        if (activeSec === 0 && heroSel === "head") return setHeroSel("egg");
-        activate();
-      },
-      // On the main page ←/→ move like k/j; on a project they step between projects.
-      ArrowRight: () => (home ? map.j() : openProject(projects[(idx + 1) % projects.length].slug)),
-      ArrowLeft: () =>
-        home ? map.k() : openProject(projects[(idx - 1 + projects.length) % projects.length].slug),
-      Backspace: () => view && goBack(),
-      e: () => {
+        break;
+      case "mail":
         window.location.assign("mailto:" + site.email);
-      },
-      g: () => open(site.github.profile),
-      l: () => open(site.linkedin),
-      r: () => open(site.resume),
-    };
-    // Space presses the selected element like Enter does (with nothing selected it
-    // scrolls the page as usual). With the egg selected, both always play it.
-    if (eggKey) {
-      e.preventDefault();
-      if (!e.repeat) activate();
-      return;
+        break;
+      case "openLink":
+        window.open(LINKS[d.link], "_blank", "noopener");
+        break;
     }
-    if (e.key === " ") {
-      if (selectedEl()) {
-        e.preventDefault();
-        if (!e.repeat) activate();
-      }
-      return;
-    }
-    // Shortcuts off: every single-character key (letters, digits, ?) is left alone.
-    if (!keysOn && e.key.length === 1) return;
-    const fn = map[e.key];
-    if (!fn) return;
-    if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !home && idx < 0) return;
-    if ((e.key === "ArrowUp" || e.key === "ArrowDown") && !home) return;
-    e.preventDefault();
-    fn();
     // A shortcut with a visible button (header, bottom bar, hero, project page, dialog
     // close) flashes it; the last match is the topmost (dialogs render after the page).
-    const keyed = document.querySelectorAll('[data-key="' + CSS.escape(e.key) + '"]');
-    pressFx(keyed[keyed.length - 1]);
+    if (d.flashKey) {
+      const keyed = document.querySelectorAll('[data-key="' + CSS.escape(d.flashKey) + '"]');
+      pressFx(keyed[keyed.length - 1]);
+    }
   };
+
+  const handleKey = (e) => applyKey(routeKey(keyFacts(e)), e);
 
   // Scroll spy: the last section whose top is above 55% of the viewport is active.
   const onScroll = () => {
@@ -689,7 +560,8 @@ export default function App({ initialView = null }) {
         pressFx(e.target.closest(PRESSABLE));
     };
     window.addEventListener("pointerdown", onPress);
-    // Remember what Tab focused (see `tabbed` in handleKey); a click or script focus clears it.
+    // Remember what Tab focused (the router's `tabbed`, src/lib/keyRouter.js); a click or
+    // script focus clears it.
     let tabbing = false;
     const onAnyKey = (e) => {
       tabbing = e.key === "Tab";
