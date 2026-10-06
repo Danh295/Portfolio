@@ -2,6 +2,7 @@
 
 import { BANNER } from "@/lib/ascii/banner";
 import Hint from "@/components/Hint";
+import { pstr } from "@/lib/shell/fs";
 import { SHORTCUT_CMDS } from "@/lib/shell/spec";
 import ShellPane from "./ShellPane";
 import Vim from "./Vim";
@@ -10,7 +11,6 @@ import styles from "./Terminal.module.css";
 /** Full-screen terminal mode. */
 export default function Terminal({
   session,
-  cwd,
   bodyRef,
   inputRef,
   vim,
@@ -32,7 +32,7 @@ export default function Terminal({
   return (
     <div className={styles.term}>
       <div className={styles.head}>
-        <span className={styles.mid}>danny@portfolio: {cwd} — zsh</span>
+        <span className={styles.mid}>danny@portfolio: {pstr(session.cwd)} — zsh</span>
         <button type="button" onClick={onExit} data-tip="exit or ctrl-d" className={styles.exit}>
           <span className={styles.dim}>[exit]</span> back to gui
         </button>

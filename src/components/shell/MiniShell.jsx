@@ -1,12 +1,12 @@
 "use client";
 
+import { pstr } from "@/lib/shell/fs";
 import ShellPane from "./ShellPane";
 import styles from "./MiniShell.module.css";
 
 /** The embedded shell panel opened with ` in gui mode. */
 export default function MiniShell({
   session,
-  cwd,
   panelRef,
   inputRef,
   onRun,
@@ -24,7 +24,7 @@ export default function MiniShell({
       inert={inert}
     >
       <div className={styles.head}>
-        <span>┤ danny@portfolio: {cwd} ├</span>
+        <span>┤ danny@portfolio: {pstr(session.cwd)} ├</span>
         <button type="button" onClick={onClose} data-key="Escape" className={styles.close}>
           <span className={styles.dim}>[esc]</span> close
         </button>
