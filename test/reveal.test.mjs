@@ -20,6 +20,8 @@ test("a landed jump starts only the active section, once its header shows", () =
   assert.equal(at({ jump: "landed", visible: true, active: true, labelShown: true }), true);
   assert.equal(at({ jump: "landed", active: true }), false, "header not fully shown");
   assert.equal(at({ jump: "landed", visible: true }), false, "a section peeking below waits");
+  // Layout moved under the jump (its header ended up under the nav): still the target.
+  assert.equal(at({ jump: "landed", active: true, visible: true }), true, "target, header hidden");
 });
 
 test("focus inside a waiting section always starts it", () => {

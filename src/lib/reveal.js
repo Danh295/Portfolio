@@ -7,7 +7,8 @@
 // - "moving": a jump (nav buttons, 1–4, h, j/k, the shell) is scrolling. Nothing starts,
 //   so the target types in once it's parked and the sections it flies past keep theirs.
 // - "landed": the jump has settled. Only the active section starts, once its header is
-//   fully on screen; a section peeking below it waits to be selected or scrolled to.
+//   fully on screen (or enough of it shows, if layout moved under the jump and left its
+//   header under the nav); a section peeking below it waits to be selected or scrolled to.
 // Focus moving into a waiting section (Tab, a click, a script) starts it at once, so a
 // focused element is never invisible text.
 
@@ -20,5 +21,5 @@ export function shouldReveal({ jump, visible, active, labelShown, focused }) {
   if (focused) return true;
   if (jump === "none") return visible;
   if (jump === "moving") return false;
-  return active && labelShown;
+  return active && (labelShown || visible);
 }
