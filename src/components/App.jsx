@@ -40,7 +40,6 @@ import {
 } from "@/lib/nav";
 import { useOnChange } from "@/lib/useOnChange";
 import { useProjectHistory } from "@/lib/useProjectHistory";
-import { useSectionSettle } from "@/lib/useSectionSettle";
 import { routeKey } from "@/lib/keyRouter";
 import styles from "./App.module.css";
 
@@ -621,15 +620,6 @@ export default function App({ initialView = null }) {
     return () => ro.disconnect();
   }, [mode]);
 
-  // Scrolling the section list is free inside a section and settles onto the next header
-  // once it crosses a boundary (src/lib/useSectionSettle.js). Not on project pages, the
-  // terminal or behind a popup.
-  useSectionSettle({
-    enabled: mode === "gui" && !view && !(help || aboutOpen),
-    reduce,
-    navLockRef: navLock,
-  });
-
   useEffect(() => {
     const p = view && projects.find((x) => x.slug === view);
     document.title = p ? p.title + " | " + site.name : site.title;
@@ -848,6 +838,7 @@ export default function App({ initialView = null }) {
               inert={popup}
               ref={contentRef}
               className={view ? `${styles.main} ${styles.mainDetail}` : styles.main}
+              data-snap={view ? undefined : ""}
             >
               {view ? (
                 <ProjectDetail
