@@ -36,9 +36,11 @@ export const isStill = (reduce) => reduce || ui.headerFx === "none" || prefersRe
 /**
  * Animate the heading in `ref` to `text`.
  *   trigger "load"   — once per page load, after the intro finishes (hero h1)
- *   trigger "active" — once per page load: blank until its section is first `active`
- *                      (selected or scrolled to) *and* the heading is on screen, then
- *                      types out (section labels)
+ *   trigger "active" — once per page load, section labels. Scrolling (mouse, trackpad,
+ *                      touch): types out as soon as any of its section shows between the
+ *                      nav and the bottom bar, so nothing on screen sits blank. Keyboard
+ *                      mode (html.kbd): blank until the section is `active` (selected,
+ *                      jumped or scrolled to) *and* the heading is fully on screen.
  *   trigger "set"    — every time `text` changes (project titles)
  * A one-time effect counts as played as soon as it starts, and once started it runs to
  * the end even if the section stops being active; so a heading is only ever blank →
@@ -98,13 +100,30 @@ export function useTextFx(ref, text, trigger, reduce, active = false, onStart = 
         window.removeEventListener(INTRO_END, start);
       };
     }
-    if (!active) return; // stays blank until its section is reached
-    // "On screen" = fully inside the band between the sticky nav and bottom bar (their
-    // measured heights, App.jsx), so a label still under a bar (e.g. at the start of a
-    // smooth scroll, or under a nav wrapped to several rows) doesn't count.
+    // "On screen" = inside the band between the sticky nav and bottom bar (their
+    // measured heights, App.jsx), so anything still under a bar doesn't count.
     const cs = getComputedStyle(document.documentElement),
       navH = Math.ceil(parseFloat(cs.getPropertyValue("--nav-h")) || 56),
       barH = Math.ceil(parseFloat(cs.getPropertyValue("--bar-h")) || 40);
+    // Scrolling: start the moment any of the section shows. Not in keyboard mode, which
+    // waits below. Several thresholds, so a section already showing when keyboard mode
+    // ends still starts on the next bit of scrolling.
+    const frame = el.closest("[data-sec]");
+    const seen = new IntersectionObserver(
+      (entries) => {
+        if (document.documentElement.classList.contains("kbd")) return;
+        if (entries.some((en) => en.isIntersecting)) {
+          seen.disconnect();
+          start();
+        }
+      },
+      { rootMargin: `-${navH}px 0px -${barH}px 0px`, threshold: [0, 0.25, 0.5, 0.75, 1] },
+    );
+    if (frame) seen.observe(frame);
+    if (!active) return () => seen.disconnect();
+    // Keyboard mode (and anyone once the section is reached): the label fully on screen,
+    // so one still under a bar (the start of a smooth scroll, a nav wrapped to several
+    // rows) doesn't count.
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((en) => en.isIntersecting)) {
@@ -115,7 +134,10 @@ export function useTextFx(ref, text, trigger, reduce, active = false, onStart = 
       { rootMargin: `-${navH}px 0px -${barH + 4}px 0px`, threshold: 1 },
     );
     io.observe(el);
-    return () => io.disconnect();
+    return () => {
+      seen.disconnect();
+      io.disconnect();
+    };
   }, [ref, key, text, trigger, reduce, active, once]);
 
   // Unmounting (or a new `text`) stops an effect in flight and shows the finished text.
