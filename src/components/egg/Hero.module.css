@@ -461,9 +461,14 @@
 
 /* Below this width the two cells stack (480 + 520 + gap), so the hero can't fit one
    screen anyway: let it grow and give the frame its full height. */
-/* Blinking cursor after the selected header; hidden while the heading effect types. */
+/* Blinking cursor after the selected header; hidden while the heading effect types. It
+   takes no room in the line (zero-width box, glyph overflowing right), so it can't wrap
+   the heading onto another line on a narrow screen: the hero would then change height
+   whenever it gains or loses the selection, shifting everything below mid-jump. */
 .caret::after {
   content: "█";
+  display: inline-block;
+  width: 0;
   animation: caret-blink 1.04s steps(1) infinite;
 }
 
