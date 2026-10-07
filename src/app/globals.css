@@ -75,19 +75,6 @@ html[data-keys="off"] [data-hint] {
   display: none;
 }
 
-/* Scrolling the section list snaps to a section top when it ends near one, so the header
-   lands exactly where a jump parks it. Mouse and trackpad only (touch scrolls freely); the
-   list marks itself with data-snap (App.jsx), so project pages and the terminal don't snap.
-   Proximity, and no scroll-snap-stop: the browser folds the snap into its own scroll
-   animation, momentum carries a flick across sections, and a scroll that ends far from a
-   header stays where it is. (Mandatory + snap-stop: always forced one section per gesture
-   and cut momentum off at every boundary, which felt stiff.) */
-@media (hover: hover) and (pointer: fine) {
-  html:has([data-snap]) {
-    scroll-snap-type: y proximity;
-  }
-}
-
 input,
 textarea,
 select,

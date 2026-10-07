@@ -819,7 +819,7 @@ export default function App({ initialView = null }) {
     <div className={styles.tail}>
       <Skills skills={skills} active={activeSec === 3} reduce={reduce} />
       <div className={styles.foot}>
-        <span suppressHydrationWarning>© {YEAR} danny hu · soft-boiled in waterloo</span>
+        <span suppressHydrationWarning>© {YEAR} danny hu · ontario, canada</span>
         <span>
           [↑/↓] sections<Hint> · [?] all keys · [`] shell</Hint>
         </span>
@@ -838,7 +838,6 @@ export default function App({ initialView = null }) {
               inert={popup}
               ref={contentRef}
               className={view ? `${styles.main} ${styles.mainDetail}` : styles.main}
-              data-snap={view ? undefined : ""}
             >
               {view ? (
                 <ProjectDetail

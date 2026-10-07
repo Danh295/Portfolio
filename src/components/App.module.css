@@ -17,15 +17,6 @@
   padding: 0 var(--pad-x) var(--main-pb);
 }
 
-/* The snap point at the very top of the page, under the nav (see globals.css). */
-.main[data-snap]::before {
-  content: "";
-  display: block;
-  height: 0;
-  scroll-snap-align: start;
-  scroll-margin-top: var(--nav-h, 58px);
-}
-
 /* The last section (skills + footer) is at least one screen tall from where a jump
    parks a section top (--nav-offset), so jumping to it lines up like the others
    instead of stopping early at the bottom of the page. */
