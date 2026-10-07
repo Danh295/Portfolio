@@ -11,6 +11,15 @@
   background: var(--bg);
 }
 
+/* The reveal after the boot log (Intro.jsx): the page shows through as this retracts. */
+.cover {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-intro);
+  background: var(--bg);
+  pointer-events: none;
+}
+
 .pre {
   margin: 0;
   font: 12px/14px var(--mono);
