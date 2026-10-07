@@ -66,14 +66,25 @@ export default function Intro({ reduce, rootRef }) {
       setFx(null);
       delete document.documentElement.dataset.loading;
       endIntro(); // skipped early too: the hero heading starts now, not at the planned end
-      if (reveal && rootRef.current)
-        rootRef.current.animate(
-          [{ clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)" }],
+      if (reveal && rootRef.current) {
+        // The page is revealed line by line under a cover pinned to the screen, which
+        // retracts top to bottom. (Clipping the page itself swept the whole document, so
+        // a scroll during the reveal outran it into unrevealed page.) It sweeps the
+        // screen at the speed the document sweep used to cross it.
+        const share = Math.min(1, innerHeight / Math.max(1, rootRef.current.offsetHeight)),
+          cover = document.createElement("div");
+        cover.className = styles.cover;
+        cover.dataset.revealCover = "";
+        document.body.appendChild(cover);
+        const sweep = cover.animate(
+          [{ clipPath: "inset(0 0 0 0)" }, { clipPath: "inset(100% 0 0 0)" }],
           {
-            duration: BOOT.REVEAL_MS,
-            easing: "steps(28, end)",
+            duration: BOOT.REVEAL_MS * share,
+            easing: `steps(${Math.max(1, Math.round(28 * share))}, end)`,
           },
         );
+        sweep.onfinish = sweep.oncancel = () => cover.remove();
+      }
     };
     const dissolve = (p) => {
       let s = "";
