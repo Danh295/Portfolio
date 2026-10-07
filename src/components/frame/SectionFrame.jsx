@@ -1,14 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { usePlayed, useTextFx } from "@/lib/useTextFx";
 import { blankText, typeIn } from "@/lib/typeIn";
 import styles from "./SectionFrame.module.css";
 
 // Animated part of a frame label (e.g. "~/projects").
-function FxText({ text, trigger, reduce, active, focused, onStart }) {
+function FxText({ text, trigger, reduce, active, onStart }) {
   const ref = useRef(null);
-  useTextFx(ref, text, trigger, reduce, active, onStart, focused);
+  useTextFx(ref, text, trigger, reduce, active, onStart);
   const played = usePlayed(trigger, text);
   return (
     <span ref={ref} data-fx={played ? undefined : "pending"}>
@@ -47,9 +47,6 @@ export default function SectionFrame({
     cancel = useRef(null);
   const titlePlayed = usePlayed("active", title);
   const pending = titleFx === "active" && !titlePlayed;
-  // Keyboard focus landing inside a frame that hasn't typed in starts it at once, so the
-  // focused element is never transparent text.
-  const [focused, setFocused] = useState(false);
 
   // The header started typing: in one go, blank the frame's text (same-width spaces),
   // un-hide it and type it back in. Unmounting mid-way restores the text.
@@ -74,7 +71,6 @@ export default function SectionFrame({
       id={id}
       data-sec={sec}
       data-fx={pending ? "pending" : undefined}
-      onFocus={pending ? () => setFocused(true) : undefined}
       aria-labelledby={id ? id + "-label" : undefined}
       className={`${styles.frame} ${className}`}
       {...rest}
@@ -101,7 +97,6 @@ export default function SectionFrame({
               trigger={titleFx}
               reduce={reduce}
               active={active}
-              focused={focused}
               onStart={onStart}
             />
           )}

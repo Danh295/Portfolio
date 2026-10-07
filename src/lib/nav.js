@@ -3,6 +3,7 @@
 
 import { site } from "@/config/site";
 import { projects } from "@/data/projects";
+import { setJump } from "@/lib/jump";
 
 export const SECTION_IDS = ["home", "projects", "experience", "skills"];
 
@@ -43,31 +44,26 @@ export const parseLocation = () => parsePath(window.location.pathname, window.lo
 // last sections are shorter than the viewport.
 // `target` is the scrollY a programmatic scroll is heading to, so a follow-up
 // ensureVisible can measure against where the page will land, not where it is mid-flight.
-// While the lock is on, <html data-jump> says a jump is in flight (src/lib/reveal.js: the
-// sections it flies past keep their type-in); NAV_SETTLED fires when it lands or the user
-// takes over, so they can look again.
-export const NAV_SETTLED = "danny:navsettled";
-export const isJumping = () => document.documentElement.hasAttribute("data-jump");
-
-const settle = (lock) => {
-  lock.current.on = false;
-  lock.current.target = null;
-  if (!isJumping()) return;
-  delete document.documentElement.dataset.jump;
-  window.dispatchEvent(new Event(NAV_SETTLED));
-};
-
+// The lock also tells src/lib/jump.js how the page got here: a jump is "moving" while
+// held, "landed" when the lock times out, and over ("none") once the user takes over.
 export function holdNav(lock, ms, target) {
   lock.current.on = true;
-  document.documentElement.dataset.jump = "";
+  setJump("moving");
   if (target !== undefined) lock.current.target = target;
   clearTimeout(lock.current.t);
-  lock.current.t = setTimeout(() => settle(lock), ms);
+  lock.current.t = setTimeout(() => {
+    lock.current.on = false;
+    lock.current.target = null;
+    setJump("landed");
+  }, ms);
 }
 
-export function freeNav(lock) {
+/** The user took over (wheel, touch, scroll keys, a click). `quiet`: no JUMP_CHANGED. */
+export function freeNav(lock, quiet = false) {
+  lock.current.on = false;
+  lock.current.target = null;
   clearTimeout(lock.current.t);
-  settle(lock);
+  setJump("none", !quiet);
 }
 
 /** scrollY that parks `el` just under the nav (its scroll-margin-top), within page bounds. */
