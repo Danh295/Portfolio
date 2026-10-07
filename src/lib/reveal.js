@@ -4,11 +4,12 @@
 // - "none": the user scrolled (wheel, trackpad, touch, scrollbar, Space/PageDown) or
 //   clicked. A section starts once enough of it shows (REVEAL_PX in useTextFx), so
 //   nothing on screen sits blank for long and the type-in happens where it's seen.
-// - "moving": a jump (nav buttons, 1–4, h, j/k, the shell) is scrolling. Nothing starts,
-//   so the target types in once it's parked and the sections it flies past keep theirs.
-// - "landed": the jump has settled. Only the active section starts, once its header is
-//   fully on screen (or enough of it shows, if layout moved under the jump and left its
-//   header under the nav); a section peeking below it waits to be selected or scrolled to.
+// - "moving" / "landed": a jump (nav buttons, 1–4, h, j/k, the shell) is scrolling, or has
+//   settled. Only its target (the active section) starts, the moment its header is fully
+//   on screen, mid-scroll included, so arriving never waits on the jump to settle. Once
+//   landed, enough of it showing also counts (layout moved under the jump and left its
+//   header under the nav). The sections it flies past, and one peeking below it, wait to
+//   be selected or scrolled to.
 // Focus moving into a waiting section (Tab, a click, a script) starts it at once, so a
 // focused element is never invisible text.
 
@@ -20,6 +21,6 @@
 export function shouldReveal({ jump, visible, active, labelShown, focused }) {
   if (focused) return true;
   if (jump === "none") return visible;
-  if (jump === "moving") return false;
-  return active && (labelShown || visible);
+  if (!active) return false;
+  return labelShown || (jump === "landed" && visible);
 }

@@ -11,9 +11,10 @@ test("the user scrolled: a section starts once enough of it shows", () => {
   assert.equal(at({ visible: true, active: false, labelShown: false }), true, "header off screen");
 });
 
-test("a jump in flight starts nothing, not even its target", () => {
+test("a jump in flight starts only its target, the moment its header shows", () => {
   assert.equal(at({ jump: "moving", visible: true }), false, "a section it flies past");
-  assert.equal(at({ jump: "moving", visible: true, active: true, labelShown: true }), false);
+  assert.equal(at({ jump: "moving", visible: true, active: true }), false, "header not shown yet");
+  assert.equal(at({ jump: "moving", active: true, labelShown: true }), true, "no wait to land");
 });
 
 test("a landed jump starts only the active section, once its header shows", () => {
