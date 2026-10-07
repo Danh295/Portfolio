@@ -43,20 +43,31 @@ export const parseLocation = () => parsePath(window.location.pathname, window.lo
 // last sections are shorter than the viewport.
 // `target` is the scrollY a programmatic scroll is heading to, so a follow-up
 // ensureVisible can measure against where the page will land, not where it is mid-flight.
+// While the lock is on, <html data-jump> says a jump is in flight (src/lib/reveal.js: the
+// sections it flies past keep their type-in); NAV_SETTLED fires when it lands or the user
+// takes over, so they can look again.
+export const NAV_SETTLED = "danny:navsettled";
+export const isJumping = () => document.documentElement.hasAttribute("data-jump");
+
+const settle = (lock) => {
+  lock.current.on = false;
+  lock.current.target = null;
+  if (!isJumping()) return;
+  delete document.documentElement.dataset.jump;
+  window.dispatchEvent(new Event(NAV_SETTLED));
+};
+
 export function holdNav(lock, ms, target) {
   lock.current.on = true;
+  document.documentElement.dataset.jump = "";
   if (target !== undefined) lock.current.target = target;
   clearTimeout(lock.current.t);
-  lock.current.t = setTimeout(() => {
-    lock.current.on = false;
-    lock.current.target = null;
-  }, ms);
+  lock.current.t = setTimeout(() => settle(lock), ms);
 }
 
 export function freeNav(lock) {
-  lock.current.on = false;
-  lock.current.target = null;
   clearTimeout(lock.current.t);
+  settle(lock);
 }
 
 /** scrollY that parks `el` just under the nav (its scroll-margin-top), within page bounds. */
