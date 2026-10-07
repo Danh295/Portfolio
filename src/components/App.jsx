@@ -39,6 +39,7 @@ import {
   projUrl,
 } from "@/lib/nav";
 import { useOnChange } from "@/lib/useOnChange";
+import { BARS_MEASURED } from "@/lib/bars";
 import { useProjectHistory } from "@/lib/useProjectHistory";
 import { routeKey } from "@/lib/keyRouter";
 import styles from "./App.module.css";
@@ -596,7 +597,7 @@ export default function App({ initialView = null }) {
       window.removeEventListener("pointerdown", onPointer, true);
       window.removeEventListener("focusin", onFocusIn);
       window.removeEventListener("click", onKeyClick, true);
-      freeNav(navLock);
+      freeNav(navLock, true); // quietly: the sections are unmounting too
     };
   }, []);
 
@@ -609,11 +610,14 @@ export default function App({ initialView = null }) {
         [navRef, "--nav-h"],
         [barRef, "--bar-h"],
       ];
-    const measure = () =>
+    // Anything measuring the band between them (src/lib/bars.js) measures again.
+    const measure = () => {
       bars.forEach(
         ([r, v]) =>
           r.current && root.style.setProperty(v, r.current.getBoundingClientRect().height + "px"),
       );
+      window.dispatchEvent(new Event(BARS_MEASURED));
+    };
     const ro = new ResizeObserver(measure);
     bars.forEach(([r]) => r.current && ro.observe(r.current));
     measure();

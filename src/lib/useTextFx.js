@@ -3,7 +3,8 @@
 import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react";
 import { ui } from "@/config/ui";
 import { INTRO_END, introWait } from "@/lib/intro";
-import { NAV_SETTLED, isJumping } from "@/lib/nav";
+import { BARS_MEASURED, readBars } from "@/lib/bars";
+import { JUMP_CHANGED, jumpState } from "@/lib/jump";
 import { shouldReveal } from "@/lib/reveal";
 import { runTextFx } from "@/lib/textFx";
 import { prefersReducedMotion } from "@/lib/useReducedMotion";
@@ -22,6 +23,9 @@ const subscribe = (l) => {
   return () => listeners.delete(l);
 };
 const BLANK = " ";
+// How much of a section must show between the nav and the bottom bar before a scroll
+// starts it (AOS's default offset): enough to see it type, not so much that it sits blank.
+const REVEAL_PX = 120;
 
 /** Whether a one-time heading has already played this load (false on the server). */
 export function usePlayed(trigger, text) {
@@ -39,29 +43,20 @@ export const isStill = (reduce) => reduce || ui.headerFx === "none" || prefersRe
  * Animate the heading in `ref` to `text`.
  *   trigger "load"   — once per page load, after the intro finishes (hero h1)
  *   trigger "active" — once per page load, section labels. Blank until src/lib/reveal.js
- *                      says go: any scroll the user makes starts it as soon as any of its
- *                      section shows between the nav and the bottom bar; during a jump,
- *                      only the target starts, once it's `active` and the heading is fully
- *                      on screen; keyboard focus inside the section (`focused`) starts it.
+ *                      says go: after the user scrolls, once REVEAL_PX of its section
+ *                      shows; after a jump has landed, once it's `active` and the heading
+ *                      is fully on screen; at once when focus moves into the section.
  *   trigger "set"    — every time `text` changes (project titles)
  * A one-time effect counts as played as soon as it starts, and once started it runs to
  * the end even if the section stops being active; so a heading is only ever blank →
  * typing → typed, never typed → blank → typing again. Reduced motion shows the text.
  * `onStart` fires when a one-time effect starts (SectionFrame types its rows in then).
  */
-export function useTextFx(
-  ref,
-  text,
-  trigger,
-  reduce,
-  active = false,
-  onStart = null,
-  focused = false,
-) {
+export function useTextFx(ref, text, trigger, reduce, active = false, onStart = null) {
   const once = trigger !== "set";
   const key = trigger + ":" + text;
   const running = useRef(null); // cancel fn of the effect in flight
-  const facts = useRef({ active, focused }); // read by the "active" trigger's check
+  const isActive = useRef(active); // read by the "active" trigger's check
   const recheck = useRef(null); // that check, while the heading still waits
   const startCb = useRef(onStart);
   useEffect(() => {
@@ -112,56 +107,75 @@ export function useTextFx(
         window.removeEventListener(INTRO_END, start);
       };
     }
-    // The facts src/lib/reveal.js decides on. "On screen" = inside the band between the
-    // sticky nav and bottom bar (their measured heights, App.jsx), so anything still
-    // under a bar doesn't count.
-    const cs = getComputedStyle(document.documentElement),
-      navH = Math.ceil(parseFloat(cs.getPropertyValue("--nav-h")) || 56),
-      barH = Math.ceil(parseFloat(cs.getPropertyValue("--bar-h")) || 40);
-    let visible = false, // any of the section shows
-      labelShown = false; // the heading is fully on screen
+    // The facts src/lib/reveal.js decides on, measured against the band between the
+    // sticky nav and bottom bar (src/lib/bars.js), so anything under a bar doesn't count.
+    const frame = el.closest("[data-sec]");
+    let visible = false, // REVEAL_PX of the section shows
+      labelShown = false, // the heading is fully on screen
+      focused = false, // focus moved into the section
+      seen = null,
+      io = null;
     const check = () => {
-      if (!shouldReveal({ jumping: isJumping(), visible, labelShown, ...facts.current })) return;
+      const facts = { jump: jumpState(), visible, labelShown, focused };
+      if (!shouldReveal({ ...facts, active: isActive.current })) return;
       stop();
       start();
     };
-    // A frame only touching the band's edge intersects at 0px: it isn't showing. The
-    // second threshold reports it as soon as a sliver is.
-    const seen = new IntersectionObserver(
-      (entries) => {
-        const en = entries[entries.length - 1];
-        visible = en.isIntersecting && en.intersectionRect.height > 0;
-        check();
-      },
-      { rootMargin: `-${navH}px 0px -${barH}px 0px`, threshold: [0, 0.001] },
-    );
-    const io = new IntersectionObserver(
-      (entries) => {
-        labelShown = entries[entries.length - 1].intersectionRatio > 0.99;
-        check();
-      },
-      { rootMargin: `-${navH}px 0px -${barH + 4}px 0px`, threshold: 1 },
-    );
-    const frame = el.closest("[data-sec]");
-    if (frame) seen.observe(frame);
-    io.observe(el);
-    // A jump landing (or the user taking it over) lets the sections it passed look again.
-    window.addEventListener(NAV_SETTLED, check);
+    // (Re)built whenever the bars are measured or the window resizes: the band moves.
+    const observe = () => {
+      if (seen) seen.disconnect();
+      if (io) io.disconnect();
+      const { navH, barH } = readBars(),
+        off = Math.max(0, Math.min(REVEAL_PX, Math.floor((innerHeight - navH - barH) / 4)));
+      // The band shrunk by the offset at both ends: scrolling down, the section's top must
+      // be `off` above the bottom bar; scrolling up, its bottom `off` below the nav. A frame
+      // only touching the edge intersects at 0px, so it isn't showing yet.
+      seen = new IntersectionObserver(
+        (entries) => {
+          const en = entries[entries.length - 1];
+          visible = en.isIntersecting && en.intersectionRect.height > 0;
+          check();
+        },
+        { rootMargin: `-${navH + off}px 0px -${barH + off}px 0px`, threshold: [0, 0.001] },
+      );
+      io = new IntersectionObserver(
+        (entries) => {
+          labelShown = entries[entries.length - 1].intersectionRatio > 0.99;
+          check();
+        },
+        { rootMargin: `-${navH}px 0px -${barH + 4}px 0px`, threshold: 1 },
+      );
+      if (frame) seen.observe(frame);
+      io.observe(el);
+    };
+    const onFocusIn = () => {
+      focused = true;
+      check();
+    };
+    observe();
+    window.addEventListener(BARS_MEASURED, observe);
+    window.addEventListener("resize", observe);
+    // A jump landing, or the user taking over, can be what a section was waiting for.
+    window.addEventListener(JUMP_CHANGED, check);
+    if (frame) frame.addEventListener("focusin", onFocusIn);
     recheck.current = check;
     function stop() {
       seen.disconnect();
       io.disconnect();
-      window.removeEventListener(NAV_SETTLED, check);
+      window.removeEventListener(BARS_MEASURED, observe);
+      window.removeEventListener("resize", observe);
+      window.removeEventListener(JUMP_CHANGED, check);
+      if (frame) frame.removeEventListener("focusin", onFocusIn);
       recheck.current = null;
     }
     return stop;
   }, [ref, key, text, trigger, reduce, once]);
 
-  // The section becoming active, or focus moving into it, can be what it was waiting for.
+  // The section becoming active can be what it was waiting for.
   useEffect(() => {
-    facts.current = { active, focused };
+    isActive.current = active;
     if (recheck.current) recheck.current();
-  }, [active, focused]);
+  }, [active]);
 
   // Unmounting (or a new `text`) stops an effect in flight and shows the finished text.
   useEffect(() => {
