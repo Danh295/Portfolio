@@ -25,11 +25,12 @@ const BOOT_EMBED = [
 const newSession = (lines) => ({ lines, input: "", hist: [], hi: -1, cwd: [], pend: null });
 
 /**
- * `egg`: the minigame (an inline ./egg is reset when another command runs). `vimOpen`:
+ * `resetEgg`/`crackEgg`: the minigame's reset and next-stage press (an inline ./egg is
+ * reset when another command runs; Enter plays it in terminal mode). `vimOpen`:
  * vim owns the terminal (shortcuts wait). `onFx(k, fx)`: apply a command's page effects.
  * `onExit(k)`: ctrl-d on an empty prompt.
  */
-export function useShell({ keysOn, egg, vimOpen, termInputRef, onFx, onExit }) {
+export function useShell({ keysOn, resetEgg, crackEgg, vimOpen, termInputRef, onFx, onExit }) {
   const [sessions, setSessions] = useState(() => ({
     term: newSession(BOOT_TERM),
     embed: newSession(BOOT_EMBED),
@@ -91,7 +92,7 @@ export function useShell({ keysOn, egg, vimOpen, termInputRef, onFx, onExit }) {
         },
       };
     });
-    if (hadEgg && !fx.egg) egg.reset();
+    if (hadEgg && !fx.egg) resetEgg();
     onFx(k, fx);
   };
 
@@ -118,7 +119,7 @@ export function useShell({ keysOn, egg, vimOpen, termInputRef, onFx, onExit }) {
       ...s,
       term: { ...s.term, lines: retireEgg(s.term.lines, "^C"), input: "", pend: null },
     }));
-    egg.reset();
+    resetEgg();
   };
 
   const stopAutoType = () => {
@@ -167,7 +168,7 @@ export function useShell({ keysOn, egg, vimOpen, termInputRef, onFx, onExit }) {
       // The egg owns the keyboard: Enter plays, ctrl-c quits, everything else is ignored.
       if (e.metaKey) return;
       e.preventDefault();
-      if (e.key === "Enter") egg.crack();
+      if (e.key === "Enter") crackEgg();
       else if (e.ctrlKey && e.key === "c") quitEgg();
       return;
     }

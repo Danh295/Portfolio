@@ -112,7 +112,8 @@ export default function App({ initialView = null }) {
     setTermInput,
   } = useShell({
     keysOn,
-    egg,
+    resetEgg: egg.reset,
+    crackEgg: egg.crack,
     vimOpen: !!vim,
     termInputRef,
     onFx: (k, fx) => fxRef.current(k, fx),
