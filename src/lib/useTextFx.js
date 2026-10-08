@@ -24,7 +24,7 @@ const subscribe = (l) => {
 const BLANK = " ";
 // How much of a section must show between the nav and the bottom bar before a scroll
 // starts it (AOS's default offset): enough to see it type, not so much that it sits blank.
-const REVEAL_PX = 120;
+const START_PX = 120;
 
 /** Whether a one-time heading has already played this load (false on the server). */
 export function usePlayed(trigger, text) {
@@ -38,13 +38,13 @@ export function usePlayed(trigger, text) {
 
 // Type-ins play under reduced motion too (text changing in place, nothing moving across the
 // screen; CONTEXT.md "Reduced motion"): only the config can turn them off.
-export const isStill = () => ui.headerFx === "none";
+const STILL = ui.headerFx === "none";
 
 /**
  * Animate the heading in `ref` to `text`.
  *   trigger "load"   — once per page load, after the intro finishes (hero h1)
  *   trigger "active" — once per page load, section labels. Blank until src/lib/typeInStart.js
- *                      says go: after the user scrolls, once REVEAL_PX of its section
+ *                      says go: after the user scrolls, once START_PX of its section
  *                      shows; after a jump has landed, once it's `active` and the heading
  *                      is fully on screen; at once when focus moves into the section.
  *   trigger "set"    — every time `text` changes (project titles)
@@ -67,7 +67,7 @@ export function useTextFx(ref, text, trigger, active = false, onStart = null) {
   // Before first paint, a one-time heading that hasn't played starts blank (same width).
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el || !once || played.has(key) || isStill()) return;
+    if (!el || !once || played.has(key) || STILL) return;
     el.textContent = BLANK.repeat(text.length);
     el.dataset.typing = "";
   }, [ref, key, once, text]);
@@ -75,7 +75,7 @@ export function useTextFx(ref, text, trigger, active = false, onStart = null) {
   useEffect(() => {
     const el = ref.current;
     if (!el || running.current) return; // already typing: let it finish
-    if (isStill() || (once && played.has(key))) {
+    if (STILL || (once && played.has(key))) {
       delete el.dataset.typing;
       delete el.dataset.fx;
       el.textContent = text;
@@ -111,7 +111,7 @@ export function useTextFx(ref, text, trigger, active = false, onStart = null) {
     // The facts src/lib/typeInStart.js decides on, measured against the band between the
     // sticky nav and bottom bar (src/lib/bars.js), so anything under a bar doesn't count.
     const frame = el.closest("[data-sec]");
-    let visible = false, // REVEAL_PX of the section shows
+    let visible = false, // START_PX of the section shows
       labelShown = false, // the heading is fully on screen
       focused = false, // focus moved into the section
       seen = null,
@@ -127,7 +127,7 @@ export function useTextFx(ref, text, trigger, active = false, onStart = null) {
       if (seen) seen.disconnect();
       if (io) io.disconnect();
       const { navH, barH } = readBars(),
-        off = Math.max(0, Math.min(REVEAL_PX, Math.floor((innerHeight - navH - barH) / 4)));
+        off = Math.max(0, Math.min(START_PX, Math.floor((innerHeight - navH - barH) / 4)));
       // The band shrunk by the offset at both ends: scrolling down, the section's top must
       // be `off` above the bottom bar; scrolling up, its bottom `off` below the nav. A frame
       // only touching the edge intersects at 0px, so it isn't showing yet.

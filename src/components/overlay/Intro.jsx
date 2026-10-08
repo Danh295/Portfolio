@@ -68,6 +68,8 @@ export default function Intro({ rootRef }) {
       delete document.documentElement.dataset.loading;
       endIntro(); // skipped early too: the hero heading starts now, not at the planned end
       // Under reduced motion the boot log still plays, but the page is uncovered at once.
+      // (Read the media query directly: the useReducedMotion hook still reports the server
+      // value during hydration, and the intro can end that early when skipped.)
       if (reveal && rootRef.current && !prefersReducedMotion()) {
         // The page is revealed line by line under a cover pinned to the screen, which
         // retracts top to bottom. (Clipping the page itself swept the whole document, so
