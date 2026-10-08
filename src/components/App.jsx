@@ -28,15 +28,8 @@ import { useTheme } from "@/lib/useTheme";
 import { useKeysPref } from "@/lib/useKeysPref";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { openBuffer, vimKey as vimStep } from "@/lib/vim";
-import {
-  alignTarget,
-  focusQuiet,
-  freeNav,
-  holdNav,
-  parseLocation,
-  parsePath,
-  projUrl,
-} from "@/lib/nav";
+import { alignTarget, focusQuiet, freeNav, holdNav, parseLocation } from "@/lib/nav";
+import { parsePath, projUrl } from "@/lib/urls";
 import { useOnChange } from "@/lib/useOnChange";
 import { BARS_MEASURED } from "@/lib/bars";
 import { useProjectHistory } from "@/lib/useProjectHistory";

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseHash, parsePath } from "@/lib/nav";
+import { parseHash, parsePath } from "@/lib/urls";
 import { stepSelection, heroStops, EXP_LAST, selectionLabel } from "@/lib/selection";
 import { projects } from "@/data/projects";
 import { experienceEntries } from "@/data/experience";

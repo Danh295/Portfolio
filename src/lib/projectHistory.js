@@ -2,7 +2,7 @@
 // a Back/Forward should do to the history stack and where the page should land. The
 // useProjectHistory hook applies them.
 
-import { parsePath, projUrl, secUrl } from "@/lib/nav";
+import { parsePath, projUrl, secUrl } from "@/lib/urls";
 
 /**
  * Opening `slug`. From the section list (`view` null) it pushes a project entry marked
