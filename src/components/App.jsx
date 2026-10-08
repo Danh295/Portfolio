@@ -75,7 +75,7 @@ export default function App({ initialView = null }) {
   const [rulesOpen, setRulesOpen] = useState(false);
   const [vim, setVim] = useState(null);
 
-  const egg = useEggGame({ reduce, clockMode: ui.eggClock, mode });
+  const egg = useEggGame({ clockMode: ui.eggClock, mode });
 
   const rootRef = useRef(null),
     contentRef = useRef(null),
@@ -119,7 +119,6 @@ export default function App({ initialView = null }) {
     setTermInput,
   } = useShell({
     keysOn,
-    reduce,
     egg,
     vimOpen: !!vim,
     termInputRef,
@@ -787,7 +786,6 @@ export default function App({ initialView = null }) {
         setHeroSel("more");
         setAboutOpen(true);
       }}
-      reduce={reduce}
     />
   );
   const projectList = (
@@ -796,7 +794,6 @@ export default function App({ initialView = null }) {
       filter={filter}
       sel={sel}
       active={activeSec === 1}
-      reduce={reduce}
       listRef={listRef}
       onFilter={(key) => {
         setFilter(key);
@@ -811,7 +808,6 @@ export default function App({ initialView = null }) {
       expSel={expSel}
       expOpen={expOpen}
       active={activeSec === 2}
-      reduce={reduce}
       onToggle={(i) => {
         setExpSel(i);
         setActiveSec(2);
@@ -821,7 +817,7 @@ export default function App({ initialView = null }) {
   );
   const tail = (
     <div className={styles.tail}>
-      <Skills skills={skills} active={activeSec === 3} reduce={reduce} />
+      <Skills skills={skills} active={activeSec === 3} />
       <div className={styles.foot}>
         <span suppressHydrationWarning>© {YEAR} danny hu · ontario, canada</span>
         <span>
@@ -844,12 +840,7 @@ export default function App({ initialView = null }) {
               className={view ? `${styles.main} ${styles.mainDetail}` : styles.main}
             >
               {view ? (
-                <ProjectDetail
-                  slug={view}
-                  reduce={reduce}
-                  onBack={goBack}
-                  onOpen={(slug) => openProject(slug)}
-                />
+                <ProjectDetail slug={view} onBack={goBack} onOpen={(slug) => openProject(slug)} />
               ) : (
                 <>
                   {hero}
@@ -905,7 +896,7 @@ export default function App({ initialView = null }) {
       </div>
       <Tooltip />
       <Cursor mode={mode} />
-      <Intro reduce={reduce} rootRef={rootRef} />
+      <Intro rootRef={rootRef} />
     </>
   );
 }

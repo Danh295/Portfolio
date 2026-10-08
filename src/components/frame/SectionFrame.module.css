@@ -60,12 +60,6 @@
   visibility: hidden;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .caret::after {
-    animation: none;
-  }
-}
-
 @media (max-width: 720px) {
   .right {
     display: none;

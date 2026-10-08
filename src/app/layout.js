@@ -3,13 +3,13 @@ import "./globals.css";
 import { site } from "@/config/site";
 import { ui } from "@/config/ui";
 
-// Mirrors introPlan() in src/lib/intro.js: boot intro, not yet seen this session, motion ok,
-// and not a deep link (a #hash goes straight to its section).
+// Mirrors introPlan() in src/lib/intro.js: boot intro, not yet seen this session, and not a
+// deep link (a #hash goes straight to its section).
 // Only on the home page (the only route that renders the intro, which removes the cover);
 // if the intro never mounts (a failed script), a fail-safe uncovers the page after 6s.
 const INTRO_COVER =
   ui.introFx === "boot"
-    ? `try{var h=document.documentElement,p=location.pathname.replace(/\\/+$/,"");if((p===${JSON.stringify(site.basePath)}||p==="")&&!location.hash&&sessionStorage.getItem("danny-intro")!=="1"&&!matchMedia("(prefers-reduced-motion: reduce)").matches){h.classList.add("boot-intro");h.dataset.loading="true";setTimeout(function(){if(h.classList.contains("boot-intro")){h.classList.remove("boot-intro");delete h.dataset.loading}},6000)}}catch(e){}`
+    ? `try{var h=document.documentElement,p=location.pathname.replace(/\\/+$/,"");if((p===${JSON.stringify(site.basePath)}||p==="")&&!location.hash&&sessionStorage.getItem("danny-intro")!=="1"){h.classList.add("boot-intro");h.dataset.loading="true";setTimeout(function(){if(h.classList.contains("boot-intro")){h.classList.remove("boot-intro");delete h.dataset.loading}},6000)}}catch(e){}`
     : "";
 
 // Self-hosted IBM Plex Mono (OFL, fonts/plex/OFL.txt): the site's typeface. It covers
@@ -101,13 +101,13 @@ export const viewport = {
   ],
 };
 
-// Type-in (globals.css): text that hasn't typed in yet is hidden from the first paint,
-// only when motion is allowed. If the app never hydrates (a failed script), the text
-// comes back after 8s.
+// Type-in (globals.css): text that hasn't typed in yet is hidden from the first paint
+// (reduced motion too: type-ins still play). If the app never hydrates (a failed script),
+// the text comes back after 8s.
 const FX =
   ui.headerFx === "none"
     ? ""
-    : `try{var f=document.documentElement;if(!matchMedia("(prefers-reduced-motion: reduce)").matches){f.classList.add("fx");setTimeout(function(){if(!f.dataset.hydrated)f.classList.remove("fx")},8000)}}catch(e){}`;
+    : `try{var f=document.documentElement;f.classList.add("fx");setTimeout(function(){if(!f.dataset.hydrated)f.classList.remove("fx")},8000)}catch(e){}`;
 
 // Runs before first paint (and before hydration):
 // - Theme: the visitor's saved choice, else their OS setting (useTheme keeps it in sync).

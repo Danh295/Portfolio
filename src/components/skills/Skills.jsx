@@ -3,7 +3,7 @@ import Hint from "@/components/Hint";
 import { projects } from "@/data/projects";
 import styles from "./Skills.module.css";
 
-export default function Skills({ skills, active, reduce }) {
+export default function Skills({ skills, active }) {
   return (
     <SectionFrame
       id="skills"
@@ -12,7 +12,6 @@ export default function Skills({ skills, active, reduce }) {
       title="~/skills"
       right={"bar = share of " + projects.length + " projects · hover or tab for details"}
       active={active}
-      reduce={reduce}
       className={styles.skills}
     >
       <div className={styles.grid}>

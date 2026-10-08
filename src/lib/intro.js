@@ -2,7 +2,6 @@
 // cached, so the intro overlay and the heading effects agree on the delay.
 
 import { parsePath } from "@/lib/nav";
-import { prefersReducedMotion } from "@/lib/useReducedMotion";
 
 const KEY = "danny-intro";
 
@@ -23,7 +22,7 @@ let plan = null;
  * Returns { fx: "boot" | "wipe" | "none", delay: ms before load headings start, at }.
  * `at` is when the plan was made; use introWait() for the delay still outstanding.
  */
-export function introPlan(fx, reduce) {
+export function introPlan(fx) {
   if (plan) return plan;
   let seen = false;
   try {
@@ -31,13 +30,10 @@ export function introPlan(fx, reduce) {
   } catch {
     // storage blocked: treat as unseen
   }
-  // Read the media now, not the hook: during hydration useReducedMotion still reports the
-  // server value (false), and this plan is cached on first call.
-  const still = reduce || prefersReducedMotion();
   // A deep link (/#projects, a redirect stub, a project page) goes straight to what it
   // asked for instead of sitting through the boot screen.
   const deep = !!window.location.hash || !!parsePath(window.location.pathname, "").slug;
-  if (fx === "none" || still || seen || deep) {
+  if (fx === "none" || seen || deep) {
     plan = { fx: "none", delay: 0, at: performance.now() };
     return plan;
   }
@@ -52,8 +48,8 @@ export function introPlan(fx, reduce) {
 }
 
 /** Milliseconds left before the intro is over (0 once it has played, e.g. on remounts). */
-export function introWait(fx, reduce) {
-  const p = introPlan(fx, reduce);
+export function introWait(fx) {
+  const p = introPlan(fx);
   return Math.max(0, p.at + p.delay - performance.now());
 }
 

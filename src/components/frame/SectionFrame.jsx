@@ -6,9 +6,9 @@ import { blankText, typeIn } from "@/lib/typeIn";
 import styles from "./SectionFrame.module.css";
 
 // Animated part of a frame label (e.g. "~/projects").
-function FxText({ text, trigger, reduce, active, onStart }) {
+function FxText({ text, trigger, active, onStart }) {
   const ref = useRef(null);
-  useTextFx(ref, text, trigger, reduce, active, onStart);
+  useTextFx(ref, text, trigger, active, onStart);
   const played = usePlayed(trigger, text);
   return (
     <span ref={ref} data-fx={played ? undefined : "pending"}>
@@ -37,7 +37,6 @@ export default function SectionFrame({
   right,
   active,
   caret = true,
-  reduce,
   className = "",
   children,
   ...rest
@@ -92,13 +91,7 @@ export default function SectionFrame({
           {titleFx === "none" ? (
             title
           ) : (
-            <FxText
-              text={title}
-              trigger={titleFx}
-              reduce={reduce}
-              active={active}
-              onStart={onStart}
-            />
+            <FxText text={title} trigger={titleFx} active={active} onStart={onStart} />
           )}
         </span>{" "}
         <span aria-hidden="true">├</span>

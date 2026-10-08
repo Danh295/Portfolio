@@ -4,7 +4,7 @@ import { experienceEntries } from "@/data/experience";
 import { pad } from "@/lib/format";
 import styles from "./Experience.module.css";
 
-export default function Experience({ expSel, expOpen, active, reduce, onToggle }) {
+export default function Experience({ expSel, expOpen, active, onToggle }) {
   return (
     <SectionFrame
       id="experience"
@@ -18,7 +18,6 @@ export default function Experience({ expSel, expOpen, active, reduce, onToggle }
       }
       active={active}
       caret={expSel < 0}
-      reduce={reduce}
       className={styles.exp}
     >
       {experienceEntries.map((e, i) => {

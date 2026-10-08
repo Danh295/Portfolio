@@ -7,7 +7,6 @@ import { BARS_MEASURED, readBars } from "@/lib/bars";
 import { JUMP_CHANGED, jumpState } from "@/lib/jump";
 import { shouldStart } from "@/lib/typeInStart";
 import { runTextFx } from "@/lib/textFx";
-import { prefersReducedMotion } from "@/lib/useReducedMotion";
 
 // Headings that have started their one-time effect this page load. Survives remounts
 // (e.g. opening and closing a project), so each plays exactly once per load. A small
@@ -37,7 +36,9 @@ export function usePlayed(trigger, text) {
   );
 }
 
-export const isStill = (reduce) => reduce || ui.headerFx === "none" || prefersReducedMotion();
+// Type-ins play under reduced motion too (text changing in place, nothing moving across the
+// screen; CONTEXT.md "Reduced motion"): only the config can turn them off.
+export const isStill = () => ui.headerFx === "none";
 
 /**
  * Animate the heading in `ref` to `text`.
@@ -49,10 +50,10 @@ export const isStill = (reduce) => reduce || ui.headerFx === "none" || prefersRe
  *   trigger "set"    — every time `text` changes (project titles)
  * A one-time effect counts as played as soon as it starts, and once started it runs to
  * the end even if the section stops being active; so a heading is only ever blank →
- * typing → typed, never typed → blank → typing again. Reduced motion shows the text.
+ * typing → typed, never typed → blank → typing again. Reduced motion still types.
  * `onStart` fires when a one-time effect starts (SectionFrame types its rows in then).
  */
-export function useTextFx(ref, text, trigger, reduce, active = false, onStart = null) {
+export function useTextFx(ref, text, trigger, active = false, onStart = null) {
   const once = trigger !== "set";
   const key = trigger + ":" + text;
   const running = useRef(null); // cancel fn of the effect in flight
@@ -66,15 +67,15 @@ export function useTextFx(ref, text, trigger, reduce, active = false, onStart = 
   // Before first paint, a one-time heading that hasn't played starts blank (same width).
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el || !once || played.has(key) || isStill(reduce)) return;
+    if (!el || !once || played.has(key) || isStill()) return;
     el.textContent = BLANK.repeat(text.length);
     el.dataset.typing = "";
-  }, [ref, key, once, text, reduce]);
+  }, [ref, key, once, text]);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || running.current) return; // already typing: let it finish
-    if (isStill(reduce) || (once && played.has(key))) {
+    if (isStill() || (once && played.has(key))) {
       delete el.dataset.typing;
       delete el.dataset.fx;
       el.textContent = text;
@@ -100,7 +101,7 @@ export function useTextFx(ref, text, trigger, reduce, active = false, onStart = 
     // also means StrictMode's dev-only mount → unmount → mount never starts one twice.
     if (trigger === "load") {
       // Waits out the intro, or starts as soon as it's skipped.
-      const timer = setTimeout(start, introWait(ui.introFx, reduce));
+      const timer = setTimeout(start, introWait(ui.introFx));
       window.addEventListener(INTRO_END, start);
       return () => {
         clearTimeout(timer);
@@ -169,7 +170,7 @@ export function useTextFx(ref, text, trigger, reduce, active = false, onStart = 
       recheck.current = null;
     }
     return stop;
-  }, [ref, key, text, trigger, reduce, once]);
+  }, [ref, key, text, trigger, once]);
 
   // The section becoming active can be what it was waiting for.
   useEffect(() => {

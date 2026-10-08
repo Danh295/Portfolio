@@ -12,16 +12,7 @@ const FOLDER_ROWS = projectFolders.map((key, i) => [
   key,
 ]);
 
-export default function ProjectList({
-  list,
-  filter,
-  sel,
-  active,
-  reduce,
-  listRef,
-  onFilter,
-  onOpen,
-}) {
+export default function ProjectList({ list, filter, sel, active, listRef, onFilter, onOpen }) {
   return (
     <SectionFrame
       id="projects"
@@ -35,7 +26,6 @@ export default function ProjectList({
       }
       active={active}
       caret={sel < 0}
-      reduce={reduce}
       className={styles.work}
     >
       <div className={styles.tree} role="group" aria-label="project folders">

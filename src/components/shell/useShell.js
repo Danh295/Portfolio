@@ -29,7 +29,7 @@ const newSession = (lines) => ({ lines, input: "", hist: [], hi: -1, cwd: [], pe
  * vim owns the terminal (shortcuts wait). `onFx(k, fx)`: apply a command's page effects.
  * `onExit(k)`: ctrl-d on an empty prompt.
  */
-export function useShell({ keysOn, reduce, egg, vimOpen, termInputRef, onFx, onExit }) {
+export function useShell({ keysOn, egg, vimOpen, termInputRef, onFx, onExit }) {
   const [sessions, setSessions] = useState(() => ({
     term: newSession(BOOT_TERM),
     embed: newSession(BOOT_EMBED),
@@ -139,11 +139,6 @@ export function useShell({ keysOn, reduce, egg, vimOpen, termInputRef, onFx, onE
       stopAutoType();
       runRef.current("term", cmd);
     };
-    if (reduce) {
-      patchSession("term", { input: cmd });
-      autoType.current = setTimeout(finish, 120);
-      return;
-    }
     let n = 0;
     const step = () => {
       n += 1;

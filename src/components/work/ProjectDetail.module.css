@@ -118,12 +118,6 @@
   display: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .h1::after {
-    animation: none;
-  }
-}
-
 .meta {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
