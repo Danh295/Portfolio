@@ -95,12 +95,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .tabOn {
-    animation: none;
-  }
-}
-
 /* Never shrinks or wraps (the shortcut tabs already fill the row on most windows, and a
    shrinking flex item squeezed its label onto three lines), and stays pinned to the right
    edge while the tabs scroll sideways under it. */

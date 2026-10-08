@@ -103,7 +103,7 @@ function statusText(L, t) {
  * that changes per frame stays in refs; React state only holds the stage, result
  * and the stats panel.
  */
-export function useEggGame({ reduce, clockMode, mode }) {
+export function useEggGame({ clockMode, mode }) {
   const [stage, setStageState] = useState(0);
   const [result, setResultState] = useState(null);
   const [stats, setStatsState] = useState(null);
@@ -119,7 +119,6 @@ export function useEggGame({ reduce, clockMode, mode }) {
     result: null,
     stats: null,
     briefing: false,
-    reduce,
     mode,
     clockMode,
   });
@@ -136,9 +135,9 @@ export function useEggGame({ reduce, clockMode, mode }) {
   const wake = useRef(() => {});
 
   useEffect(() => {
-    Object.assign(live.current, { reduce, mode, clockMode });
+    Object.assign(live.current, { mode, clockMode });
     wake.current();
-  }, [reduce, mode, clockMode]);
+  }, [mode, clockMode]);
 
   const getScene = () => scene.current || (scene.current = freshScene());
 
@@ -230,8 +229,7 @@ export function useEggGame({ reduce, clockMode, mode }) {
       best = c;
       writeBest(C, c);
     }
-    if (g.word === "perfect" && !L.reduce)
-      t.conf.push(...spawnConfetti(t.W, t.H, 140, EGG_GRID_SCALE));
+    if (g.word === "perfect") t.conf.push(...spawnConfetti(t.W, t.H, 140, EGG_GRID_SCALE));
     setTimer("");
     setResult({ label: C.fmt(c) + " · " + g.word, hint: g.off + " · best " + C.fmt(best) });
     setStage(5);
@@ -239,9 +237,9 @@ export function useEggGame({ reduce, clockMode, mode }) {
   }, [setStage, setResult, setStats, setTimer]);
 
   // The frame loop. Physics every frame, paint every other frame. At rest (stage 0 or 5)
-  // it idles while there's nothing to show: the pot is off screen or the tab hidden, or
-  // reduced motion has frozen it and the last frame is painted. Any scroll, resize, key,
-  // pointer, stage or mode change wakes it.
+  // it idles while there's nothing to show: the pot is off screen or the tab hidden. Any
+  // scroll, resize, key, pointer, stage or mode change wakes it. The egg plays under reduced
+  // motion too: it's contained in its own box, and a frozen egg read as a stuck page.
   useEffect(() => {
     let raf = 0,
       last = 0,
@@ -259,8 +257,7 @@ export function useEggGame({ reduce, clockMode, mode }) {
     const frame = () => {
       odd = !odd;
       const t = getScene(),
-        L = live.current,
-        R = L.reduce;
+        L = live.current;
       const inTerm = L.mode === "term" && termPre.current && termPre.current.isConnected;
       const el = inTerm ? termPre.current : guiPre.current,
         box = inTerm ? termBox.current : guiBox.current,
@@ -280,23 +277,22 @@ export function useEggGame({ reduce, clockMode, mode }) {
       last = now;
       // While a round is on (stages 1–4) the game always runs (its clocks, the 15s
       // auto-pull), on screen or not; only the raster below is skipped off screen.
-      if (!R && !t.drag) t.B += 0.004 * k;
+      if (!t.drag) t.B += 0.004 * k;
       t.A += t.vA * k;
       t.B += t.vB * k;
       t.vA *= Math.pow(0.93, k);
       t.vB *= Math.pow(0.93, k);
       t.A = Math.max(0.15, Math.min(1.2, t.A));
       // gentle cursor parallax, eased
-      t.px += ((R ? 0 : t.mx) - t.px) * ease1(0.06);
-      t.py += ((R ? 0 : t.my) - t.py) * ease1(0.06);
+      t.px += (t.mx - t.px) * ease1(0.06);
+      t.py += (t.my - t.py) * ease1(0.06);
       const el2 = (now - t.t0) / 1000,
         C = clockConfig(L.clockMode);
-      t.flame += ((st === 1 || st === 2 ? 1 : 0) - t.flame) * (R ? 1 : ease1(0.08));
+      t.flame += ((st === 1 || st === 2 ? 1 : 0) - t.flame) * ease1(0.08);
       if (st === 1) {
         const e = now - t.t0;
-        t.boil = R
-          ? ROLL_BOIL
-          : e < SIMMER_MS
+        t.boil =
+          e < SIMMER_MS
             ? SIMMER_BOIL * ease(cl(e / SIMMER_MS))
             : SIMMER_BOIL + (ROLL_BOIL - SIMMER_BOIL) * ease(cl((e - SIMMER_MS) / ROLL_MS));
         if (e >= SIMMER_MS + ROLL_MS + ROLL_HOLD_MS && !t.cooking) {
@@ -312,7 +308,7 @@ export function useEggGame({ reduce, clockMode, mode }) {
         const c = (now - t.cookT0) / 1000;
         setTimer(boilClockText(c, C));
         if (c >= C.max) crack();
-      } else t.boil += (0 - t.boil) * (R ? 1 : ease1(0.04));
+      } else t.boil += (0 - t.boil) * ease1(0.04);
       if (st !== 1) t.cooking = false;
       if (st === 0) t.countT0 = 0;
       // Centre overlay, one style for every phase: simmering… → rolling boil! → ready?
@@ -335,9 +331,9 @@ export function useEggGame({ reduce, clockMode, mode }) {
           a.dataset.show = String(!!announce);
         }
       }
-      t.hover = st <= 1 ? 1 : Math.max(0, t.hover - (R ? 1 : 0.03 * k));
+      t.hover = st <= 1 ? 1 : Math.max(0, t.hover - 0.03 * k);
       if (st === 3) {
-        t.swap = R ? 1 : cl(el2 / 3.4);
+        t.swap = cl(el2 / 3.4);
         const rem = Math.max(0, C.ice - Math.max(0, el2 - 3.4));
         setTimer(C.fmt(C.m ? Math.ceil(rem) : rem));
         if (rem <= 0 && !t.fin) {
@@ -350,14 +346,14 @@ export function useEggGame({ reduce, clockMode, mode }) {
       else t.swap = 1;
       if (st !== 3) t.fin = false;
       if (st === 4) {
-        t.serve = Math.min(1, t.serve + (R ? 1 : 0.0032 * k));
+        t.serve = Math.min(1, t.serve + 0.0032 * k);
         if (t.serve >= 1 && !t.done) {
           t.done = true;
           finish();
         }
       } else t.done = false;
       if (st < 4) t.serve = 0;
-      t.drip = st === 5 ? Math.min(t.dripMax, t.drip + (R ? 1 : 0.0035 * k)) : 0;
+      t.drip = st === 5 ? Math.min(t.dripMax, t.drip + 0.0035 * k) : 0;
       // Confetti steps once per 60fps frame's worth of time.
       t.confAcc = (t.confAcc || 0) + k;
       while (t.confAcc >= 1) {
@@ -380,7 +376,7 @@ export function useEggGame({ reduce, clockMode, mode }) {
           el,
           fxBox,
           potArt(t.A + jit + 0.05 * t.py, t.B + 0.08 * t.px, W, H, {
-            t: R ? 0 : now / 1000,
+            t: now / 1000,
             boil: t.boil,
             flame: t.flame,
             swap: t.swap,
@@ -393,15 +389,8 @@ export function useEggGame({ reduce, clockMode, mode }) {
           }),
         );
       }
-      const atRest = (st === 0 || st === 5) && !t.drag,
-        still =
-          R &&
-          painting &&
-          !t.conf.length &&
-          t.shake < 0.01 &&
-          Math.abs(t.vA) + Math.abs(t.vB) < 1e-5 &&
-          Math.abs(t.px) + Math.abs(t.py) < 1e-3;
-      raf = atRest && (!onScreen || still) && now > awake ? 0 : requestAnimationFrame(frame);
+      const atRest = (st === 0 || st === 5) && !t.drag;
+      raf = atRest && !onScreen && now > awake ? 0 : requestAnimationFrame(frame);
     };
     run();
 

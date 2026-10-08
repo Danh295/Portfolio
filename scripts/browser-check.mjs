@@ -569,11 +569,60 @@ await run("smoke (1291×808)", DESKTOP, async (t) => {
   );
 });
 
-await run("reduced motion (1291×808)", { ...DESKTOP, reducedMotion: true }, async (t) => {
+// Reduced motion reduces, it doesn't remove: text still types in, carets blink, the egg
+// plays and presses flash; what moves across the screen calms (no reveal sweep, instant
+// jumps).
+const REDUCED = { ...DESKTOP, reducedMotion: true };
+
+await run("reduced motion: the intro (1291×808)", REDUCED, async (t) => {
+  await t.go("", 900);
+  const booting = await t.ev("!!document.documentElement.dataset.loading");
+  let cover = false;
+  for (let i = 0; i < 200 && !cover; i++) {
+    cover = await t.ev("!!document.querySelector('[data-reveal-cover]')");
+    if (await t.ev("!document.documentElement.dataset.loading")) break;
+    await sleep(25);
+  }
+  await sleep(2500);
+  const h1 = await t.ev(`document.querySelector('h1').textContent.trim()`);
+  check("the boot log still plays", booting);
+  check("but the page is uncovered at once (no reveal sweep)", !cover);
+  check("and the heading types in after it", h1 === "hey, i'm danny", { h1 });
+});
+
+await run("reduced motion: the page (1291×808)", REDUCED, async (t) => {
   await t.go("#home");
+  const egg = () => t.ev(`document.querySelector('[data-sec="0"] pre')?.textContent ?? ""`);
+  const e0 = await egg();
+  await sleep(600);
+  check("the egg keeps moving", e0 !== "" && (await egg()) !== e0);
+  const caret = await t.ev(
+    `getComputedStyle(document.querySelector('h1'), '::after').animationName`,
+  );
+  check("the selected header's caret blinks", caret && caret !== "none", { caret });
+  await t.send("Input.dispatchKeyEvent", {
+    type: "keyDown",
+    key: "t",
+    code: "KeyT",
+    windowsVirtualKeyCode: 84,
+    text: "t",
+  });
+  const flashed = await t.ev(`!!document.querySelector('[data-pressed]')`);
+  await t.send("Input.dispatchKeyEvent", {
+    type: "keyUp",
+    key: "t",
+    code: "KeyT",
+    windowsVirtualKeyCode: 84,
+  });
+  check("a key press flashes its button", flashed);
+  const g = await t.geo();
+  await t.showTop(1, g.off + 60);
+  check("a section types in on scroll", (await t.fx(1)) === "started");
+  await t.key("3", "Digit3", 51);
   check(
-    "nothing waits hidden (no html.fx)",
-    !(await t.ev("document.documentElement.classList.contains('fx')")),
+    "a jump is instant (already parked 150ms after the key)",
+    Math.abs((await t.top(3)) - g.parked) <= 2,
+    { top: await t.top(3) },
   );
 });
 

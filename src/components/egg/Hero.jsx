@@ -24,7 +24,6 @@ export default function Hero({
   onMore,
   onRules,
   onStart,
-  reduce,
   keysOn = true,
 }) {
   // Hero stops: the heading (the section header: blinking cursor), then "more…" and
@@ -42,7 +41,7 @@ export default function Hero({
   useEffect(() => {
     if (rulesUp) rulesRef.current?.focus({ preventScroll: true, focusVisible: false });
   }, [rulesUp]);
-  useTextFx(h1, homeContent.heading, "load", reduce);
+  useTextFx(h1, homeContent.heading, "load");
   const headPlayed = usePlayed("load", homeContent.heading);
 
   // The ASCII frame is EGG_PX tall. When the hero is sized to the viewport, shrink

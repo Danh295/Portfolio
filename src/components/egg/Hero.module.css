@@ -476,14 +476,6 @@
   display: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .caret::after,
-  .pressStart,
-  .actOn {
-    animation: none;
-  }
-}
-
 @media (max-width: 1066px) {
   .hero {
     min-height: 0;

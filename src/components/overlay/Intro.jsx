@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ui } from "@/config/ui";
 import { introPlan, endIntro, BOOT, BOOT_END_MS } from "@/lib/intro";
+import { prefersReducedMotion } from "@/lib/useReducedMotion";
 import { projects } from "@/data/projects";
 import styles from "./Intro.module.css";
 
@@ -20,14 +21,14 @@ const LOG = [
  * Once-per-session intro. "boot" prints a log and a progress bar (~1.95s), then the
  * page is revealed line by line. "wipe" dissolves a █▓▒░ field. Click to skip.
  */
-export default function Intro({ reduce, rootRef }) {
+export default function Intro({ rootRef }) {
   const [fx, setFx] = useState(null);
   const ovRef = useRef(null),
     preRef = useRef(null),
-    started = useRef(false); // plays once: turning reduced motion on later doesn't replay it
+    started = useRef(false); // plays once
 
   useEffect(() => {
-    const plan = introPlan(ui.introFx, reduce);
+    const plan = introPlan(ui.introFx);
     const uncover = () => {
       document.documentElement.classList.remove("boot-intro");
       if (plan.fx === "none") delete document.documentElement.dataset.loading;
@@ -39,7 +40,7 @@ export default function Intro({ reduce, rootRef }) {
       setFx(plan.fx);
     });
     return () => cancelAnimationFrame(id);
-  }, [reduce]);
+  }, []);
 
   useEffect(() => {
     if (!fx) return;
@@ -66,7 +67,8 @@ export default function Intro({ reduce, rootRef }) {
       setFx(null);
       delete document.documentElement.dataset.loading;
       endIntro(); // skipped early too: the hero heading starts now, not at the planned end
-      if (reveal && rootRef.current) {
+      // Under reduced motion the boot log still plays, but the page is uncovered at once.
+      if (reveal && rootRef.current && !prefersReducedMotion()) {
         // The page is revealed line by line under a cover pinned to the screen, which
         // retracts top to bottom. (Clipping the page itself swept the whole document, so
         // a scroll during the reveal outran it into unrevealed page.) It sweeps the

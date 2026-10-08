@@ -7,13 +7,13 @@ import { pad } from "@/lib/format";
 import { fmtDate, repoFor } from "@/lib/github";
 import styles from "./ProjectDetail.module.css";
 
-export default function ProjectDetail({ slug, reduce, onBack, onOpen }) {
+export default function ProjectDetail({ slug, onBack, onOpen }) {
   const h1 = useRef(null);
   const idx = projects.findIndex((p) => p.slug === slug);
   const p = projects[idx];
   const next = projects[(idx + 1) % projects.length],
     prev = projects[(idx - 1 + projects.length) % projects.length];
-  useTextFx(h1, p.title, "set", reduce);
+  useTextFx(h1, p.title, "set");
 
   const meta = [
     ["type", p.category],
