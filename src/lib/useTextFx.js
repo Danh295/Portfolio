@@ -5,7 +5,7 @@ import { ui } from "@/config/ui";
 import { INTRO_END, introWait } from "@/lib/intro";
 import { BARS_MEASURED, readBars } from "@/lib/bars";
 import { JUMP_CHANGED, jumpState } from "@/lib/jump";
-import { shouldReveal } from "@/lib/reveal";
+import { shouldStart } from "@/lib/typeInStart";
 import { runTextFx } from "@/lib/textFx";
 import { prefersReducedMotion } from "@/lib/useReducedMotion";
 
@@ -42,7 +42,7 @@ export const isStill = (reduce) => reduce || ui.headerFx === "none" || prefersRe
 /**
  * Animate the heading in `ref` to `text`.
  *   trigger "load"   — once per page load, after the intro finishes (hero h1)
- *   trigger "active" — once per page load, section labels. Blank until src/lib/reveal.js
+ *   trigger "active" — once per page load, section labels. Blank until src/lib/typeInStart.js
  *                      says go: after the user scrolls, once REVEAL_PX of its section
  *                      shows; after a jump has landed, once it's `active` and the heading
  *                      is fully on screen; at once when focus moves into the section.
@@ -107,7 +107,7 @@ export function useTextFx(ref, text, trigger, reduce, active = false, onStart = 
         window.removeEventListener(INTRO_END, start);
       };
     }
-    // The facts src/lib/reveal.js decides on, measured against the band between the
+    // The facts src/lib/typeInStart.js decides on, measured against the band between the
     // sticky nav and bottom bar (src/lib/bars.js), so anything under a bar doesn't count.
     const frame = el.closest("[data-sec]");
     let visible = false, // REVEAL_PX of the section shows
@@ -117,7 +117,7 @@ export function useTextFx(ref, text, trigger, reduce, active = false, onStart = 
       io = null;
     const check = () => {
       const facts = { jump: jumpState(), visible, labelShown, focused };
-      if (!shouldReveal({ ...facts, active: isActive.current })) return;
+      if (!shouldStart({ ...facts, active: isActive.current })) return;
       stop();
       start();
     };

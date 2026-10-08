@@ -21,7 +21,7 @@ The keys popup or the more… popup, both drawn by one frame (`Popup.jsx`). Whil
 _Avoid_: modal, dialog, overlay (the overlay folder also holds the intro, cursor and tooltip)
 
 **Intro**:
-The boot animation, once per browser session. Deep links and reduced motion skip it.
+The boot animation, once per browser session: a boot log, then the _reveal_, which uncovers the page line by line. Deep links skip it.
 _Avoid_: splash, loader
 
 ## Keyboard
@@ -41,6 +41,10 @@ _Avoid_: keyboard focus mode
 **Keys off**:
 Single-character shortcuts disabled (WCAG 2.1.4), saved as `danny-keys`. Hints for one-character keys are hidden.
 _Avoid_: shortcuts disabled, hotkeys off
+
+**Jump**:
+A scroll the site makes to a section or stop: the nav buttons, `1`–`4`, `h`, j/k, the shell's `cd`, a deep link, coming back from a project page. The visitor's own scrolling (wheel, trackpad, touch, scrollbar, Space/PageDown) isn't one. A jump has _landed_ once its scroll settles.
+_Avoid_: navigation, programmatic scroll, snap
 
 **Key router**:
 The pure module (`src/lib/keyRouter.js`) that decides what every keydown does, from the facts of the key and the page. App only reads those facts and applies the decision.
@@ -70,8 +74,12 @@ _Avoid_: console, terminal view
 ## Motion
 
 **Type-in**:
-The once-per-load effect that types a section header and its frame's text in. Text that hasn't typed in yet is `data-fx="pending"`: still in the DOM, only made transparent.
+The once-per-load effect that types a section header and its frame's text in. Text that hasn't typed in yet is `data-fx="pending"`: still in the DOM, only made transparent. When it starts depends on how the visitor got there: scrolled to, once enough of the section shows; a jump, its target the moment its header shows (the sections it passes wait to be seen); focus moving into the section, at once.
 _Avoid_: typewriter, reveal, animation
+
+**Reduced motion**:
+The visitor's OS asking for less motion. The site reduces, it doesn't remove: text still types in, carets blink, the egg plays and presses flash; what moves across the screen calms down (jumps are instant, no fades, no reveal sweep).
+_Avoid_: no motion, animations off
 
 ## Egg
 
