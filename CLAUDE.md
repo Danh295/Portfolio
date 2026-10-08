@@ -94,7 +94,7 @@ Open work is tracked in `TODO.MD` (local); the code-level gaps:
 Tracked here until done; update the status as each step moves.
 
 1. **Done** (2026-10-07): reviewed `TODO.MD` against the repo with Danny (`/grill-with-docs`): Oct 6–7 done entries, stale lines fixed, new items triaged; `CONTEXT.md` gained Jump and Reduced motion, Type-in says when it starts, and "reveal" now means only the intro's (the type-in rule is `src/lib/typeInStart.js`).
-2. **Waiting on Danny**: yes/no on deleting the old `gh-pages` branch (no longer served; kept as a rollback), due mid-October.
+2. **Done** (2026-10-08): the old `gh-pages` branch was already gone from the remote (Pages deploys from the Actions workflow); the stale local branches `old-version` and `backup-before-date-rewrite` (was `5f88f24`, recoverable from the reflog for a while) were deleted.
 3. **Not started**: the cheap small cleanups under `TODO.MD`'s "up next (claude)".
 4. **Done** (2026-10-07): a committed browser check (`npm run check:browser`, plain CDP, no dependencies, local only) covering type-in timing, the intro, a smoke run and reduced motion.
 5. **Done** (2026-10-07): reduced motion became "reduce, don't remove" (a Windows PC with Animation effects off showed a frozen site): type-ins, the intro boot log, carets, shell auto-typing, the press flash and the egg keep playing; smooth scrolling, fades, the reveal sweep, cursor morph/spin and the 404 egg stay calm.
