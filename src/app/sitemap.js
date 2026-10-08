@@ -1,6 +1,6 @@
 import { site } from "@/config/site";
 import { projects } from "@/data/projects";
-import { projPath } from "@/lib/nav";
+import { projPath } from "@/lib/urls";
 
 export const dynamic = "force-static";
 

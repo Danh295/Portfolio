@@ -1,7 +1,7 @@
 import App from "@/components/App";
 import { site } from "@/config/site";
 import { projects } from "@/data/projects";
-import { projPath } from "@/lib/nav";
+import { projPath } from "@/lib/urls";
 
 // One pre-rendered page per project, so each can be indexed and shared:
 // /Portfolio/projects/<slug>/. It's the same app, opened on that project; moving around

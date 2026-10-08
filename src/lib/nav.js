@@ -1,39 +1,9 @@
-// Navigation helpers for App.jsx: URLs, the scroll lock that keeps the scroll spy out of
-// keyboard jumps, and quiet focus moves. URL parsing is pure (testable under node).
+// Navigation helpers for App.jsx (DOM): where the page's URL points, the scroll lock that
+// keeps the scroll spy out of keyboard jumps, and quiet focus moves. The URLs themselves
+// are pure, in src/lib/urls.js.
 
-import { site } from "@/config/site";
-import { projects } from "@/data/projects";
 import { setJump } from "@/lib/jump";
-
-export const SECTION_IDS = ["home", "projects", "experience", "skills"];
-
-// URLs: a project is a real page, /Portfolio/projects/<slug>/ (pre-rendered by
-// app/projects/[slug]/page.js, so it can be indexed and shared); sections are hashes on
-// the home page, /Portfolio/#experience.
-const HOME_URL = site.basePath + "/";
-export const secUrl = (n) => HOME_URL + "#" + SECTION_IDS[n];
-/** A project page's path without the basePath (for site.url + …); projUrl adds it. */
-export const projPath = (slug) => "/projects/" + slug + "/";
-export const projUrl = (slug) => site.basePath + projPath(slug);
-
-const isSlug = (s) => projects.some((p) => p.slug === s);
-
-/** "#projects" → { sec: 1 }; "#projects/recall" or the older "#recall" → { slug }. */
-export function parseHash(hash) {
-  const h = hash.replace(/^#\/?/, "");
-  const [head, slug] = h.split("/");
-  if (head === "projects" && slug && isSlug(slug)) return { slug };
-  if (!slug && isSlug(head)) return { slug: head };
-  const sec = SECTION_IDS.indexOf(head);
-  return { sec: sec < 0 ? 0 : sec };
-}
-
-/** What a URL points at: { slug } for a project page, else parseHash's answer. */
-export function parsePath(pathname, hash) {
-  const m = pathname.match(/\/projects\/([^/]+)\/?$/);
-  if (m && isSlug(m[1])) return { slug: m[1] };
-  return parseHash(hash);
-}
+import { parsePath } from "@/lib/urls";
 
 export const parseLocation = () => parsePath(window.location.pathname, window.location.hash);
 

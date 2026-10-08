@@ -1,7 +1,7 @@
 // Once-per-session intro. The decision is made on first call (client only) and
 // cached, so the intro overlay and the heading effects agree on the delay.
 
-import { parsePath } from "@/lib/nav";
+import { parsePath } from "@/lib/urls";
 
 const KEY = "danny-intro";
 
