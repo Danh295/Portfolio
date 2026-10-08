@@ -89,16 +89,6 @@ Open work is tracked in `TODO.MD` (local); the code-level gaps:
 - Left on purpose: `keyFacts` reads the egg's rect on every keydown (one cheap layout read; reading it lazily would put the DOM inside the pure router's facts), and `Popup.jsx`'s module-level focus bookkeeping resets when that file is hot-reloaded with a popup open (dev only: focus then falls to the page on close).
 - Content placeholders (coursework `courses`, IESO details) show up as the `todo` test.
 
-## Current focus (from the 2026-10-07 handoff)
-
-Tracked here until done; update the status as each step moves.
-
-1. **Done** (2026-10-07): reviewed `TODO.MD` against the repo with Danny (`/grill-with-docs`): Oct 6–7 done entries, stale lines fixed, new items triaged; `CONTEXT.md` gained Jump and Reduced motion, Type-in says when it starts, and "reveal" now means only the intro's (the type-in rule is `src/lib/typeInStart.js`).
-2. **Done** (2026-10-08): the old `gh-pages` branch was already gone from the remote (Pages deploys from the Actions workflow); the stale local branches `old-version` and `backup-before-date-rewrite` (was `5f88f24`, recoverable from the reflog for a while) were deleted.
-3. **Done** (2026-10-08): the small cleanups: `selectHero(stop)` in App.jsx, the pure `selectionLabel` (`src/lib/selection.js`), the pure URLs split out to `src/lib/urls.js`, `useShell` takes `resetEgg`/`crackEgg`, a test that the router's flash selectors name attributes the JSX renders, and a tidier browser check (one `KEY` table, shared helpers, clearer names); the lazy egg rect and Popup's hot-reload reset are left on purpose.
-4. **Done** (2026-10-07): a committed browser check (`npm run check:browser`, plain CDP, no dependencies, local only) covering type-in timing, the intro, a smoke run and reduced motion.
-5. **Done** (2026-10-07): reduced motion became "reduce, don't remove" (a Windows PC with Animation effects off showed a frozen site): type-ins, the intro boot log, carets, shell auto-typing, the press flash and the egg keep playing; smooth scrolling, fades, the reveal sweep, cursor morph/spin and the 404 egg stay calm.
-
 ## Git Commits
 
 - Commit and push straight to `main`; no branches or PRs (personal project). Run `lint`, `format:check`, `test` and `build` first, plus `npm run check:browser` for UI changes.
