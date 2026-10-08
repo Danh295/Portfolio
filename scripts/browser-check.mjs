@@ -25,6 +25,25 @@ const PHONE = { width: 390, height: 844 };
 // Tall enough that skills peeks well over START_PX below experience after a jump to it, so
 // "a section peeking below a jump waits" is actually tested (at 808px it peeks only ~72px).
 const TALL = { width: 1291, height: 1000 };
+// The keys the cases press: key → [code, windowsVirtualKeyCode].
+const KEY = {
+  Enter: ["Enter", 13],
+  Escape: ["Escape", 27],
+  Tab: ["Tab", 9],
+  " ": ["Space", 32],
+  "`": ["Backquote", 192],
+  "?": ["Slash", 191],
+  2: ["Digit2", 50],
+  3: ["Digit3", 51],
+  j: ["KeyJ", 74],
+  t: ["KeyT", 84],
+};
+// Page-side expressions: the nav button whose label includes `label`; the hero's heading
+// as typed so far, and in full (its aria-label, src/data/home.js `heading`).
+const navButton = (label) =>
+  `[...document.querySelectorAll('nav button, nav a')].find(b=>b.textContent.includes('${label}'))`;
+const H1_TEXT = `document.querySelector('h1').textContent.trim()`;
+const H1_FULL = `document.querySelector('h1').ariaLabel`;
 
 if (!existsSync(join(OUT, "index.html"))) {
   console.error("out/ has no build: run `npm run build` first.");
@@ -156,6 +175,17 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
       throw new Error("page script failed: " + expression.slice(0, 60));
     return r.result?.result?.value;
   };
+  const sendKey = (type, key) => {
+    if (!KEY[key]) throw new Error("no KEY entry for " + JSON.stringify(key));
+    const [code, keyCode] = KEY[key];
+    return send("Input.dispatchKeyEvent", {
+      type,
+      key,
+      code,
+      windowsVirtualKeyCode: keyCode,
+      text: type === "keyDown" && key.length === 1 ? key : undefined,
+    });
+  };
   const t = {
     errors,
     width,
@@ -166,21 +196,12 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
       await send("Page.navigate", { url: SITE + path });
       await sleep(wait);
     },
-    key: async (key, code, keyCode) => {
-      const text = key.length === 1 ? key : undefined;
-      await send("Input.dispatchKeyEvent", {
-        type: "keyDown",
-        key,
-        code,
-        windowsVirtualKeyCode: keyCode,
-        text,
-      });
-      await send("Input.dispatchKeyEvent", {
-        type: "keyUp",
-        key,
-        code,
-        windowsVirtualKeyCode: keyCode,
-      });
+    // Presses `key` (a KEY entry): down, then up. keyDown/keyUp send one half.
+    keyDown: (key) => sendKey("keyDown", key),
+    keyUp: (key) => sendKey("keyUp", key),
+    key: async (key) => {
+      await sendKey("keyDown", key);
+      await sendKey("keyUp", key);
       await sleep(150);
     },
     // A trackpad-like scroll (touch gestures under ~30px get eaten by touch slop).
@@ -324,7 +345,7 @@ await run("type-in scrolling up (1291×808)", DESKTOP, async (t) => {
 
 await run("type-in after skipping the intro (1291×808)", DESKTOP, async (t) => {
   await t.go("", 1200);
-  await t.key("Enter", "Enter", 13);
+  await t.key("Enter");
   await sleep(1200);
   const g = await t.geo();
   await t.showTop(1, g.off + 60);
@@ -336,7 +357,7 @@ await run("type-in after skipping the intro (1291×808)", DESKTOP, async (t) => 
 
 await run("type-in on Space (1291×808)", DESKTOP, async (t) => {
   await t.go("#home");
-  await t.key(" ", "Space", 32);
+  await t.key(" ");
   await sleep(1000);
   check("Space scrolls projects in and it types in", (await t.fx(1)) === "started");
 });
@@ -344,9 +365,7 @@ await run("type-in on Space (1291×808)", DESKTOP, async (t) => {
 await run("type-in on a nav click (1291×808)", DESKTOP, async (t) => {
   await t.go("#home");
   await t.watchStarts();
-  const clicked = await t.click(
-    `[...document.querySelectorAll('nav button, nav a')].find(b=>b.textContent.includes('skills'))`,
-  );
+  const clicked = await t.click(navButton("skills"));
   await sleep(1800);
   check("skills (the target) types in", clicked && (await t.startedAt(3)) !== null);
   check(
@@ -360,10 +379,10 @@ await run("type-in on a nav click (1291×808)", DESKTOP, async (t) => {
 
 const keyboardJumps = async (t) => {
   await t.go("#home");
-  await t.key("j", "KeyJ", 74);
-  await t.key("j", "KeyJ", 74);
+  await t.key("j");
+  await t.key("j");
   await t.watchStarts();
-  await t.key("j", "KeyJ", 74);
+  await t.key("j");
   await sleep(1200);
   check(
     "j onto projects types it in right away",
@@ -371,18 +390,18 @@ const keyboardJumps = async (t) => {
     await t.startedAt(1),
   );
   await t.watchStarts();
-  await t.key("2", "Digit2", 50);
+  await t.key("2");
   await sleep(1500);
   check("2 types experience in right away", quick(await t.startedAt(2)), await t.startedAt(2));
   check("skills peeking below experience waits", (await t.fx(3)) === "pending");
   for (let i = 0; i < 5; i++) {
-    await t.key("j", "KeyJ", 74);
+    await t.key("j");
     await sleep(150);
   }
   await sleep(900);
   check("j down every role: skills still waits", (await t.fx(3)) === "pending");
   await t.watchStarts();
-  await t.key("j", "KeyJ", 74);
+  await t.key("j");
   await sleep(1200);
   check("j onto skills types it in right away", quick(await t.startedAt(3)), await t.startedAt(3));
 };
@@ -393,7 +412,7 @@ await run("type-in on focus (1291×808)", DESKTOP, async (t) => {
   await t.go("#home");
   let sec = "-";
   for (let i = 0; i < 40 && sec !== "1"; i++) {
-    await t.key("Tab", "Tab", 9);
+    await t.key("Tab");
     sec = await t.ev(`(document.activeElement.closest('[data-sec]') || {}).dataset?.sec ?? "-"`);
   }
   await sleep(300);
@@ -407,10 +426,10 @@ await run("type-in on focus (1291×808)", DESKTOP, async (t) => {
 await run("type-in on the shell's cd (1291×808)", DESKTOP, async (t) => {
   await t.go("#home");
   await t.watchStarts();
-  await t.key("`", "Backquote", 192);
+  await t.key("`");
   await sleep(500);
   await t.send("Input.insertText", { text: "cd experience" });
-  await t.key("Enter", "Enter", 13);
+  await t.key("Enter");
   await sleep(1800);
   check(
     "the shell's cd types experience in, projects (flown past) waits",
@@ -439,9 +458,7 @@ await run("phone (390×844, touch)", { ...PHONE, mobile: true }, async (t) => {
     t.ev(`Math.round(document.querySelector('[data-sec="0"]').getBoundingClientRect().height)`);
   const h0 = await hero();
   const g = await t.geo();
-  const tapped = await t.tap(
-    `[...document.querySelectorAll('nav button, nav a')].find(b=>b.textContent.includes('skills'))`,
-  );
+  const tapped = await t.tap(navButton("skills"));
   await sleep(2000);
   check("the nav button takes a tap", tapped && (await t.top(3)) < g.parked + 200);
   check("the hero keeps its height when the selection leaves it", (await hero()) === h0, {
@@ -479,20 +496,17 @@ await run("intro (1291×808)", DESKTOP, async (t) => {
     { appeared, covered },
   );
   await sleep(1500);
-  check(
-    "the heading types in after it",
-    (await t.ev(`document.querySelector('h1').textContent.trim()`)) === "hey, i'm danny",
-  );
+  check("the heading types in after it", (await t.ev(H1_TEXT)) === (await t.ev(H1_FULL)));
 });
 
 await run("intro skipped with Enter (1291×808)", DESKTOP, async (t) => {
   await t.go("", 900);
   const playing = await t.ev("!!document.documentElement.dataset.loading");
-  await t.key("Enter", "Enter", 13);
+  await t.key("Enter");
   await sleep(1600);
   check(
     "Enter skips it and the heading types in",
-    playing && (await t.ev(`document.querySelector('h1').textContent.trim()`)) === "hey, i'm danny",
+    playing && (await t.ev(H1_TEXT)) === (await t.ev(H1_FULL)),
     { playing },
   );
 });
@@ -528,7 +542,7 @@ await run("smoke (1291×808)", DESKTOP, async (t) => {
   const opened =
     (await t.ev("location.pathname")).includes("/projects/") &&
     (await t.ev("!!document.querySelector('[data-detail-title]')"));
-  await t.key("Escape", "Escape", 27);
+  await t.key("Escape");
   await sleep(1500);
   const y1 = await t.ev("Math.round(scrollY)");
   check(
@@ -537,27 +551,27 @@ await run("smoke (1291×808)", DESKTOP, async (t) => {
     { opened, y0, y1 },
   );
   const theme = await t.ev("document.documentElement.dataset.theme");
-  await t.key("t", "KeyT", 84);
+  await t.key("t");
   check("t switches the theme", (await t.ev("document.documentElement.dataset.theme")) !== theme);
-  await t.key("t", "KeyT", 84);
-  await t.key("?", "Slash", 191);
+  await t.key("t");
+  await t.key("?");
   await sleep(300);
   const popup = await t.ev("!!document.querySelector('[role=dialog]')");
-  await t.key("Escape", "Escape", 27);
+  await t.key("Escape");
   await sleep(300);
   check(
     "? opens the keys popup and Esc closes it",
     popup && !(await t.ev("!!document.querySelector('[role=dialog]')")),
   );
-  await t.key("`", "Backquote", 192);
+  await t.key("`");
   await sleep(400);
   await t.send("Input.insertText", { text: "./app --mode terminal" });
-  await t.key("Enter", "Enter", 13);
+  await t.key("Enter");
   await sleep(1200);
   const mode = () => t.ev("document.querySelector('[data-mode]')?.dataset.mode");
   const term = await mode();
   await t.send("Input.insertText", { text: "exit" });
-  await t.key("Enter", "Enter", 13);
+  await t.key("Enter");
   await sleep(1200);
   check("terminal mode opens and exit comes back", term === "term" && (await mode()) === "gui", {
     term,
@@ -598,10 +612,10 @@ await run("reduced motion: the intro (1291×808)", REDUCED, async (t) => {
     await sleep(25);
   }
   // Typing, not just shown: some sample catches the heading part-way.
-  const full = "hey, i'm danny",
+  const full = await t.ev(H1_FULL),
     seen = new Set();
   for (let i = 0; i < 120; i++) {
-    seen.add(await t.ev(`document.querySelector('h1').textContent.trim()`));
+    seen.add(await t.ev(H1_TEXT));
     await sleep(25);
   }
   const partway = [...seen].some((s) => s && s !== full);
@@ -620,20 +634,9 @@ await run("reduced motion: the page (1291×808)", REDUCED, async (t) => {
     `getComputedStyle(document.querySelector('h1'), '::after').animationName`,
   );
   check("the selected header's caret blinks", caret && caret !== "none", { caret });
-  await t.send("Input.dispatchKeyEvent", {
-    type: "keyDown",
-    key: "t",
-    code: "KeyT",
-    windowsVirtualKeyCode: 84,
-    text: "t",
-  });
+  await t.keyDown("t");
   const flashed = await t.ev(`!!document.querySelector('[data-pressed]')`);
-  await t.send("Input.dispatchKeyEvent", {
-    type: "keyUp",
-    key: "t",
-    code: "KeyT",
-    windowsVirtualKeyCode: 84,
-  });
+  await t.keyUp("t");
   check("a key press flashes its button", flashed);
   const g = await t.geo();
   const before = await t.fx(1);
@@ -646,7 +649,7 @@ await run("reduced motion: the page (1291×808)", REDUCED, async (t) => {
     f=document.querySelector('[data-sec="3"]');(function step(){
     if(Math.abs(f.getBoundingClientRect().top-${g.parked})<=2)__jumpMs=Math.round(performance.now()-s);
     else if(performance.now()-s<1500)requestAnimationFrame(step)})()},{once:true,capture:true})})()`);
-  await t.key("3", "Digit3", 51);
+  await t.key("3");
   await sleep(600);
   const ms = await t.ev("window.__jumpMs");
   check("a jump is instant (parked within 50ms of the key)", ms !== null && ms <= 50, { ms });
