@@ -22,7 +22,7 @@ const OUT = new URL("../out/", import.meta.url).pathname;
 const BASE = "/Portfolio/";
 const DESKTOP = { width: 1291, height: 808 };
 const PHONE = { width: 390, height: 844 };
-// Tall enough that skills peeks well over REVEAL_PX below experience after a jump to it, so
+// Tall enough that skills peeks well over START_PX below experience after a jump to it, so
 // "a section peeking below a jump waits" is actually tested (at 808px it peeks only ~72px).
 const TALL = { width: 1291, height: 1000 };
 
@@ -209,11 +209,21 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
         });
       return true;
     },
+    // A finger tap on the element `findExpr` finds (touch emulation is on for the phone).
+    tap: async (findExpr) => {
+      const p = await ev(
+        `(()=>{const e=${findExpr};if(!e)return null;const r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`,
+      );
+      if (!p) return false;
+      await send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [p] });
+      await send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      return true;
+    },
     fx: (n) => ev(`document.querySelector('[data-sec="${n}"]').dataset.fx || "started"`),
     top: (n) =>
       ev(`Math.round(document.querySelector('[data-sec="${n}"]').getBoundingClientRect().top)`),
     // The band between the nav and the bottom bar, where a jump parks a header, and the
-    // offset a scroll needs before a section starts (REVEAL_PX in src/lib/useTextFx.js).
+    // offset a scroll needs before a section starts (START_PX in src/lib/useTextFx.js).
     geo: () =>
       ev(`(()=>{const cs=getComputedStyle(document.documentElement),
         nav=Math.ceil(parseFloat(cs.getPropertyValue('--nav-h'))||56),
@@ -256,7 +266,7 @@ const check = (name, ok, detail) => {
     `${ok ? "PASS" : "FAIL"} ${name}${ok || detail === undefined ? "" : "  " + JSON.stringify(detail)}`,
   );
 };
-const quick = (at) => at !== null && at.ms <= 150;
+const quick = (at) => at !== null && at.ms <= 120;
 
 async function run(title, view, body) {
   if (process.env.ONLY && !title.includes(process.env.ONLY)) return;
@@ -429,10 +439,11 @@ await run("phone (390×844, touch)", { ...PHONE, mobile: true }, async (t) => {
     t.ev(`Math.round(document.querySelector('[data-sec="0"]').getBoundingClientRect().height)`);
   const h0 = await hero();
   const g = await t.geo();
-  await t.click(
+  const tapped = await t.tap(
     `[...document.querySelectorAll('nav button, nav a')].find(b=>b.textContent.includes('skills'))`,
   );
   await sleep(2000);
+  check("the nav button takes a tap", tapped && (await t.top(3)) < g.parked + 200);
   check("the hero keeps its height when the selection leaves it", (await hero()) === h0, {
     before: h0,
     after: await hero(),
@@ -486,23 +497,26 @@ await run("intro skipped with Enter (1291×808)", DESKTOP, async (t) => {
   );
 });
 
-await run("scrolling during the intro's reveal (1291×808)", DESKTOP, async (t) => {
-  await t.go("", 0);
-  await waitForCover(t);
-  await t.send("Input.synthesizeScrollGesture", {
-    x: 640,
-    y: 500,
-    yDistance: -1200,
-    speed: 3000,
-    gestureSourceType: "touch",
-    preventFling: true,
+// A fast scroll as the reveal starts, and again mid-sweep (it uncovers the screen in ~0.3s).
+for (const after of [0, 150])
+  await run(`scrolling ${after}ms into the intro's reveal (1291×808)`, DESKTOP, async (t) => {
+    await t.go("", 0);
+    await waitForCover(t);
+    await sleep(after);
+    await t.send("Input.synthesizeScrollGesture", {
+      x: 640,
+      y: 500,
+      yDistance: -1200,
+      speed: 3000,
+      gestureSourceType: "touch",
+      preventFling: true,
+    });
+    const covered = await t.ev(COVERED);
+    check("a fast scroll never runs into unrevealed page", covered === 0, {
+      covered,
+      y: await t.ev("Math.round(scrollY)"),
+    });
   });
-  const covered = await t.ev(COVERED);
-  check("a fast scroll never runs into unrevealed page", covered === 0, {
-    covered,
-    y: await t.ev("Math.round(scrollY)"),
-  });
-});
 
 await run("smoke (1291×808)", DESKTOP, async (t) => {
   await t.go("#projects");
@@ -583,11 +597,17 @@ await run("reduced motion: the intro (1291×808)", REDUCED, async (t) => {
     if (await t.ev("!document.documentElement.dataset.loading")) break;
     await sleep(25);
   }
-  await sleep(2500);
-  const h1 = await t.ev(`document.querySelector('h1').textContent.trim()`);
+  // Typing, not just shown: some sample catches the heading part-way.
+  const full = "hey, i'm danny",
+    seen = new Set();
+  for (let i = 0; i < 120; i++) {
+    seen.add(await t.ev(`document.querySelector('h1').textContent.trim()`));
+    await sleep(25);
+  }
+  const partway = [...seen].some((s) => s && s !== full);
   check("the boot log still plays", booting);
   check("but the page is uncovered at once (no reveal sweep)", !cover);
-  check("and the heading types in after it", h1 === "hey, i'm danny", { h1 });
+  check("and the heading types in after it", partway && seen.has(full), [...seen].slice(0, 4));
 });
 
 await run("reduced motion: the page (1291×808)", REDUCED, async (t) => {
@@ -616,14 +636,20 @@ await run("reduced motion: the page (1291×808)", REDUCED, async (t) => {
   });
   check("a key press flashes its button", flashed);
   const g = await t.geo();
+  const before = await t.fx(1);
   await t.showTop(1, g.off + 60);
-  check("a section types in on scroll", (await t.fx(1)) === "started");
+  check("a section types in on scroll", before === "pending" && (await t.fx(1)) === "started", {
+    before,
+  });
+  // Time from the key to skills parked, measured in the page.
+  await t.ev(`(()=>{window.__jumpMs=null;addEventListener('keydown',()=>{const s=performance.now(),
+    f=document.querySelector('[data-sec="3"]');(function step(){
+    if(Math.abs(f.getBoundingClientRect().top-${g.parked})<=2)__jumpMs=Math.round(performance.now()-s);
+    else if(performance.now()-s<1500)requestAnimationFrame(step)})()},{once:true,capture:true})})()`);
   await t.key("3", "Digit3", 51);
-  check(
-    "a jump is instant (already parked 150ms after the key)",
-    Math.abs((await t.top(3)) - g.parked) <= 2,
-    { top: await t.top(3) },
-  );
+  await sleep(600);
+  const ms = await t.ev("window.__jumpMs");
+  check("a jump is instant (parked within 50ms of the key)", ms !== null && ms <= 50, { ms });
 });
 
 /* ---------- done ---------- */

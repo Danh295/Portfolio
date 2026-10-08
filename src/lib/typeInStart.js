@@ -2,7 +2,7 @@
 // facts; this decides). The split is how the page got there (src/lib/jump.js), not the
 // input device:
 // - "none": the user scrolled (wheel, trackpad, touch, scrollbar, Space/PageDown) or
-//   clicked. A section starts once enough of it shows (REVEAL_PX in useTextFx), so
+//   clicked. A section starts once enough of it shows (START_PX in useTextFx), so
 //   nothing on screen sits blank for long and the type-in happens where it's seen.
 // - "moving" / "landed": a jump (nav buttons, 1–4, h, j/k, the shell) is scrolling, or has
 //   settled. Only its target (the active section) starts, the moment its header is fully
