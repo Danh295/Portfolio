@@ -205,12 +205,18 @@ export default function App({ initialView = null }) {
     else scrollSec(n);
   };
 
+  // Select a hero stop ("head" | "more" | "rules" | "egg"), making the hero the active
+  // section. It doesn't scroll (goSec and goHome do).
+  const selectHero = (stop) => {
+    setActiveSec(0);
+    setHeroSel(stop);
+  };
+
   // "[h] ~/danny" and the h key: the hero, from anywhere (a project page included).
   const goHome = () => {
     if (view) leaveProject(0);
     else scrollSec(0);
-    setActiveSec(0);
-    setHeroSel("head");
+    selectHero("head");
   };
 
   // Starting or advancing the egg puts the rules card away (it would sit over the pot).
@@ -263,10 +269,7 @@ export default function App({ initialView = null }) {
     // A section the embedded shell went to (cd / cat …, or `./egg` → the hero with the
     // egg selected): scroll there, leaving an open project page first.
     const to = fx.sec0 ? 0 : k === "embed" && fx.sec != null && !fx.open ? fx.sec : null;
-    if (fx.sec0) {
-      setActiveSec(0);
-      setHeroSel("egg");
-    }
+    if (fx.sec0) selectHero("egg");
     if (to != null) {
       if (view) leaveProject(to);
       else setTimeout(() => scrollSec(to), 50);
@@ -380,8 +383,7 @@ export default function App({ initialView = null }) {
         egg.reset();
         break;
       case "proceedRules":
-        setActiveSec(0);
-        setHeroSel("egg");
+        selectHero("egg");
         startEgg();
         break;
       case "startEgg":
@@ -443,7 +445,7 @@ export default function App({ initialView = null }) {
         goSec(d.n, d.stop);
         break;
       case "selectHero":
-        setHeroSel(d.heroSel);
+        selectHero(d.heroSel);
         break;
       case "selectRow":
         setSel(d.sel);
@@ -767,23 +769,17 @@ export default function App({ initialView = null }) {
       rulesOpen={rulesOpen}
       keysOn={keysOn}
       onRules={() => {
-        setActiveSec(0);
-        setHeroSel("rules");
+        selectHero("rules");
         setRulesOpen((o) => !o);
       }}
       announceRef={guiAnnounceRef}
-      onSelectEgg={() => {
-        setActiveSec(0);
-        setHeroSel("egg");
-      }}
+      onSelectEgg={() => selectHero("egg")}
       onStart={() => {
-        setActiveSec(0);
-        setHeroSel("egg");
+        selectHero("egg");
         startEgg();
       }}
       onMore={() => {
-        setActiveSec(0);
-        setHeroSel("more");
+        selectHero("more");
         setAboutOpen(true);
       }}
     />
