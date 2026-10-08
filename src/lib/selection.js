@@ -34,3 +34,22 @@ export function stepSelection(dir, s) {
   const i = stops.indexOf(s.heroSel);
   return i > 0 ? { heroSel: stops[i - 1] } : null;
 }
+
+// The hero's stops as read out (the heading, its first stop, reads nothing).
+const HERO_NAMES = { more: "more about me", rules: "how to play", egg: "egg minigame" };
+
+/**
+ * What the polite live region reads for the j/k selection (it's shown by colour only),
+ * from `s` = { mode, view, activeSec, heroSel, sel, expSel, list }: `list` is the work
+ * list as filtered, so a project reads as "n of" that list. "" on a section's header,
+ * in terminal mode and on a project page.
+ */
+export function selectionLabel(s) {
+  if (s.mode !== "gui" || s.view) return "";
+  if (s.activeSec === 0) return HERO_NAMES[s.heroSel] ?? "";
+  if (s.activeSec === 1 && s.list[s.sel])
+    return s.list[s.sel].title + ", project " + (s.sel + 1) + " of " + s.list.length;
+  if (s.activeSec === 2 && s.expSel >= 0)
+    return experienceEntries[s.expSel].title + " at " + experienceEntries[s.expSel].company;
+  return "";
+}
