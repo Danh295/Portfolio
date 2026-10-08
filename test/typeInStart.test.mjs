@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { shouldReveal } from "@/lib/reveal";
+import { shouldStart } from "@/lib/typeInStart";
 
 const base = { jump: "none", visible: false, active: false, labelShown: false, focused: false };
-const at = (over) => shouldReveal({ ...base, ...over });
+const at = (over) => shouldStart({ ...base, ...over });
 
 test("the user scrolled: a section starts once enough of it shows", () => {
   assert.equal(at({}), false, "not on screen yet (or only a sliver)");

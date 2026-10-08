@@ -18,7 +18,7 @@
  * nav and the bottom bar. `active`: it's the active section. `labelShown`: its header is
  * fully on screen. `focused`: focus is inside it.
  */
-export function shouldReveal({ jump, visible, active, labelShown, focused }) {
+export function shouldStart({ jump, visible, active, labelShown, focused }) {
   if (focused) return true;
   if (jump === "none") return visible;
   if (!active) return false;

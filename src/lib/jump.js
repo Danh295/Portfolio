@@ -1,4 +1,4 @@
-// How the page got where it is, for src/lib/reveal.js. <html data-jump> is "moving" while a
+// How the page got where it is, for src/lib/typeInStart.js. <html data-jump> is "moving" while a
 // jump (nav buttons, 1–4, h, j/k, the shell, a deep link, back from a project) scrolls,
 // "landed" once it settles, and absent once the user scrolls or clicks (src/lib/nav.js:
 // holdNav / its timeout / freeNav). JUMP_CHANGED fires on every change.
