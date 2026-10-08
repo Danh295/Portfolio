@@ -21,7 +21,6 @@ import Intro from "@/components/overlay/Intro";
 import { site } from "@/config/site";
 import { ui } from "@/config/ui";
 import { projects, projectFolders } from "@/data/projects";
-import { experienceEntries } from "@/data/experience";
 import { skills } from "@/lib/shell";
 import { spark } from "@/lib/github";
 import { useShell } from "@/components/shell/useShell";
@@ -42,6 +41,7 @@ import { useOnChange } from "@/lib/useOnChange";
 import { BARS_MEASURED } from "@/lib/bars";
 import { useProjectHistory } from "@/lib/useProjectHistory";
 import { routeKey } from "@/lib/keyRouter";
+import { selectionLabel } from "@/lib/selection";
 import styles from "./App.module.css";
 
 // Read once per page load, not per render (a render must not read the clock).
@@ -728,16 +728,7 @@ export default function App({ initialView = null }) {
   // hidden from screen readers) until it closes.
   const popup = help || aboutOpen;
   // The j/k selection is shown by colour only, so it's also read out (a polite live region).
-  const selName =
-    mode !== "gui" || view
-      ? ""
-      : activeSec === 1 && list[sel]
-        ? list[sel].title + ", project " + (sel + 1) + " of " + list.length
-        : activeSec === 2 && expSel >= 0
-          ? experienceEntries[expSel].title + " at " + experienceEntries[expSel].company
-          : activeSec === 0 && heroSel !== "head"
-            ? { more: "more about me", rules: "how to play", egg: "egg minigame" }[heroSel]
-            : "";
+  const selName = selectionLabel({ mode, view, activeSec, heroSel, sel, expSel, list });
 
   // The gui's big pieces are built up front, not inside the mode/view conditionals
   // below: React Compiler caches each element on its own inputs, so a keystroke in the

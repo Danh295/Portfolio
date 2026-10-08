@@ -1,8 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseHash, parsePath } from "@/lib/nav";
-import { stepSelection, heroStops, EXP_LAST } from "@/lib/selection";
+import { stepSelection, heroStops, EXP_LAST, selectionLabel } from "@/lib/selection";
 import { projects } from "@/data/projects";
+import { experienceEntries } from "@/data/experience";
 
 test("parseHash / parsePath", () => {
   assert.deepEqual(parseHash(""), { sec: 0 });
@@ -77,4 +78,33 @@ test("rules chip joins the hero stops once seen", () => {
     heroSel: "rules",
   });
   assert.deepEqual(stepSelection(-1, { ...base, activeSec: 3 }), { goSec: [2, EXP_LAST] });
+});
+
+test("the selection is read out by name; headers read nothing", () => {
+  const at = (s) => selectionLabel({ mode: "gui", view: null, list: projects, ...base, ...s });
+  assert.equal(at({}), "", "the hero's heading");
+  assert.equal(at({ heroSel: "more" }), "more about me");
+  assert.equal(at({ heroSel: "rules" }), "how to play");
+  assert.equal(at({ heroSel: "egg" }), "egg minigame");
+  assert.equal(at({ activeSec: 1 }), "", "the work header");
+  assert.equal(
+    at({ activeSec: 1, sel: 0 }),
+    projects[0].title + ", project 1 of " + projects.length,
+  );
+  assert.equal(at({ activeSec: 1, sel: projects.length }), "", "a row past the list");
+  assert.equal(at({ activeSec: 2 }), "", "the experience header");
+  const e = experienceEntries[EXP_LAST];
+  assert.equal(at({ activeSec: 2, expSel: EXP_LAST }), e.title + " at " + e.company);
+  assert.equal(at({ activeSec: 3 }), "");
+  assert.equal(at({ mode: "term", heroSel: "egg" }), "", "terminal mode");
+  assert.equal(at({ view: projects[0].slug, activeSec: 1, sel: 0 }), "", "a project page");
+});
+
+test("a project reads as n of the filtered list", () => {
+  const list = projects.filter((p) => p.category === "hackathon");
+  assert.ok(list.length > 1 && list.length < projects.length);
+  assert.equal(
+    selectionLabel({ mode: "gui", view: null, ...base, activeSec: 1, sel: 1, list }),
+    list[1].title + ", project 2 of " + list.length,
+  );
 });
