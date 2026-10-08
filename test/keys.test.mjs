@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { routeKey } from "@/lib/keyRouter";
 
 // The facts App reads for one keydown. BASE is the gui at rest: home page, the hero's
@@ -284,6 +285,28 @@ test("pressing a stop flashes its element", () => {
   assert.equal(flash({ activeSec: 1, sel: 0 }), '[data-row="0"]');
   assert.equal(flash({ activeSec: 2, expSel: 1 }), '[data-exprow="1"] > button');
   assert.deepEqual(route({ key: " ", activeSec: 2, expSel: 1, expOpen: 1 }).i, -1, "folds");
+});
+
+// The selectors the router flashes name attributes the JSX renders: a rename on either
+// side fails here. (Only the attribute is checked: the experience row's "> button" is
+// structure, which the browser check covers.)
+test("the flashed stops are rendered with the attributes the router names", () => {
+  const src = (f) => readFileSync(new URL("../src/components/" + f, import.meta.url), "utf8");
+  const stops = [
+    [{ heroSel: "more" }, "egg/Hero.jsx"],
+    [{ heroSel: "rules" }, "egg/Hero.jsx"],
+    [{ heroSel: "egg" }, "egg/Hero.jsx"],
+    [{ activeSec: 1, sel: 0 }, "work/ProjectList.jsx"],
+    [{ activeSec: 2, expSel: 0 }, "experience/Experience.jsx"],
+  ];
+  for (const [over, file] of stops) {
+    const sel = route({ key: " ", ...over }).flashSelected;
+    const [, name, value] = sel.match(/^\[([\w-]+)(?:="([^"]*)")?\]/);
+    // A row index comes from the loop (name={i}); a fixed stop is a literal (name="m").
+    const rendered =
+      value === undefined ? name + "=" : /^\d+$/.test(value) ? name + "={" : `${name}="${value}"`;
+    assert.ok(src(file).includes(rendered), file + " renders no " + rendered + " for " + sel);
+  }
 });
 
 // With a popup open, Back/Forward still work, and the "jump to the end" combos scroll the
