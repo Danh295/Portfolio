@@ -70,11 +70,14 @@ npm run format:check  # prettier --check .
 npm test              # node:test suites in test/ (pure libs + data checks)
 npm run build         # next build → out/
 npm run sync          # refresh the build-time GitHub snapshot
+npm run check:browser # drive out/ in headless Chrome (after npm run build; ONLY=<case> runs one)
 ```
 
 **Deploys.** `.github/workflows/pages.yml` runs `lint`, `format:check`, `test` and `build` and deploys `out/` with GitHub's Pages artifact actions on every push to `main`, daily at 09:17 UTC (refreshing the GitHub snapshot; the previous snapshot is restored from the actions cache first, so an API failure keeps the last good data) and on `gh workflow run pages.yml`. Settings → Pages → Source must be **GitHub Actions**. A red check on `main` means nothing was deployed. There are no pull-request checks and no Dependabot: dependency and action bumps are by hand (see the lockfile rule below). GitHub disables scheduled workflows after 60 days with no repo activity, which would silently stop the daily deploy (and the `● now` retirement it drives); `gh workflow enable pages.yml` turns it back on. Node version: `.nvmrc`.
 
 **Tests** (`test/*.test.mjs`) import the app's modules unchanged through `test/hooks.mjs`, which resolves `@/` and extensionless imports like Next does and loads `src/**/*.js` as ESM. Keep the pure libs free of DOM and React so they stay testable. The coursework test is a `todo` until the `courses` arrays are filled.
+
+**Browser check** (`scripts/browser-check.mjs`, `npm run check:browser`, local only, not in `pages.yml`): serves `out/` at `/Portfolio/` (unknown paths get `404.html`, like Pages) and drives headless Chrome over the DevTools protocol, no dependencies (`CHROME=` picks another binary). It pins what node tests can't: when sections type in (scrolling down and up, the 120px offset, keyboard jumps starting their target at once, sections passed or peeking below a jump waiting, Tab, the shell's `cd`, a wrapped bar, a phone jump), the intro (the reveal, Enter skipping it, scrolling during it), a smoke run (project open and back, theme, keys popup, terminal mode, deep link, 404, egg) and reduced motion; any console error fails it. Each case gets a fresh tab (a hash-only navigation doesn't reload the page).
 
 **Lockfile:** write it only with CI's npm (`npx npm@11.19.0 install --package-lock-only`). A local `npm install`/`npm prune` with another npm version drops the `@emnapi/*` entries and `npm ci` then fails in CI.
 
@@ -93,12 +96,12 @@ Tracked here until done; update the status as each step moves.
 1. **Done** (2026-10-07): reviewed `TODO.MD` against the repo with Danny (`/grill-with-docs`): Oct 6–7 done entries, stale lines fixed, new items triaged; `CONTEXT.md` gained Jump and Reduced motion, Type-in says when it starts, and "reveal" now means only the intro's (the type-in rule is `src/lib/typeInStart.js`).
 2. **Waiting on Danny**: yes/no on deleting the old `gh-pages` branch (no longer served; kept as a rollback), due mid-October.
 3. **Not started**: the cheap small cleanups under `TODO.MD`'s "up next (claude)".
-4. **In progress**: a committed browser check (`npm run check:browser`, plain CDP, no dependencies, local only) covering type-in timing, the intro, a smoke run and reduced motion.
-5. **Not started**: reduced motion becomes "reduce, don't remove" (a Windows PC with Animation effects off showed a frozen site): type-ins, the intro boot log, carets, shell auto-typing, the press flash and the egg keep playing; smooth scrolling, fades, the reveal sweep, cursor morph/spin and the 404 egg stay calm.
+4. **Done** (2026-10-07): a committed browser check (`npm run check:browser`, plain CDP, no dependencies, local only) covering type-in timing, the intro, a smoke run and reduced motion.
+5. **In progress**: reduced motion becomes "reduce, don't remove" (a Windows PC with Animation effects off showed a frozen site): type-ins, the intro boot log, carets, shell auto-typing, the press flash and the egg keep playing; smooth scrolling, fades, the reveal sweep, cursor morph/spin and the 404 egg stay calm.
 
 ## Git Commits
 
-- Commit and push straight to `main`; no branches or PRs (personal project). Run `lint`, `format:check`, `test` and `build` first, plus a browser check for UI changes.
+- Commit and push straight to `main`; no branches or PRs (personal project). Run `lint`, `format:check`, `test` and `build` first, plus `npm run check:browser` for UI changes.
 - Never include a `Co-Authored-By` line in commit messages. Do not credit Claude or any AI as a co-author.
 
 ## Agent skills
