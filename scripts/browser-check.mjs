@@ -165,7 +165,7 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
       features: [{ name: "prefers-reduced-motion", value: "reduce" }],
     });
 
-  const ev = async (expression) => {
+  const evaluate = async (expression) => {
     const r = await send("Runtime.evaluate", {
       expression,
       awaitPromise: true,
@@ -186,12 +186,12 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
       text: type === "keyDown" && key.length === 1 ? key : undefined,
     });
   };
-  const t = {
+  const tab = {
     errors,
     width,
     height,
     send,
-    ev,
+    evaluate,
     go: async (path, wait = 2500) => {
       await send("Page.navigate", { url: SITE + path });
       await sleep(wait);
@@ -216,7 +216,7 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
       }),
     // Clicks the element `findExpr` finds: its centre, or `fromLeft` px in from its left.
     click: async (findExpr, fromLeft) => {
-      const p = await ev(
+      const p = await evaluate(
         `(()=>{const e=${findExpr};if(!e)return null;const r=e.getBoundingClientRect();return {x:r.x+(${fromLeft ?? "r.width/2"}),y:r.y+r.height/2}})()`,
       );
       if (!p) return false;
@@ -232,7 +232,7 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
     },
     // A finger tap on the element `findExpr` finds (touch emulation is on for the phone).
     tap: async (findExpr) => {
-      const p = await ev(
+      const p = await evaluate(
         `(()=>{const e=${findExpr};if(!e)return null;const r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`,
       );
       if (!p) return false;
@@ -240,25 +240,27 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
       await send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
       return true;
     },
-    fx: (n) => ev(`document.querySelector('[data-sec="${n}"]').dataset.fx || "started"`),
+    typeIn: (n) => evaluate(`document.querySelector('[data-sec="${n}"]').dataset.fx || "started"`),
     top: (n) =>
-      ev(`Math.round(document.querySelector('[data-sec="${n}"]').getBoundingClientRect().top)`),
+      evaluate(
+        `Math.round(document.querySelector('[data-sec="${n}"]').getBoundingClientRect().top)`,
+      ),
     // The band between the nav and the bottom bar, where a jump parks a header, and the
     // offset a scroll needs before a section starts (START_PX in src/lib/useTextFx.js).
-    geo: () =>
-      ev(`(()=>{const cs=getComputedStyle(document.documentElement),
+    band: () =>
+      evaluate(`(()=>{const cs=getComputedStyle(document.documentElement),
         nav=Math.ceil(parseFloat(cs.getPropertyValue('--nav-h'))||56),
         bar=Math.ceil(parseFloat(cs.getPropertyValue('--bar-h'))||40);
-        return {nav,bar,bandBottom:innerHeight-bar,
+        return {nav,bar,bottom:innerHeight-bar,
           parked:Math.round(parseFloat(getComputedStyle(document.querySelector('[data-sec="1"]')).scrollMarginTop)),
           off:Math.max(0,Math.min(120,Math.floor((innerHeight-nav-bar)/4)))}})()`),
     // Stamps when (ms since the stamp) and where (frame top) each waiting frame starts.
     watchStarts: () =>
-      ev(`(()=>{window.__t0=performance.now();window.__at={};
+      evaluate(`(()=>{window.__t0=performance.now();window.__at={};
         document.querySelectorAll('[data-sec]').forEach(f=>{if(!f.dataset.fx)return;
           new MutationObserver((m,o)=>{if(!f.dataset.fx){__at[f.dataset.sec]={ms:Math.round(performance.now()-__t0),top:Math.round(f.getBoundingClientRect().top)};o.disconnect()}})
             .observe(f,{attributes:true,attributeFilter:['data-fx']})})})()`),
-    startedAt: (n) => ev(`window.__at && window.__at['${n}'] || null`),
+    startedAt: (n) => evaluate(`window.__at && window.__at['${n}'] || null`),
     close: async () => {
       listeners.delete(onEvent);
       await cdp("Target.closeTarget", { targetId });
@@ -266,16 +268,16 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
   };
   // Put section n's top `px` above the bottom bar, arriving by a real gesture so the page
   // counts it as the visitor's own scroll.
-  t.showTop = async (n, px) => {
-    const g = await t.geo();
-    await ev(
-      `scrollTo(0, Math.round(document.querySelector('[data-sec="${n}"]').getBoundingClientRect().top + scrollY - ${g.bandBottom} + ${px} - 80))`,
+  tab.showTop = async (n, px) => {
+    const band = await tab.band();
+    await evaluate(
+      `scrollTo(0, Math.round(document.querySelector('[data-sec="${n}"]').getBoundingClientRect().top + scrollY - ${band.bottom} + ${px} - 80))`,
     );
     await sleep(300);
-    await t.gesture(80);
+    await tab.gesture(80);
     await sleep(900);
   };
-  return t;
+  return tab;
 }
 
 /* ---------- checks ---------- */
@@ -292,184 +294,202 @@ const quick = (at) => at !== null && at.ms <= 120;
 async function run(title, view, body) {
   if (process.env.ONLY && !title.includes(process.env.ONLY)) return;
   console.log(`\n${title}`);
-  const t = await openTab(view);
+  const tab = await openTab(view);
   try {
-    await body(t);
+    await body(tab);
   } catch (e) {
     check("ran without error", false, String(e));
   }
-  check("no console errors", t.errors.length === 0, t.errors.slice(0, 3));
-  await t.close();
+  check("no console errors", tab.errors.length === 0, tab.errors.slice(0, 3));
+  await tab.close();
 }
 
-await run("type-in on scroll (1291×808)", DESKTOP, async (t) => {
-  await t.go("#home");
-  const g = await t.geo();
-  await t.showTop(1, g.off - 50);
-  const before = await t.fx(1);
-  await t.gesture(100);
+await run("type-in on scroll (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  const band = await tab.band();
+  await tab.showTop(1, band.off - 50);
+  const before = await tab.typeIn(1);
+  await tab.gesture(100);
   await sleep(900);
   check(
-    `projects waits under ${g.off}px shown, then types in past it`,
-    before === "pending" && (await t.fx(1)) === "started",
+    `projects waits under ${band.off}px shown, then types in past it`,
+    before === "pending" && (await tab.typeIn(1)) === "started",
     { before },
   );
-  await t.showTop(3, g.off - 50);
-  const skills = await t.fx(3);
-  await t.gesture(100);
+  await tab.showTop(3, band.off - 50);
+  const skills = await tab.typeIn(3);
+  await tab.gesture(100);
   await sleep(900);
-  check("skills waits, then types in", skills === "pending" && (await t.fx(3)) === "started", {
-    skills,
-  });
+  check(
+    "skills waits, then types in",
+    skills === "pending" && (await tab.typeIn(3)) === "started",
+    {
+      skills,
+    },
+  );
 });
 
-await run("type-in scrolling up (1291×808)", DESKTOP, async (t) => {
-  await t.go("#skills");
-  const g = await t.geo();
+await run("type-in scrolling up (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#skills");
+  const band = await tab.band();
   const bottom = () =>
-    t.ev(`Math.round(document.querySelector('[data-sec="2"]').getBoundingClientRect().bottom)`);
+    tab.evaluate(
+      `Math.round(document.querySelector('[data-sec="2"]').getBoundingClientRect().bottom)`,
+    );
   // Its bottom 80px short of (off - 50) below the nav; the gesture up adds the 80.
-  await t.ev(`scrollTo(0, scrollY + ${await bottom()} - ${g.nav + g.off - 50 - 80})`);
+  await tab.evaluate(`scrollTo(0, scrollY + ${await bottom()} - ${band.nav + band.off - 50 - 80})`);
   await sleep(300);
-  await t.gesture(-80);
+  await tab.gesture(-80);
   await sleep(900);
-  const before = await t.fx(2);
-  await t.gesture(-100);
+  const before = await tab.typeIn(2);
+  await tab.gesture(-100);
   await sleep(900);
   check(
     "experience waits until its bottom clears the nav by the offset",
-    before === "pending" && (await t.fx(2)) === "started",
+    before === "pending" && (await tab.typeIn(2)) === "started",
     { before },
   );
 });
 
-await run("type-in after skipping the intro (1291×808)", DESKTOP, async (t) => {
-  await t.go("", 1200);
-  await t.key("Enter");
+await run("type-in after skipping the intro (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("", 1200);
+  await tab.key("Enter");
   await sleep(1200);
-  const g = await t.geo();
-  await t.showTop(1, g.off + 60);
+  const band = await tab.band();
+  await tab.showTop(1, band.off + 60);
   check(
     "keyboard mode from the skip doesn't stop a scroll's type-in",
-    (await t.fx(1)) === "started",
+    (await tab.typeIn(1)) === "started",
   );
 });
 
-await run("type-in on Space (1291×808)", DESKTOP, async (t) => {
-  await t.go("#home");
-  await t.key(" ");
+await run("type-in on Space (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  await tab.key(" ");
   await sleep(1000);
-  check("Space scrolls projects in and it types in", (await t.fx(1)) === "started");
+  check("Space scrolls projects in and it types in", (await tab.typeIn(1)) === "started");
 });
 
-await run("type-in on a nav click (1291×808)", DESKTOP, async (t) => {
-  await t.go("#home");
-  await t.watchStarts();
-  const clicked = await t.click(navButton("skills"));
+await run("type-in on a nav click (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  await tab.watchStarts();
+  const clicked = await tab.click(navButton("skills"));
   await sleep(1800);
-  check("skills (the target) types in", clicked && (await t.startedAt(3)) !== null);
+  check("skills (the target) types in", clicked && (await tab.startedAt(3)) !== null);
   check(
     "projects and experience (flown past) wait",
-    (await t.fx(1)) === "pending" && (await t.fx(2)) === "pending",
+    (await tab.typeIn(1)) === "pending" && (await tab.typeIn(2)) === "pending",
   );
-  await t.gesture(-400);
+  await tab.gesture(-400);
   await sleep(900);
-  check("scrolling back up types experience in", (await t.fx(2)) === "started");
+  check("scrolling back up types experience in", (await tab.typeIn(2)) === "started");
 });
 
-const keyboardJumps = async (t) => {
-  await t.go("#home");
-  await t.key("j");
-  await t.key("j");
-  await t.watchStarts();
-  await t.key("j");
+const keyboardJumps = async (tab) => {
+  await tab.go("#home");
+  await tab.key("j");
+  await tab.key("j");
+  await tab.watchStarts();
+  await tab.key("j");
   await sleep(1200);
   check(
     "j onto projects types it in right away",
-    quick(await t.startedAt(1)),
-    await t.startedAt(1),
+    quick(await tab.startedAt(1)),
+    await tab.startedAt(1),
   );
-  await t.watchStarts();
-  await t.key("2");
+  await tab.watchStarts();
+  await tab.key("2");
   await sleep(1500);
-  check("2 types experience in right away", quick(await t.startedAt(2)), await t.startedAt(2));
-  check("skills peeking below experience waits", (await t.fx(3)) === "pending");
+  check("2 types experience in right away", quick(await tab.startedAt(2)), await tab.startedAt(2));
+  check("skills peeking below experience waits", (await tab.typeIn(3)) === "pending");
   for (let i = 0; i < 5; i++) {
-    await t.key("j");
+    await tab.key("j");
     await sleep(150);
   }
   await sleep(900);
-  check("j down every role: skills still waits", (await t.fx(3)) === "pending");
-  await t.watchStarts();
-  await t.key("j");
+  check("j down every role: skills still waits", (await tab.typeIn(3)) === "pending");
+  await tab.watchStarts();
+  await tab.key("j");
   await sleep(1200);
-  check("j onto skills types it in right away", quick(await t.startedAt(3)), await t.startedAt(3));
+  check(
+    "j onto skills types it in right away",
+    quick(await tab.startedAt(3)),
+    await tab.startedAt(3),
+  );
 };
 await run("type-in on keyboard jumps (1291×808)", DESKTOP, keyboardJumps);
 await run("type-in on keyboard jumps (1291×1000)", TALL, keyboardJumps);
 
-await run("type-in on focus (1291×808)", DESKTOP, async (t) => {
-  await t.go("#home");
+await run("type-in on focus (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
   let sec = "-";
   for (let i = 0; i < 40 && sec !== "1"; i++) {
-    await t.key("Tab");
-    sec = await t.ev(`(document.activeElement.closest('[data-sec]') || {}).dataset?.sec ?? "-"`);
+    await tab.key("Tab");
+    sec = await tab.evaluate(
+      `(document.activeElement.closest('[data-sec]') || {}).dataset?.sec ?? "-"`,
+    );
   }
   await sleep(300);
-  check("Tab into a project row types projects in", sec === "1" && (await t.fx(1)) === "started", {
-    sec,
-  });
+  check(
+    "Tab into a project row types projects in",
+    sec === "1" && (await tab.typeIn(1)) === "started",
+    {
+      sec,
+    },
+  );
 });
 
 // A tab of its own: a second go("#home") in the same tab only changes the hash, so the page
 // (and what has already typed in) wouldn't start over.
-await run("type-in on the shell's cd (1291×808)", DESKTOP, async (t) => {
-  await t.go("#home");
-  await t.watchStarts();
-  await t.key("`");
+await run("type-in on the shell's cd (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  await tab.watchStarts();
+  await tab.key("`");
   await sleep(500);
-  await t.send("Input.insertText", { text: "cd experience" });
-  await t.key("Enter");
+  await tab.send("Input.insertText", { text: "cd experience" });
+  await tab.key("Enter");
   await sleep(1800);
   check(
     "the shell's cd types experience in, projects (flown past) waits",
-    (await t.startedAt(2)) !== null && (await t.fx(1)) === "pending",
+    (await tab.startedAt(2)) !== null && (await tab.typeIn(1)) === "pending",
   );
 });
 
-await run("type-in under a wrapped bottom bar (resized to 480px)", DESKTOP, async (t) => {
-  await t.go("#home");
-  await t.send("Emulation.setDeviceMetricsOverride", {
+await run("type-in under a wrapped bottom bar (resized to 480px)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  await tab.send("Emulation.setDeviceMetricsOverride", {
     width: 480,
     height: DESKTOP.height,
     deviceScaleFactor: 1,
     mobile: false,
   });
   await sleep(800);
-  await t.showTop(3, -10);
-  check("skills still under the taller bar waits", (await t.fx(3)) === "pending", {
-    top: await t.top(3),
+  await tab.showTop(3, -10);
+  check("skills still under the taller bar waits", (await tab.typeIn(3)) === "pending", {
+    top: await tab.top(3),
   });
 });
 
-await run("phone (390×844, touch)", { ...PHONE, mobile: true }, async (t) => {
-  await t.go("#home");
+await run("phone (390×844, touch)", { ...PHONE, mobile: true }, async (tab) => {
+  await tab.go("#home");
   const hero = () =>
-    t.ev(`Math.round(document.querySelector('[data-sec="0"]').getBoundingClientRect().height)`);
+    tab.evaluate(
+      `Math.round(document.querySelector('[data-sec="0"]').getBoundingClientRect().height)`,
+    );
   const h0 = await hero();
-  const g = await t.geo();
-  const tapped = await t.tap(navButton("skills"));
+  const band = await tab.band();
+  const tapped = await tab.tap(navButton("skills"));
   await sleep(2000);
-  check("the nav button takes a tap", tapped && (await t.top(3)) < g.parked + 200);
+  check("the nav button takes a tap", tapped && (await tab.top(3)) < band.parked + 200);
   check("the hero keeps its height when the selection leaves it", (await hero()) === h0, {
     before: h0,
     after: await hero(),
   });
-  const top = await t.top(3);
+  const top = await tab.top(3);
   check(
     "a nav tap parks skills under the nav and types it in",
-    Math.abs(top - g.parked) <= 3 && (await t.fx(3)) === "started",
-    { top, parked: g.parked },
+    Math.abs(top - band.parked) <= 3 && (await tab.typeIn(3)) === "started",
+    { top, parked: band.parked },
   );
 });
 
@@ -477,47 +497,50 @@ await run("phone (390×844, touch)", { ...PHONE, mobile: true }, async (t) => {
 const COVERED = `(()=>{const c=document.querySelector('[data-reveal-cover]');const a=c&&c.getAnimations().find(x=>x.playState==='running');
   if(!a)return c?innerHeight:0;const n=+(String(a.effect.getTiming().easing).match(/steps\\((\\d+)/)||[0,1])[1];
   return Math.round(innerHeight*(1-Math.floor(a.effect.getComputedTiming().progress*n)/n))})()`;
-const waitForCover = async (t) => {
+const waitForCover = async (tab) => {
   for (let i = 0; i < 300; i++) {
-    if (await t.ev("!!document.querySelector('[data-reveal-cover]')")) return true;
+    if (await tab.evaluate("!!document.querySelector('[data-reveal-cover]')")) return true;
     await sleep(20);
   }
   return false;
 };
 
-await run("intro (1291×808)", DESKTOP, async (t) => {
-  await t.go("", 0);
-  const appeared = await waitForCover(t);
-  const covered = await t.ev(COVERED);
+await run("intro (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("", 0);
+  const appeared = await waitForCover(tab);
+  const covered = await tab.evaluate(COVERED);
   await sleep(800);
   check(
     "the reveal uncovers the screen, then goes",
-    appeared && covered > 0 && (await t.ev(COVERED)) === 0,
+    appeared && covered > 0 && (await tab.evaluate(COVERED)) === 0,
     { appeared, covered },
   );
   await sleep(1500);
-  check("the heading types in after it", (await t.ev(H1_TEXT)) === (await t.ev(H1_FULL)));
+  check(
+    "the heading types in after it",
+    (await tab.evaluate(H1_TEXT)) === (await tab.evaluate(H1_FULL)),
+  );
 });
 
-await run("intro skipped with Enter (1291×808)", DESKTOP, async (t) => {
-  await t.go("", 900);
-  const playing = await t.ev("!!document.documentElement.dataset.loading");
-  await t.key("Enter");
+await run("intro skipped with Enter (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("", 900);
+  const playing = await tab.evaluate("!!document.documentElement.dataset.loading");
+  await tab.key("Enter");
   await sleep(1600);
   check(
     "Enter skips it and the heading types in",
-    playing && (await t.ev(H1_TEXT)) === (await t.ev(H1_FULL)),
+    playing && (await tab.evaluate(H1_TEXT)) === (await tab.evaluate(H1_FULL)),
     { playing },
   );
 });
 
 // A fast scroll as the reveal starts, and again mid-sweep (it uncovers the screen in ~0.3s).
 for (const after of [0, 150])
-  await run(`scrolling ${after}ms into the intro's reveal (1291×808)`, DESKTOP, async (t) => {
-    await t.go("", 0);
-    await waitForCover(t);
+  await run(`scrolling ${after}ms into the intro's reveal (1291×808)`, DESKTOP, async (tab) => {
+    await tab.go("", 0);
+    await waitForCover(tab);
     await sleep(after);
-    await t.send("Input.synthesizeScrollGesture", {
+    await tab.send("Input.synthesizeScrollGesture", {
       x: 640,
       y: 500,
       yDistance: -1200,
@@ -525,73 +548,79 @@ for (const after of [0, 150])
       gestureSourceType: "touch",
       preventFling: true,
     });
-    const covered = await t.ev(COVERED);
+    const covered = await tab.evaluate(COVERED);
     check("a fast scroll never runs into unrevealed page", covered === 0, {
       covered,
-      y: await t.ev("Math.round(scrollY)"),
+      y: await tab.evaluate("Math.round(scrollY)"),
     });
   });
 
-await run("smoke (1291×808)", DESKTOP, async (t) => {
-  await t.go("#projects");
-  await t.gesture(120);
+await run("smoke (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#projects");
+  await tab.gesture(120);
   await sleep(600);
-  const y0 = await t.ev("Math.round(scrollY)");
-  await t.click(`document.querySelector('[data-row="1"]')`, 30);
+  const y0 = await tab.evaluate("Math.round(scrollY)");
+  await tab.click(`document.querySelector('[data-row="1"]')`, 30);
   await sleep(1200);
   const opened =
-    (await t.ev("location.pathname")).includes("/projects/") &&
-    (await t.ev("!!document.querySelector('[data-detail-title]')"));
-  await t.key("Escape");
+    (await tab.evaluate("location.pathname")).includes("/projects/") &&
+    (await tab.evaluate("!!document.querySelector('[data-detail-title]')"));
+  await tab.key("Escape");
   await sleep(1500);
-  const y1 = await t.ev("Math.round(scrollY)");
+  const y1 = await tab.evaluate("Math.round(scrollY)");
   check(
     "a project opens, and Esc comes back to the same list position",
     opened && Math.abs(y1 - y0) <= 2,
     { opened, y0, y1 },
   );
-  const theme = await t.ev("document.documentElement.dataset.theme");
-  await t.key("t");
-  check("t switches the theme", (await t.ev("document.documentElement.dataset.theme")) !== theme);
-  await t.key("t");
-  await t.key("?");
+  const theme = await tab.evaluate("document.documentElement.dataset.theme");
+  await tab.key("t");
+  check(
+    "t switches the theme",
+    (await tab.evaluate("document.documentElement.dataset.theme")) !== theme,
+  );
+  await tab.key("t");
+  await tab.key("?");
   await sleep(300);
-  const popup = await t.ev("!!document.querySelector('[role=dialog]')");
-  await t.key("Escape");
+  const popup = await tab.evaluate("!!document.querySelector('[role=dialog]')");
+  await tab.key("Escape");
   await sleep(300);
   check(
     "? opens the keys popup and Esc closes it",
-    popup && !(await t.ev("!!document.querySelector('[role=dialog]')")),
+    popup && !(await tab.evaluate("!!document.querySelector('[role=dialog]')")),
   );
-  await t.key("`");
+  await tab.key("`");
   await sleep(400);
-  await t.send("Input.insertText", { text: "./app --mode terminal" });
-  await t.key("Enter");
+  await tab.send("Input.insertText", { text: "./app --mode terminal" });
+  await tab.key("Enter");
   await sleep(1200);
-  const mode = () => t.ev("document.querySelector('[data-mode]')?.dataset.mode");
+  const mode = () => tab.evaluate("document.querySelector('[data-mode]')?.dataset.mode");
   const term = await mode();
-  await t.send("Input.insertText", { text: "exit" });
-  await t.key("Enter");
+  await tab.send("Input.insertText", { text: "exit" });
+  await tab.key("Enter");
   await sleep(1200);
   check("terminal mode opens and exit comes back", term === "term" && (await mode()) === "gui", {
     term,
   });
-  await t.go("projects/recall/");
+  await tab.go("projects/recall/");
   check(
     "a project deep link shows the project",
-    await t.ev("!!document.querySelector('[data-detail-title]')"),
+    await tab.evaluate("!!document.querySelector('[data-detail-title]')"),
   );
-  await t.go("nope/", 1500);
-  check("an unknown path shows the 404", /nope/.test(await t.ev("document.body.innerText")));
-  await t.go("#home", 3000);
-  const egg = await t.click(
+  await tab.go("nope/", 1500);
+  check(
+    "an unknown path shows the 404",
+    /nope/.test(await tab.evaluate("document.body.innerText")),
+  );
+  await tab.go("#home", 3000);
+  const egg = await tab.click(
     `[...document.querySelectorAll('button')].find(b=>/to start/.test(b.textContent))`,
   );
   await sleep(800);
   check(
     "the egg's start box starts a round",
     egg &&
-      !(await t.ev(
+      !(await tab.evaluate(
         `[...document.querySelectorAll('button')].some(b=>/to start/.test(b.textContent))`,
       )),
   );
@@ -602,20 +631,20 @@ await run("smoke (1291×808)", DESKTOP, async (t) => {
 // jumps).
 const REDUCED = { ...DESKTOP, reducedMotion: true };
 
-await run("reduced motion: the intro (1291×808)", REDUCED, async (t) => {
-  await t.go("", 900);
-  const booting = await t.ev("!!document.documentElement.dataset.loading");
+await run("reduced motion: the intro (1291×808)", REDUCED, async (tab) => {
+  await tab.go("", 900);
+  const booting = await tab.evaluate("!!document.documentElement.dataset.loading");
   let cover = false;
   for (let i = 0; i < 200 && !cover; i++) {
-    cover = await t.ev("!!document.querySelector('[data-reveal-cover]')");
-    if (await t.ev("!document.documentElement.dataset.loading")) break;
+    cover = await tab.evaluate("!!document.querySelector('[data-reveal-cover]')");
+    if (await tab.evaluate("!document.documentElement.dataset.loading")) break;
     await sleep(25);
   }
   // Typing, not just shown: some sample catches the heading part-way.
-  const full = await t.ev(H1_FULL),
+  const full = await tab.evaluate(H1_FULL),
     seen = new Set();
   for (let i = 0; i < 120; i++) {
-    seen.add(await t.ev(H1_TEXT));
+    seen.add(await tab.evaluate(H1_TEXT));
     await sleep(25);
   }
   const partway = [...seen].some((s) => s && s !== full);
@@ -624,34 +653,38 @@ await run("reduced motion: the intro (1291×808)", REDUCED, async (t) => {
   check("and the heading types in after it", partway && seen.has(full), [...seen].slice(0, 4));
 });
 
-await run("reduced motion: the page (1291×808)", REDUCED, async (t) => {
-  await t.go("#home");
-  const egg = () => t.ev(`document.querySelector('[data-sec="0"] pre')?.textContent ?? ""`);
+await run("reduced motion: the page (1291×808)", REDUCED, async (tab) => {
+  await tab.go("#home");
+  const egg = () => tab.evaluate(`document.querySelector('[data-sec="0"] pre')?.textContent ?? ""`);
   const e0 = await egg();
   await sleep(600);
   check("the egg keeps moving", e0 !== "" && (await egg()) !== e0);
-  const caret = await t.ev(
+  const caret = await tab.evaluate(
     `getComputedStyle(document.querySelector('h1'), '::after').animationName`,
   );
   check("the selected header's caret blinks", caret && caret !== "none", { caret });
-  await t.keyDown("t");
-  const flashed = await t.ev(`!!document.querySelector('[data-pressed]')`);
-  await t.keyUp("t");
+  await tab.keyDown("t");
+  const flashed = await tab.evaluate(`!!document.querySelector('[data-pressed]')`);
+  await tab.keyUp("t");
   check("a key press flashes its button", flashed);
-  const g = await t.geo();
-  const before = await t.fx(1);
-  await t.showTop(1, g.off + 60);
-  check("a section types in on scroll", before === "pending" && (await t.fx(1)) === "started", {
-    before,
-  });
+  const band = await tab.band();
+  const before = await tab.typeIn(1);
+  await tab.showTop(1, band.off + 60);
+  check(
+    "a section types in on scroll",
+    before === "pending" && (await tab.typeIn(1)) === "started",
+    {
+      before,
+    },
+  );
   // Time from the key to skills parked, measured in the page.
-  await t.ev(`(()=>{window.__jumpMs=null;addEventListener('keydown',()=>{const s=performance.now(),
+  await tab.evaluate(`(()=>{window.__jumpMs=null;addEventListener('keydown',()=>{const s=performance.now(),
     f=document.querySelector('[data-sec="3"]');(function step(){
-    if(Math.abs(f.getBoundingClientRect().top-${g.parked})<=2)__jumpMs=Math.round(performance.now()-s);
+    if(Math.abs(f.getBoundingClientRect().top-${band.parked})<=2)__jumpMs=Math.round(performance.now()-s);
     else if(performance.now()-s<1500)requestAnimationFrame(step)})()},{once:true,capture:true})})()`);
-  await t.key("3");
+  await tab.key("3");
   await sleep(600);
-  const ms = await t.ev("window.__jumpMs");
+  const ms = await tab.evaluate("window.__jumpMs");
   check("a jump is instant (parked within 50ms of the key)", ms !== null && ms <= 50, { ms });
 });
 
