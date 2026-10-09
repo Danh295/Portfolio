@@ -25,6 +25,14 @@ const PHONE = { width: 390, height: 844 };
 // Tall enough that skills peeks well over START_PX below experience after a jump to it, so
 // "a section peeking below a jump waits" is actually tested (at 808px it peeks only ~72px).
 const TALL = { width: 1291, height: 1000 };
+// How much of a section must show before a scroll starts it, read from the source (this
+// script can't import the app's modules) so the two can't drift apart.
+const START_PX = Number(
+  readFileSync(new URL("../src/lib/useTextFx.js", import.meta.url), "utf8").match(
+    /const START_PX = (\d+);/,
+  )?.[1],
+);
+if (!Number.isFinite(START_PX)) throw new Error("START_PX not found in src/lib/useTextFx.js");
 // The keys the cases press: key → [code, windowsVirtualKeyCode].
 const KEY = {
   Enter: ["Enter", 13],
@@ -246,14 +254,15 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
         `Math.round(document.querySelector('[data-sec="${n}"]').getBoundingClientRect().top)`,
       ),
     // The band between the nav and the bottom bar, where a jump parks a header, and the
-    // offset a scroll needs before a section starts (START_PX in src/lib/useTextFx.js).
+    // offset a scroll needs before a section starts: START_PX, capped at a quarter of the
+    // band (that formula is a copy of the one in src/lib/useTextFx.js).
     band: () =>
       evaluate(`(()=>{const cs=getComputedStyle(document.documentElement),
         nav=Math.ceil(parseFloat(cs.getPropertyValue('--nav-h'))||56),
         bar=Math.ceil(parseFloat(cs.getPropertyValue('--bar-h'))||40);
         return {nav,bar,bottom:innerHeight-bar,
           parked:Math.round(parseFloat(getComputedStyle(document.querySelector('[data-sec="1"]')).scrollMarginTop)),
-          off:Math.max(0,Math.min(120,Math.floor((innerHeight-nav-bar)/4)))}})()`),
+          off:Math.max(0,Math.min(${START_PX},Math.floor((innerHeight-nav-bar)/4)))}})()`),
     // Stamps when (ms since the stamp) and where (frame top) each waiting frame starts.
     watchStarts: () =>
       evaluate(`(()=>{window.__t0=performance.now();window.__at={};
