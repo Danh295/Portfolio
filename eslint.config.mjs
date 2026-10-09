@@ -25,6 +25,9 @@ const config = [
       "react/prop-types": "off",
       "react/no-unescaped-entities": "off",
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      // eslint-config-next leaves this off; its globals already cover the browser and node,
+      // so this only catches names a rename left behind.
+      "no-undef": "error",
     },
   },
 ];
