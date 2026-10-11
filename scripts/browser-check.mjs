@@ -530,6 +530,19 @@ for (const size of [
       const max = size.width >= 360 ? 48 : 90;
       check("nav is one row (~44px)", c.nav <= max, c);
       check("bottom bar is one row (~44px)", c.bar <= 48, c);
+      // The hero: the heading stays on one line, and (on a tall enough screen) the egg
+      // panel's title peeks in above the bottom bar, so the first screen doesn't look done.
+      const hero = await tab.evaluate(`(() => {
+        const h = document.querySelector("h1"),
+          fs = parseFloat(getComputedStyle(h).fontSize);
+        let egg = document.querySelector("[data-egg]");
+        while (egg && getComputedStyle(egg).containerType !== "inline-size") egg = egg.parentElement;
+        const bar = document.querySelector("footer").getBoundingClientRect().top;
+        return { lines: Math.round(h.getBoundingClientRect().height / (fs * 1.05)), fs, peek: Math.round(bar - egg.getBoundingClientRect().top) };
+      })()`);
+      check("the heading is one line", hero.lines === 1, hero);
+      if (size.height >= 800)
+        check("the egg panel's title peeks in above the bar", hero.peek >= 60, hero);
       await tab.tap(navButton("menu"));
       await sleep(300);
       const rows = await tab.evaluate(
