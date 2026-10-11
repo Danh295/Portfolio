@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Header from "@/components/header/Header";
-import Hint from "@/components/Hint";
+import Hint, { KeyLabel } from "@/components/Hint";
 import BottomBar from "@/components/frame/BottomBar";
 import Hero from "@/components/egg/Hero";
 import { useEggGame } from "@/components/egg/useEggGame";
@@ -801,9 +801,9 @@ export default function App({ initialView = null }) {
       <Skills skills={skills} active={activeSec === 3} />
       <div className={styles.foot}>
         <span suppressHydrationWarning>© {YEAR} danny hu · ontario, canada</span>
-        <span>
+        <KeyLabel>
           [↑/↓] sections<Hint> · [?] all keys · [`] shell</Hint>
-        </span>
+        </KeyLabel>
       </div>
     </div>
   );

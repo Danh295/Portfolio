@@ -502,6 +502,49 @@ await run("phone (390×844, touch)", { ...PHONE, mobile: true }, async (tab) => 
   );
 });
 
+// Key labels: [data-hint] (one-character keys) and [data-keyhint] (esc, enter, arrows) that
+// are on screen, and the touch wording that stands in for them.
+const LABELS_SHOWN = `[...document.querySelectorAll("[data-hint],[data-keyhint]")].filter((e) => e.getClientRects().length > 0).length`;
+const START_TEXT = `document.querySelector("[data-egg]")?.innerText.trim()`;
+
+await run("touch screens show no key labels (390×844)", { ...PHONE, mobile: true }, async (tab) => {
+  await tab.go("#home");
+  check(
+    "the emulation is a touch screen",
+    await tab.evaluate(`matchMedia("(hover: none) and (pointer: coarse)").matches`),
+  );
+  check("no key label is on screen", (await tab.evaluate(LABELS_SHOWN)) === 0, {
+    shown: await tab.evaluate(LABELS_SHOWN),
+  });
+  check("the egg's start box says tap", (await tab.evaluate(START_TEXT)) === "tap to start", {
+    text: await tab.evaluate(START_TEXT),
+  });
+  await tab.tap(navButton("terminal"));
+  await sleep(600);
+  const px = await tab.evaluate(
+    `parseFloat(getComputedStyle(document.querySelector('[aria-label="embedded shell"] input')).fontSize)`,
+  );
+  check("the shell's prompt is 16px or more, so iOS doesn't zoom", px >= 16, { px });
+  check(
+    "the shell's close button has no [esc] label",
+    !(
+      await tab.evaluate(`document.querySelector('[aria-label="embedded shell"] button').innerText`)
+    ).includes("[esc]"),
+  );
+});
+
+await run("desktop shows key labels (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  check("key labels are on screen", (await tab.evaluate(LABELS_SHOWN)) > 10, {
+    shown: await tab.evaluate(LABELS_SHOWN),
+  });
+  check(
+    "the egg's start box says click or enter",
+    (await tab.evaluate(START_TEXT)) === "click or [↲] to start",
+    { text: await tab.evaluate(START_TEXT) },
+  );
+});
+
 // How much of the screen the intro's reveal still covers (0 once it's done).
 const COVERED = `(()=>{const c=document.querySelector('[data-reveal-cover]');const a=c&&c.getAnimations().find(x=>x.playState==='running');
   if(!a)return c?innerHeight:0;const n=+(String(a.effect.getTiming().easing).match(/steps\\((\\d+)/)||[0,1])[1];

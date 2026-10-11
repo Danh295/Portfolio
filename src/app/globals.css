@@ -75,6 +75,37 @@ html[data-keys="off"] [data-hint] {
   display: none;
 }
 
+/* Touch (the finger is the primary input; an iPad with a keyboard counts too, since no
+   media query sees a keyboard): no key labels at all. `[data-hint]` are the one-character
+   keys, `[data-keyhint]` the ones that always work (src/components/Hint.jsx); `[data-touch]`
+   is the wording that takes their place, hidden everywhere else. A static media query, never
+   `html.kbd`: labels that came and went with a keypress would resize the page under a jump.
+   `html` in front outranks a component's own class. */
+[data-touch] {
+  display: none;
+}
+@media (hover: none) and (pointer: coarse) {
+  html [data-hint],
+  html [data-keyhint] {
+    display: none;
+  }
+  html [data-touch] {
+    display: inline;
+  }
+}
+
+/* No double-tap zoom on controls (it delays a tap, which the timed egg buttons can't
+   take), and no inflated text when a phone turns sideways (the ASCII and the egg grid
+   assume one size). Pinch zoom stays. */
+a,
+button {
+  touch-action: manipulation;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 input,
 textarea,
 select,

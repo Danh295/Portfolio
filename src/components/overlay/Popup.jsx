@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import { KeyLabel } from "@/components/Hint";
 import styles from "./Popup.module.css";
 
 // Where focus goes back to once the last popup closes. ? and m swap one popup for the
@@ -74,7 +75,7 @@ export default function Popup({
             <span aria-hidden="true"> ├</span>
           </span>
           <button type="button" onClick={onClose} data-key="Escape" className={styles.close}>
-            <span className={styles.dim}>[esc]</span> close
+            <KeyLabel className={styles.dim}>[esc]</KeyLabel> close
           </button>
         </div>
         <div className={`${styles.body} ${bodyClassName}`} data-popup-scroll="">

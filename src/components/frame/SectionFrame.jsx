@@ -96,7 +96,11 @@ export default function SectionFrame({
         </span>{" "}
         <span aria-hidden="true">├</span>
       </h2>
-      {right && <span className={styles.right}>{right}</span>}
+      {right && (
+        <span className={styles.right} data-keyhint="">
+          {right}
+        </span>
+      )}
       {children}
     </Tag>
   );

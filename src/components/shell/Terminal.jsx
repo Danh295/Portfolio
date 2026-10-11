@@ -1,7 +1,7 @@
 "use client";
 
 import { BANNER } from "@/lib/ascii/banner";
-import Hint from "@/components/Hint";
+import Hint, { KeyLabel } from "@/components/Hint";
 import { pstr } from "@/lib/shell/fs";
 import { SHORTCUT_CMDS } from "@/lib/shell/spec";
 import ShellPane from "./ShellPane";
@@ -62,7 +62,9 @@ export default function Terminal({
             zsh 5.9 · danny@portfolio · type <span className={styles.fg}>help</span> for commands
           </div>
           <div className={`${styles.mid} ${styles.intro}`}>
-            [tab] completes · [↑↓] history · <Hint>[0–9] shortcuts · </Hint>
+            <KeyLabel>
+              [tab] completes · [↑↓] history · <Hint>[0–9] shortcuts · </Hint>
+            </KeyLabel>
             <span className={styles.fg}>exit</span> or <span className={styles.fg}>ctrl-d</span>{" "}
             leaves
           </div>

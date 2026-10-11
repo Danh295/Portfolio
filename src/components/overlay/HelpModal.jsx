@@ -1,6 +1,6 @@
 "use client";
 
-import Hint from "@/components/Hint";
+import Hint, { KeyLabel } from "@/components/Hint";
 import { shortcutRows } from "@/config/ui";
 import Popup from "./Popup";
 import styles from "./HelpModal.module.css";
@@ -21,9 +21,9 @@ export default function HelpModal({ onClose, keysOn, onToggleKeys }) {
         </button>
         <span className={styles.note}>enter, space, arrows and esc always work</span>
       </div>
-      <div className={styles.closeHint}>
+      <KeyLabel className={styles.closeHint}>
         [esc]<Hint> or [?]</Hint> to close
-      </div>
+      </KeyLabel>
     </>
   );
   return (

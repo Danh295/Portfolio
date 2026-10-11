@@ -67,3 +67,10 @@
     padding: 20px 16px;
   }
 }
+
+/* iOS Safari zooms the page when a field under 16px takes focus. */
+@media (hover: none) and (pointer: coarse) {
+  .input {
+    font-size: max(16px, 1em);
+  }
+}

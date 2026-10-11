@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { site } from "@/config/site";
 import RollingEgg from "./RollingEgg";
+import { KeyLabel } from "@/components/Hint";
 import styles from "./NotFound.module.css";
 
 const noopSubscribe = () => () => {};
@@ -54,7 +55,7 @@ export default function NotFound() {
         <RollingEgg />
         <h1 className={styles.title}>404 · this egg rolled away</h1>
         <Link href="/" className={styles.home}>
-          <span className={styles.dim}>[↲]</span> cd ~
+          <KeyLabel className={styles.dim}>[↲]</KeyLabel> cd ~
         </Link>
       </div>
     </main>

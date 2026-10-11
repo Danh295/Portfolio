@@ -51,7 +51,7 @@ The pure module (`src/lib/keyRouter.js`) that decides what every keydown does, f
 _Avoid_: key handler, keymap, shortcut handler
 
 **Hint**:
-A visible `[x]` key label next to a control (`<Hint>`).
+A visible key label next to a control: `[x]` for a one-character key (`<Hint>`, hidden with shortcuts off and on touch) or `[esc]`/`[↲]`/arrows (`<KeyLabel>`, hidden on touch only).
 _Avoid_: shortcut label, badge
 
 ## Shell
