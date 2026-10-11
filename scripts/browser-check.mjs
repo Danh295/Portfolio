@@ -593,6 +593,23 @@ await run("touch screens show no key labels (390×844)", { ...PHONE, mobile: tru
   );
 });
 
+// A touch tablet (wide enough for the frames' right-hand legends): the key legend goes,
+// the skills legend (not a key label) stays.
+await run(
+  "touch tablet keeps the skills legend (820×1180)",
+  { width: 820, height: 1180, mobile: true },
+  async (tab) => {
+    await tab.go("#skills");
+    const legends = await tab.evaluate(
+      `[...document.querySelectorAll("[data-sec] > span")].filter((e) => e.getClientRects().length > 0).map((e) => e.innerText.trim()).join("|")`,
+    );
+    check("the skills legend shows", legends.includes("bar = share of"), { legends });
+    check("no key legend shows", !legends.includes("[↲]") && !legends.includes("move"), {
+      legends,
+    });
+  },
+);
+
 await run("desktop shows key labels (1291×808)", DESKTOP, async (tab) => {
   await tab.go("#home");
   check("key labels are on screen", (await tab.evaluate(LABELS_SHOWN)) > 10, {

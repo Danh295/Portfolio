@@ -1,5 +1,5 @@
 import SectionFrame from "@/components/frame/SectionFrame";
-import Hint from "@/components/Hint";
+import Hint, { KeyLabel } from "@/components/Hint";
 import { experienceEntries } from "@/data/experience";
 import { pad } from "@/lib/format";
 import styles from "./Experience.module.css";
@@ -12,9 +12,9 @@ export default function Experience({ expSel, expOpen, active, onToggle }) {
       prefix={<Hint>[2] </Hint>}
       title="~/experience"
       right={
-        <>
+        <KeyLabel>
           <Hint>[j/k] move · </Hint>[↲] expand
-        </>
+        </KeyLabel>
       }
       active={active}
       caret={expSel < 0}
