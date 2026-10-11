@@ -1,0 +1,29 @@
+/* The frame is Popup.module.css; this is the menu popup's size and its rows. */
+.box {
+  max-width: 320px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Full-width rows, 44px tall, split by the same hairline as the tables in the other
+   popups. A hover or the shell being open inverts the row, like the nav's buttons. */
+.row {
+  min-height: 44px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.row[aria-pressed="true"],
+:global(html:not(.kbd)) .row:hover {
+  background: var(--fg);
+  color: var(--bg);
+}

@@ -92,8 +92,63 @@
   opacity: 0.6;
 }
 
+/* The phone's menu button: only under 600px, where it stands in for .actions. */
+.menu {
+  display: none;
+}
+
+/* Phones: one row of ~44px (research: docs/research/mobile.md). ~/danny and the three
+   section links stay visible; terminal / theme / keys go behind the labelled menu button
+   (a popup, MenuModal). The row can still wrap where hints show (a narrow desktop window)
+   or under ~340px. The text keeps its size and look; a tap's reach is stretched to the
+   row's height by an invisible ::before, so a selected chip doesn't become a 44px block. */
 @media (max-width: 600px) {
+  .inner {
+    padding: 4px 12px;
+    min-height: 36px; /* + the padding: a 44px row */
+    gap: 6px 8px;
+  }
+
   .actions {
-    margin-left: 0;
+    display: none;
+  }
+
+  .links {
+    gap: 2px;
+    flex-wrap: nowrap;
+  }
+
+  .home,
+  .link {
+    padding: 0 3px;
+  }
+
+  .home,
+  .links {
+    margin-left: -3px;
+  }
+
+  .menu {
+    display: block;
+    margin-left: auto;
+    padding: 2px 6px;
+  }
+
+  .home,
+  .link,
+  .menu {
+    position: relative;
+  }
+
+  .home::before,
+  .link::before,
+  .menu::before {
+    content: "";
+    position: absolute;
+    inset: -14px 0;
+  }
+
+  .menu::before {
+    inset: -10px 0;
   }
 }

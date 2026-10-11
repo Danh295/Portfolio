@@ -37,9 +37,14 @@
   opacity: 0.6;
 }
 
+/* Phones: the panel fills the space between the bars (--nav-h / --bar-h, measured in
+   App.jsx; the nav is one row there now, so 72px from the top would cover it). */
 @media (max-width: 600px) {
   .panel {
     right: 12px;
     width: calc(100vw - 24px);
+    top: calc(var(--nav-h, 44px) + 12px);
+    bottom: calc(var(--bar-h, 44px) + 12px);
+    height: auto;
   }
 }

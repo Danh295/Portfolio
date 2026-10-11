@@ -31,9 +31,9 @@ const POPUP_SCROLL = {
 const POPUP_KEYS = new Set(["Escape", "?", "m", "s"]);
 
 const isPress = (f) => f.key === "Enter" || f.key === " ";
-const onPopup = (f) => f.help || f.aboutOpen;
+const onPopup = (f) => f.help || f.aboutOpen || f.menuOpen;
 // Something covers the section list: a project page, a popup or the embedded shell.
-const covered = (f) => f.view || f.help || f.termOpen || f.aboutOpen;
+const covered = (f) => f.view || f.help || f.termOpen || f.aboutOpen || f.menuOpen;
 
 /**
  * The shortcut table: every key the gui routes. `act(f)` returns the decision's action
@@ -170,9 +170,10 @@ function table(f, tabbed) {
   return { prevent: true, ...entry.act(f), flashKey: key };
 }
 
-// Esc closes the topmost thing: a popup, the rules card, the shell, the project page, an
+// Esc closes the topmost thing: a popup (the phone's menu, keys, more…), the rules card, the shell, the project page, an
 // open role, else it clears the selection.
 function escape(f) {
+  if (f.menuOpen) return { do: "closeMenu" };
   if (f.help) return { do: "closeHelp" };
   if (f.aboutOpen) return { do: "closeAbout" };
   if (f.rulesOpen && !f.view) return { do: "closeRules" };

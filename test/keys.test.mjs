@@ -21,6 +21,7 @@ const BASE = {
   vim: false,
   help: false,
   aboutOpen: false,
+  menuOpen: false,
   termOpen: false,
   keysOn: true,
   view: null,
@@ -91,6 +92,20 @@ test("a popup open: scroll keys scroll it, other keys do nothing", () => {
   assert.equal(pop({ key: "m" }).do, "toggleAbout");
   assert.deepEqual(pop({ key: "s" }), { prevent: true, do: "toggleKeys", flashKey: "s" });
   assert.equal(route({ aboutOpen: true, key: "s" }), null, "s only in the keys popup");
+});
+
+// The phone's menu popup (terminal / theme / keys) is a popup like the other two.
+test("the menu popup: Esc closes it, ?/m swap to the others, the rest is a popup's", () => {
+  const menu = (over) => route({ menuOpen: true, ...over });
+  assert.equal(menu({ key: "Escape" }).do, "closeMenu");
+  assert.equal(menu({ key: "?" }).do, "toggleHelp");
+  assert.equal(menu({ key: "m" }).do, "toggleAbout");
+  assert.deepEqual(menu({ key: "ArrowDown" }), { prevent: true, do: "scrollPopup", dir: 1 });
+  assert.equal(menu({ key: "t" }), null, "no shortcuts behind it");
+  assert.equal(menu({ key: "j" }), null);
+  assert.equal(menu({ key: " ", onButton: true }), null, "Space presses a focused row");
+  assert.equal(menu({ key: "s" }), null, "s only in the keys popup");
+  assert.equal(menu({ key: "ArrowLeft", alt: true }), null, "Alt+← is Back");
 });
 
 test("` toggles the embedded shell (shortcuts on only), even from its own input", () => {
@@ -209,6 +224,7 @@ test("on a project page: ←/→ step projects (wrapping), ↑/↓ do nothing, E
 
 test("Esc closes the topmost thing first", () => {
   const esc = (over) => route({ key: "Escape", ...over }).do;
+  assert.equal(esc({ menuOpen: true, help: true, termOpen: true }), "closeMenu");
   assert.equal(esc({ help: true, aboutOpen: true, termOpen: true }), "closeHelp");
   assert.equal(esc({ aboutOpen: true, termOpen: true }), "closeAbout");
   assert.equal(esc({ rulesOpen: true, termOpen: true }), "closeRules");

@@ -48,6 +48,9 @@ const KEY = {
 };
 // Page-side expressions: the nav button whose label includes `label`; the hero's heading
 // as typed so far, and in full (its aria-label, src/data/home.js `heading`).
+// The phone menu popup's row whose label is `label`.
+const menuRow = (label) =>
+  `[...document.querySelectorAll('[role="dialog"] button')].find(b=>b.textContent.trim()==='${label}')`;
 const navButton = (label) =>
   `[...document.querySelectorAll('nav button, nav a')].find(b=>b.textContent.includes('${label}'))`;
 const H1_TEXT = `document.querySelector('h1').textContent.trim()`;
@@ -464,17 +467,21 @@ await run("type-in on the shell's cd (1291×808)", DESKTOP, async (tab) => {
   );
 });
 
-await run("type-in under a wrapped bottom bar (resized to 480px)", DESKTOP, async (tab) => {
+await run("type-in under a wrapped nav (resized to 400px)", DESKTOP, async (tab) => {
   await tab.go("#home");
   await tab.send("Emulation.setDeviceMetricsOverride", {
-    width: 480,
+    width: 400,
     height: DESKTOP.height,
     deviceScaleFactor: 1,
     mobile: false,
   });
   await sleep(800);
+  // Hints show here (a desktop window), so the one-row nav still wraps; the band must
+  // follow the measured height, not the phone's 45px.
+  const navH = await tab.evaluate(`document.querySelector("nav").getBoundingClientRect().height`);
+  check("the nav wraps at 400px with hints", navH > 46, { navH });
   await tab.showTop(3, -10);
-  check("skills still under the taller bar waits", (await tab.typeIn(3)) === "pending", {
+  check("skills still under the taller nav waits", (await tab.typeIn(3)) === "pending", {
     top: await tab.top(3),
   });
 });
@@ -501,6 +508,47 @@ await run("phone (390×844, touch)", { ...PHONE, mobile: true }, async (tab) => 
     { top, parked: band.parked },
   );
 });
+
+// The phone's bars: one row each, and the menu holds terminal / theme / keys.
+const CHROME_H = `(() => {
+  const h = (q) => Math.round(document.querySelector(q).getBoundingClientRect().height);
+  return { nav: h("nav"), bar: h("footer"), overflow: document.documentElement.scrollWidth - innerWidth };
+})()`;
+for (const size of [
+  { width: 390, height: 844 },
+  { width: 360, height: 740 },
+  { width: 320, height: 640 },
+]) {
+  await run(
+    `phone bars (${size.width}×${size.height}, touch)`,
+    { ...size, mobile: true },
+    async (tab) => {
+      await tab.go("#home");
+      const c = await tab.evaluate(CHROME_H);
+      check("no sideways scroll", c.overflow === 0, c);
+      // 320 is too narrow for the nav's four links and the menu: it may wrap to two rows.
+      const max = size.width >= 360 ? 48 : 90;
+      check("nav is one row (~44px)", c.nav <= max, c);
+      check("bottom bar is one row (~44px)", c.bar <= 48, c);
+      await tab.tap(navButton("menu"));
+      await sleep(300);
+      const rows = await tab.evaluate(
+        `[...document.querySelectorAll('[role="dialog"] button')].map((b) => b.textContent.trim()).join()`,
+      );
+      check("the menu lists terminal, theme and keys", /terminal,(light|dark),keys/.test(rows), {
+        rows,
+      });
+      await tab.tap(menuRow("keys"));
+      await sleep(300);
+      check(
+        "keys swaps the menu for the keys popup",
+        await tab.evaluate(
+          `document.querySelectorAll('[role="dialog"]').length === 1 && document.querySelector('[role="dialog"]').textContent.includes("single-key shortcuts")`,
+        ),
+      );
+    },
+  );
+}
 
 // Key labels: [data-hint] (one-character keys) and [data-keyhint] (esc, enter, arrows) that
 // are on screen, and the touch wording that stands in for them.
@@ -529,7 +577,9 @@ await run("touch screens show no key labels (390×844)", { ...PHONE, mobile: tru
   check("the rules card says tap, with no key names", /exactly \d.*: tap$/.test(rule ?? ""), {
     rule,
   });
-  await tab.tap(navButton("terminal"));
+  await tab.tap(navButton("menu"));
+  await sleep(300);
+  await tab.tap(menuRow("terminal"));
   await sleep(600);
   const px = await tab.evaluate(
     `parseFloat(getComputedStyle(document.querySelector('[aria-label="embedded shell"] input')).fontSize)`,

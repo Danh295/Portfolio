@@ -34,8 +34,29 @@
   letter-spacing: 0;
 }
 
+/* Phones: one row of ~44px, the four links spread across it; the activity sparkline
+   (the only thing that wrapped it onto a second row) is left out. Where hints show (a
+   narrow desktop window) the row can still wrap. Each link's tap reaches the row's height
+   through an invisible ::before. */
 @media (max-width: 600px) {
+  .inner {
+    padding-block: 4px;
+    min-height: 36px; /* + the padding: a 44px row */
+    gap: 6px 8px;
+    justify-content: space-between;
+  }
+
   .spark {
-    margin-left: 0;
+    display: none;
+  }
+
+  .inner a {
+    position: relative;
+  }
+
+  .inner a::before {
+    content: "";
+    position: absolute;
+    inset: -14px -3px;
   }
 }
