@@ -12,11 +12,13 @@ export default function Header({
   activeSec,
   dark,
   shellOpen,
+  menuOpen,
   onHome,
   onSection,
   onShell,
   onTheme,
   onHelp,
+  onMenu,
   inert,
 }) {
   return (
@@ -82,6 +84,16 @@ export default function Header({
             keys
           </button>
         </div>
+        {/* Phones: the three buttons above move in here (Header.module.css). */}
+        <button
+          type="button"
+          onClick={onMenu}
+          aria-haspopup="dialog"
+          aria-expanded={menuOpen}
+          className={`${styles.btn} ${styles.menu}`}
+        >
+          menu
+        </button>
       </div>
     </nav>
   );

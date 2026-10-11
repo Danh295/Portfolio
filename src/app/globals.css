@@ -104,6 +104,10 @@ button {
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* A focused link or button scrolled into view stays clear of the pinned bottom bar
+     (WCAG 2.4.11). Only the bottom: a top value would add to the sections'
+     scroll-margin-top and move where a jump parks. */
+  scroll-padding-bottom: var(--bar-h, 0px);
 }
 
 input,

@@ -17,6 +17,7 @@ import Cursor from "@/components/overlay/Cursor";
 import { pressFx, PRESSABLE } from "@/lib/pressFx";
 import HelpModal from "@/components/overlay/HelpModal";
 import AboutModal from "@/components/overlay/AboutModal";
+import MenuModal from "@/components/overlay/MenuModal";
 import Intro from "@/components/overlay/Intro";
 import { site } from "@/config/site";
 import { ui } from "@/config/ui";
@@ -60,6 +61,7 @@ export default function App({ initialView = null }) {
   const [termOpen, setTermOpen] = useState(false);
   const [help, setHelp] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   // Every section's header is its first stop (it shows the blinking cursor); j/k then
   // move through its elements (selected = inverted, no cursor). Hero stops: the heading
   // ("head"), "more…" ("more"), the egg prompt ("egg"); Enter only plays the egg while
@@ -164,6 +166,7 @@ export default function App({ initialView = null }) {
   const closeOverlays = () => {
     setHelp(false);
     setAboutOpen(false);
+    setMenuOpen(false);
     setTermOpen(false);
     setRulesOpen(false);
   };
@@ -315,6 +318,7 @@ export default function App({ initialView = null }) {
       vim: !!vim,
       help,
       aboutOpen,
+      menuOpen,
       termOpen,
       keysOn,
       view,
@@ -404,6 +408,9 @@ export default function App({ initialView = null }) {
       case "closeAbout":
         setAboutOpen(false);
         break;
+      case "closeMenu":
+        setMenuOpen(false);
+        break;
       case "closeRules":
         setRulesOpen(false);
         break;
@@ -422,10 +429,12 @@ export default function App({ initialView = null }) {
         setHeroSel("head");
         break;
       case "toggleHelp":
+        setMenuOpen(false);
         setAboutOpen(false);
         setHelp((h) => !h);
         break;
       case "toggleAbout":
+        setMenuOpen(false);
         setHelp(false);
         setAboutOpen((o) => !o);
         break;
@@ -720,7 +729,7 @@ export default function App({ initialView = null }) {
 
   // A popup (keys or more…) is modal: everything behind it is inert (no Tab, no clicks,
   // hidden from screen readers) until it closes.
-  const popup = help || aboutOpen;
+  const popup = help || aboutOpen || menuOpen;
   // The j/k selection is shown by colour only, so it's also read out (a polite live region).
   const selName = selectionLabel({ mode, view, activeSec, heroSel, sel, expSel, list });
 
@@ -734,11 +743,13 @@ export default function App({ initialView = null }) {
       activeSec={view ? 1 : activeSec}
       dark={dark}
       shellOpen={termOpen}
+      menuOpen={menuOpen}
       onHome={goHome}
       onSection={goSec}
       onShell={() => setTermOpen((o) => !o)}
       onTheme={toggleTheme}
       onHelp={() => setHelp((h) => !h)}
+      onMenu={() => setMenuOpen(true)}
     />
   );
   const hero = (
@@ -845,6 +856,25 @@ export default function App({ initialView = null }) {
                 onInput={(v) => patchSession("embed", { input: v })}
                 onKey={(e) => shellKey("embed", e)}
                 onClose={() => setTermOpen(false)}
+              />
+            )}
+            {menuOpen && (
+              <MenuModal
+                dark={dark}
+                shellOpen={termOpen}
+                onClose={() => setMenuOpen(false)}
+                onShell={() => {
+                  setMenuOpen(false);
+                  setTermOpen((o) => !o);
+                }}
+                onTheme={() => {
+                  setMenuOpen(false);
+                  toggleTheme();
+                }}
+                onHelp={() => {
+                  setMenuOpen(false);
+                  setHelp(true);
+                }}
               />
             )}
             {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
