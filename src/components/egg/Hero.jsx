@@ -73,9 +73,9 @@ export default function Hero({
       title="~/danny"
       titleFx="none"
       right={
-        <>
+        <KeyLabel>
           <Hint>[j/k] move · </Hint>[↲] select
-        </>
+        </KeyLabel>
       }
       active={active}
       caret={false}

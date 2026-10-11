@@ -2,8 +2,8 @@
  * A hint for a one-character keyboard shortcut ("[h] ", "[j/k] move · "). Hidden while
  * single-key shortcuts are off (html[data-keys="off"] [data-hint] in globals.css, set from
  * src/lib/useKeysPref.js) and on touch screens (the same file). Hints for keys that always
- * work (esc, enter, arrows, tab) are plain text, or `KeyLabel` when they should still go on
- * touch. Put the trailing space inside, so hiding it leaves no gap.
+ * work (esc, enter, arrows, tab) go in `KeyLabel`, which touch hides too but keys-off doesn't.
+ * Put the trailing space inside, so hiding it leaves no gap.
  */
 export default function Hint({ className, children }) {
   return (

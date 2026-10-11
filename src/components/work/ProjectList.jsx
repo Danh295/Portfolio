@@ -1,5 +1,5 @@
 import SectionFrame from "@/components/frame/SectionFrame";
-import Hint from "@/components/Hint";
+import Hint, { KeyLabel } from "@/components/Hint";
 import { projects, projectFolders } from "@/data/projects";
 import { pad } from "@/lib/format";
 import { fmtStamp, syncedAt, syncedCount } from "@/lib/github";
@@ -20,9 +20,9 @@ export default function ProjectList({ list, filter, sel, active, listRef, onFilt
       prefix={<Hint>[1] </Hint>}
       title="~/projects"
       right={
-        <>
+        <KeyLabel>
           <Hint>[j/k] move · </Hint>[↲] open<Hint> · [f] folder</Hint>
-        </>
+        </KeyLabel>
       }
       active={active}
       caret={sel < 0}

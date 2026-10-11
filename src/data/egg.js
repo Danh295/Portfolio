@@ -1,5 +1,6 @@
 // Copy for the egg minigame, one entry per stage (0–5).
-// {T} = goal time, {H} = when the clock hides, {r} = result label, {b} = result hint.
+// {T} = goal time, {H} = when the clock hides, {r} = result label, {b} = result hint,
+// {go} = how to pull the eggs out (rules card only: the keys, or "tap" on touch).
 // `enter`: Enter/Space (with the egg selected) or a click advances this stage. After the
 // start, `prompt` labels the hero's button under the pot.
 export const eggStages = [
