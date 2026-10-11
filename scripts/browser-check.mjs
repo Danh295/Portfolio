@@ -519,6 +519,16 @@ await run("touch screens show no key labels (390×844)", { ...PHONE, mobile: tru
   check("the egg's start box says tap", (await tab.evaluate(START_TEXT)) === "tap to start", {
     text: await tab.evaluate(START_TEXT),
   });
+  await tab.evaluate(`document.querySelector("[data-egg]").scrollIntoView({ block: "center" })`);
+  await sleep(400);
+  await tab.tap(`document.querySelector("[data-egg]")`);
+  await sleep(500);
+  const rule = await tab.evaluate(
+    `[...document.querySelectorAll('[role="dialog"][aria-label="how to play"] div')].map((d) => d.innerText).find((t) => t.includes("pull them out"))`,
+  );
+  check("the rules card says tap, with no key names", /exactly \d.*: tap$/.test(rule ?? ""), {
+    rule,
+  });
   await tab.tap(navButton("terminal"));
   await sleep(600);
   const px = await tab.evaluate(
@@ -542,6 +552,18 @@ await run("desktop shows key labels (1291×808)", DESKTOP, async (tab) => {
     "the egg's start box says click or enter",
     (await tab.evaluate(START_TEXT)) === "click or [↲] to start",
     { text: await tab.evaluate(START_TEXT) },
+  );
+  await tab.click(`document.querySelector("[data-egg]")`);
+  await sleep(500);
+  const rule = await tab.evaluate(
+    `[...document.querySelectorAll('[role="dialog"][aria-label="how to play"] div')].map((d) => d.innerText).find((t) => t.includes("pull them out"))`,
+  );
+  check(
+    "the rules card names the keys",
+    /exactly \d.*: click, \[↲\] or \[space\]$/.test(rule ?? ""),
+    {
+      rule,
+    },
   );
 });
 

@@ -46,10 +46,11 @@ export const eggStages = [
 
 export const eggTypes = ["runny", "jammy", "perfect", "firm", "hard-boiled"];
 
-// Rules card shown before the first round of a visit ({T} goal, {H} when the clock hides).
+// Rules card shown before the first round of a visit ({T} goal, {H} when the clock hides,
+// {go} "click, [↲] or [space]", or "tap" on a touch screen: Hero.jsx).
 export const eggRules = [
   "the stove heats the water, the eggs go in on start!",
-  "pull them out at exactly {T}: click, [↲] or [space]",
+  "pull them out at exactly {T}: {go}",
   "the clock hides at {H}, count the rest in your head",
   "then an ice bath, and the moment of truth",
 ];

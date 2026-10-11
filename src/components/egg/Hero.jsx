@@ -201,7 +201,7 @@ export default function Hero({
                 {view.rules.map((r, i) => (
                   <div key={i} className={styles.rule}>
                     <span className={styles.ruleN}>{i + 1}</span>
-                    <span>{r}</span>
+                    <RuleText text={r} />
                   </div>
                 ))}
                 <div className={styles.rulesGo}>
@@ -269,5 +269,19 @@ export default function Hero({
         </div>
       </div>
     </SectionFrame>
+  );
+}
+
+// A rule's text; "{go}" is how to pull the eggs out: the keys, or a tap on a touch screen.
+function RuleText({ text }) {
+  const [head, tail] = text.split("{go}");
+  if (tail === undefined) return <span>{text}</span>;
+  return (
+    <span>
+      {head}
+      <KeyLabel>click, [↲] or [space]</KeyLabel>
+      <TouchText>tap</TouchText>
+      {tail}
+    </span>
   );
 }
