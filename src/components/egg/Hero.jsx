@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import SectionFrame from "@/components/frame/SectionFrame";
-import Hint from "@/components/Hint";
+import Hint, { KeyLabel, TouchText } from "@/components/Hint";
 import { homeContent } from "@/data/home";
 import { usePlayed, useTextFx } from "@/lib/useTextFx";
 import { EGG_PX } from "@/lib/egg/grid";
@@ -178,7 +178,11 @@ export default function Hero({
                 onClick={onStart}
                 onFocus={onSelectEgg}
               >
-                click or <span className={styles.pressKey}>[↲]</span> to start
+                <KeyLabel>
+                  click or <span className={styles.pressKey}>[↲]</span> to{" "}
+                </KeyLabel>
+                <TouchText>tap to </TouchText>
+                start
               </button>
             </div>
           )}
@@ -202,15 +206,18 @@ export default function Hero({
                 ))}
                 <div className={styles.rulesGo}>
                   {view.briefing ? (
-                    keysOn ? (
-                      "click or press any key to proceed"
-                    ) : (
-                      "click or press enter to proceed"
-                    )
+                    <>
+                      <KeyLabel>
+                        {keysOn ? "click or press any key to" : "click or press enter to"}{" "}
+                      </KeyLabel>
+                      <TouchText>tap to </TouchText>
+                      proceed
+                    </>
                   ) : (
                     <>
                       <Hint className={styles.pressKey}>[i]</Hint>
-                      <Hint> or</Hint> click · close
+                      <Hint> or</Hint> <KeyLabel>click</KeyLabel>
+                      <TouchText>tap</TouchText> · close
                     </>
                   )}
                 </div>
@@ -252,7 +259,7 @@ export default function Hero({
                 }
                 aria-current={eggOn ? "true" : undefined}
               >
-                {view.prompt} <span className={styles.pressKey}>[↲]</span>
+                {view.prompt} <KeyLabel className={styles.pressKey}>[↲]</KeyLabel>
               </button>
             )}
           </div>

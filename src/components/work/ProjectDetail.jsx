@@ -5,6 +5,7 @@ import { projects } from "@/data/projects";
 import { useTextFx } from "@/lib/useTextFx";
 import { pad } from "@/lib/format";
 import { fmtDate, repoFor } from "@/lib/github";
+import { KeyLabel } from "@/components/Hint";
 import styles from "./ProjectDetail.module.css";
 
 export default function ProjectDetail({ slug, onBack, onOpen }) {
@@ -43,7 +44,7 @@ export default function ProjectDetail({ slug, onBack, onOpen }) {
           data-tip="back to ~/projects"
           className={styles.back}
         >
-          <span className={styles.dim}>[esc]</span> ← cd ..
+          <KeyLabel className={styles.dim}>[esc]</KeyLabel> ← cd ..
         </button>
         <div className={styles.pn}>
           <button
@@ -52,7 +53,7 @@ export default function ProjectDetail({ slug, onBack, onOpen }) {
             data-key="ArrowLeft"
             className={styles.step}
           >
-            <span className={styles.dim}>[←]</span> {prev.title}
+            <KeyLabel className={styles.dim}>[←]</KeyLabel> {prev.title}
           </button>
           <button
             type="button"
@@ -60,7 +61,7 @@ export default function ProjectDetail({ slug, onBack, onOpen }) {
             data-key="ArrowRight"
             className={styles.step}
           >
-            {next.title} <span className={styles.dim}>[→]</span>
+            {next.title} <KeyLabel className={styles.dim}>[→]</KeyLabel>
           </button>
         </div>
       </div>

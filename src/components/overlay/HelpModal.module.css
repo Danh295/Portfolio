@@ -53,6 +53,7 @@
 }
 
 .closeHint {
+  display: block;
   padding: 12px 24px 18px;
   color: var(--mid);
   font-size: 12px;
