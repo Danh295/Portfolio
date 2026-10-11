@@ -486,13 +486,36 @@
   }
 }
 
+/* Phones: tighter, so the first screen shows the heading, the intro and the facts with
+   the top of the egg panel peeking in under them (a screen that looks finished hides
+   what's below it; NN/g, docs/research/mobile.md). The heading shrinks to fit one line
+   from 320px: 14 characters at 0.56em each, in the width left by the page padding
+   (16 + 16), the intro padding (20 + 20) and the frame's border (2): 74px. */
 @media (max-width: 600px) {
+  .hero {
+    --hero-gap: 16px;
+  }
+
   .intro {
-    padding: 32px 20px 24px;
+    padding: 20px 20px 16px;
+    gap: 16px;
+  }
+
+  .top {
+    gap: 12px;
   }
 
   .h1 {
-    font-size: 40px;
+    font-size: clamp(28px, calc((100vw - 74px) / 8.4), 40px);
+  }
+
+  .lead {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .fact {
+    padding: 8px 0;
   }
 
   .egg {
