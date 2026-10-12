@@ -4,16 +4,16 @@ import { useEffect, useId, useRef } from "react";
 import { KeyLabel } from "@/components/Hint";
 import styles from "./Popup.module.css";
 
-// Where focus goes back to once the last popup closes. ? and m swap one popup for the
-// other in a single render (the page behind stays inert), so the element is recorded
-// when the first one opens and kept across the swap. (Editing this file while a popup is
+// Where focus goes back to once the last popup closes. A swap (? and m, or the phone
+// menu's keys row) replaces one popup with another in a single render (the page behind
+// stays inert), so the element is recorded when the first one opens and kept across it. (Editing this file while a popup is
 // open resets these in dev; focus then falls to the page on close.)
 let openCount = 0,
   returnTo = null,
   restorePending = false;
 
 /**
- * The frame both popups (keys, more…) share: the scrim (a click on it closes), the box
+ * The frame the popups (keys, more…, the phone's menu) share: the scrim (a click on it closes), the box
  * with its ┤ label ├ head and [esc] close button, the scrolling body (the popup's own
  * scroll keys move it: [data-popup-scroll], src/lib/keyRouter.js) and an optional foot.
  * The box is the dialog, named by its label; it takes focus when it opens and focus

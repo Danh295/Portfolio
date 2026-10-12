@@ -625,8 +625,24 @@ export default function App({ initialView = null }) {
     const ro = new ResizeObserver(measure);
     bars.forEach(([r]) => r.current && ro.observe(r.current));
     measure();
-    return () => ro.disconnect();
+    // Terminal mode has no bars: the properties go with them (html's scroll-padding-bottom
+    // reads --bar-h, and would keep a padding for a bar that isn't there).
+    return () => {
+      ro.disconnect();
+      bars.forEach(([, v]) => root.style.removeProperty(v));
+    };
   }, [mode]);
+
+  // The menu popup stands in for the nav's buttons under 600px (Header.module.css); when
+  // the window grows past that they're back (behind the inert page), so the menu goes.
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 600px)");
+    const onChange = () => {
+      if (!mq.matches) setMenuOpen(false);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   useEffect(() => {
     const p = view && projects.find((x) => x.slug === view);
