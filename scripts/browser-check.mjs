@@ -563,6 +563,26 @@ for (const size of [
   );
 }
 
+await run(
+  "the menu closes when the window grows past 600px",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("#home");
+    await tab.tap(navButton("menu"));
+    await sleep(300);
+    const open = () => tab.evaluate(`document.querySelectorAll('[role="dialog"]').length`);
+    check("the menu is open", (await open()) === 1);
+    await tab.send("Emulation.setDeviceMetricsOverride", {
+      width: 800,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true,
+    });
+    await sleep(500);
+    check("it closes at 800px wide", (await open()) === 0);
+  },
+);
+
 // Key labels: [data-hint] (one-character keys) and [data-keyhint] (esc, enter, arrows) that
 // are on screen, and the touch wording that stands in for them.
 const LABELS_SHOWN = `[...document.querySelectorAll("[data-hint],[data-keyhint]")].filter((e) => e.getClientRects().length > 0).length`;
