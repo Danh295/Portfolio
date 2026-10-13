@@ -10,13 +10,16 @@ import { useEffect } from "react";
  *   --vv-top / --vv-h   the visible area's top and height (`visualViewport`)
  *   data-kb             present while a keyboard covers the bottom of the screen
  * and leaves them off while the page is pinch-zoomed or `visualViewport` is missing, where
- * the element's own CSS defaults apply.
+ * the element's own CSS defaults apply. Also locks the page itself (`html.locked`,
+ * globals.css) so nothing but the app's own scroll boxes move.
  */
 export function useVisualViewportFrame(frameRef) {
   useEffect(() => {
     const el = frameRef.current,
       vv = window.visualViewport;
-    if (!el || !vv) return;
+    if (!el) return;
+    document.documentElement.classList.add("locked");
+    if (!vv) return () => document.documentElement.classList.remove("locked");
     const update = () => {
       if (vv.scale > 1.01) {
         el.style.removeProperty("--vv-top");
@@ -35,6 +38,7 @@ export function useVisualViewportFrame(frameRef) {
     return () => {
       vv.removeEventListener("resize", update);
       vv.removeEventListener("scroll", update);
+      document.documentElement.classList.remove("locked");
       el.style.removeProperty("--vv-top");
       el.style.removeProperty("--vv-h");
       delete el.dataset.kb;

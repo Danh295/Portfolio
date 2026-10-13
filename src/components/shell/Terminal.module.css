@@ -68,6 +68,16 @@
   align-items: stretch;
   border-top: 1px solid var(--line);
   font-size: 12px;
+  /* The edge with more tabs fades out (--fade-l / --fade-r, from Terminal.jsx); only a
+     sideways drag moves it, never the page. */
+  touch-action: pan-x;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 var(--fade-l, 0px),
+    #000 calc(100% - var(--fade-r, 0px)),
+    transparent
+  );
 }
 
 .tabs::-webkit-scrollbar {
@@ -138,8 +148,41 @@
   letter-spacing: 0;
 }
 
+/* Phones: the header and the shortcut bar are the same 44px with the same 16px inset (the
+   output's own side padding), the git log sparkline (the tabs' fade says there's more to
+   scroll, and the room is better spent on tabs) is left out, and neither bar can be dragged
+   (the header takes no pan at all, the tabs only sideways). */
 @media (max-width: 600px) {
   .banner {
     font-size: 7px;
+  }
+
+  .head {
+    box-sizing: border-box;
+    height: 44px;
+    padding: 0 16px;
+    touch-action: none;
+  }
+
+  .exit {
+    padding: 7px 10px;
+  }
+
+  .tabs {
+    box-sizing: border-box;
+    height: 44px;
+  }
+
+  .tab {
+    display: flex;
+    align-items: center;
+  }
+
+  .tab:first-child {
+    padding-left: 16px;
+  }
+
+  .spark {
+    display: none;
   }
 }

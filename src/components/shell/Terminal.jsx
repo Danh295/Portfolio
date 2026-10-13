@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { BANNER } from "@/lib/ascii/banner";
 import Hint, { KeyLabel } from "@/components/Hint";
 import { pstr } from "@/lib/shell/fs";
@@ -31,8 +31,28 @@ export default function Terminal({
   onKey,
   onExit,
 }) {
-  const frameRef = useRef(null);
+  const frameRef = useRef(null),
+    tabsRef = useRef(null);
   useVisualViewportFrame(frameRef);
+  // The shortcut tabs scroll sideways when they don't fit; fade the edge that has more, so
+  // that shows (Terminal.module.css reads --fade-l / --fade-r).
+  useEffect(() => {
+    const tabs = tabsRef.current;
+    if (!tabs) return;
+    const update = () => {
+      const max = tabs.scrollWidth - tabs.clientWidth;
+      tabs.style.setProperty("--fade-l", tabs.scrollLeft > 2 ? "28px" : "0px");
+      tabs.style.setProperty("--fade-r", tabs.scrollLeft < max - 2 ? "28px" : "0px");
+    };
+    update();
+    tabs.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(tabs);
+    return () => {
+      tabs.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, []);
   return (
     <div ref={frameRef} className={styles.term}>
       <div className={styles.head}>
@@ -75,7 +95,7 @@ export default function Terminal({
         </ShellPane>
       )}
 
-      <div className={styles.tabs}>
+      <div ref={tabsRef} className={styles.tabs}>
         {SHORTCUT_CMDS.map((c, i) => (
           <button
             key={c}
