@@ -6,6 +6,10 @@
   min-height: 0;
   overflow: auto;
   cursor: text;
+  /* Its own scroller: up and down only, and a drag at its end doesn't carry on to the page
+     (on a phone with the keyboard up that panned the whole page). */
+  touch-action: pan-y;
+  overscroll-behavior: contain;
 }
 
 .embed {
