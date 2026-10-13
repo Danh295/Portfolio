@@ -19,6 +19,7 @@ import HelpModal from "@/components/overlay/HelpModal";
 import AboutModal from "@/components/overlay/AboutModal";
 import MenuModal from "@/components/overlay/MenuModal";
 import Intro from "@/components/overlay/Intro";
+import PhoneLog from "@/components/PhoneLog";
 import { site } from "@/config/site";
 import { ui } from "@/config/ui";
 import { projects, projectFolders } from "@/data/projects";
@@ -924,6 +925,7 @@ export default function App({ initialView = null }) {
       <Tooltip />
       <Cursor mode={mode} />
       <Intro rootRef={rootRef} />
+      <PhoneLog />
     </>
   );
 }
