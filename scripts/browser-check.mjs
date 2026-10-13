@@ -530,6 +530,11 @@ for (const size of [
       const max = size.width >= 360 ? 48 : 90;
       check("nav is one row (~44px)", c.nav <= max, c);
       check("bottom bar is one row (~44px)", c.bar <= 48, c);
+      const inset = await tab.evaluate(`(() => {
+        const pad = (q) => getComputedStyle(document.querySelector(q)).paddingLeft;
+        return { nav: pad("nav > div"), bar: pad("footer > div") };
+      })()`);
+      check("the nav and the bottom bar have the same side inset", inset.nav === inset.bar, inset);
       // The hero: the heading stays on one line, and (on a tall enough screen) the egg
       // panel's title peeks in above the bottom bar, so the first screen doesn't look done.
       const hero = await tab.evaluate(`(() => {
@@ -628,6 +633,29 @@ await run("phone terminal mode (390×844, touch)", { ...PHONE, mobile: true }, a
   check("the header is at the top of the screen", r.headTop === 0, r);
   check("the shortcut bar is at the bottom of the screen", r.barBottom === r.h, r);
   check("the page doesn't scroll", r.scroll === 0 && r.overflow <= 0, r);
+  const bars = await tab.evaluate(`(() => {
+    const term = document.querySelector('[data-mode="term"] > div');
+    const head = term.firstElementChild, tabs = term.lastElementChild;
+    const cs = (e) => getComputedStyle(e);
+    return {
+      head: Math.round(head.getBoundingClientRect().height),
+      tabs: Math.round(tabs.getBoundingClientRect().height),
+      headPad: cs(head).paddingLeft,
+      locked: document.documentElement.classList.contains("locked"),
+      body: cs(document.body).position,
+      tabsPan: cs(tabs).touchAction,
+      headPan: cs(head).touchAction,
+      spark: [...term.querySelectorAll("span")].some((s) => /git log/.test(s.textContent) && s.getClientRects().length > 0),
+    };
+  })()`);
+  check("the header and the shortcut bar are the same height", bars.head === bars.tabs, bars);
+  check("the sparkline is left out on a phone", !bars.spark, bars);
+  check("the page is locked, so nothing drags", bars.locked && bars.body === "fixed", bars);
+  check(
+    "the bars take no vertical drag",
+    bars.tabsPan === "pan-x" && bars.headPan === "none",
+    bars,
+  );
   // A keyboard up, simulated with the variables useVisualViewportFrame sets: the frame is the
   // 500px above it (shifted down 40px, as if iOS had panned), the prompt stays inside, and the
   // shortcut bar is below that area, under the keyboard.

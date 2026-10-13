@@ -40,7 +40,7 @@
    through an invisible ::before. */
 @media (max-width: 600px) {
   .inner {
-    padding-block: 4px;
+    padding: 4px 12px; /* the nav's inset (Header.module.css), so the two bars match */
     min-height: 36px; /* + the padding: a 44px row */
     gap: 6px 8px;
     justify-content: space-between;
