@@ -48,3 +48,19 @@
     height: auto;
   }
 }
+
+/* A keyboard is up (useVisualViewportFrame): the panel is the visible area above it, inset
+   8px, wherever iOS has panned the page to. */
+.panel[data-kb] {
+  top: calc(var(--vv-top, 0px) + 8px);
+  bottom: auto;
+  height: calc(var(--vv-h, 100dvh) - 16px);
+}
+
+/* Touch: the whole shell is 16px, the size its prompt has to be so iOS doesn't zoom the page
+   when it takes focus (a smaller output above a larger prompt read as two sizes). */
+@media (hover: none) and (pointer: coarse) {
+  .panel {
+    font-size: 16px;
+  }
+}

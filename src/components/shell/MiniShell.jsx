@@ -1,6 +1,7 @@
 "use client";
 
 import { pstr } from "@/lib/shell/fs";
+import { useVisualViewportFrame } from "@/lib/useVisualViewportFrame";
 import ShellPane from "./ShellPane";
 import { KeyLabel } from "@/components/Hint";
 import styles from "./MiniShell.module.css";
@@ -16,6 +17,8 @@ export default function MiniShell({
   onClose,
   inert,
 }) {
+  // A phone's keyboard shrinks the visible area and iOS pans the page: the panel follows it.
+  useVisualViewportFrame(panelRef, { lock: "keyboard" });
   return (
     <div
       ref={panelRef}

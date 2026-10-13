@@ -48,6 +48,11 @@ const KEY = {
 };
 // Page-side expressions: the nav button whose label includes `label`; the hero's heading
 // as typed so far, and in full (its aria-label, src/data/home.js `heading`).
+// A shell's scroll box (the nearest scrolling ancestor of its log) inside `root`.
+const shellBox = (root) =>
+  `(() => { let e = document.querySelector('${root} [role="log"]'); while (e && getComputedStyle(e).overflowY !== "auto") e = e.parentElement; return e; })()`;
+const atBottom = (root) =>
+  `(() => { const b = ${shellBox(root)}; return Math.round(b.scrollHeight - b.scrollTop - b.clientHeight); })()`;
 // The phone menu popup's row whose label is `label`.
 const menuRow = (label) =>
   `[...document.querySelectorAll('[role="dialog"] button')].find(b=>b.textContent.trim()==='${label}')`;
@@ -633,6 +638,21 @@ await run("phone terminal mode (390×844, touch)", { ...PHONE, mobile: true }, a
   check("the header is at the top of the screen", r.headTop === 0, r);
   check("the shortcut bar is at the bottom of the screen", r.barBottom === r.h, r);
   check("the page doesn't scroll", r.scroll === 0 && r.overflow <= 0, r);
+  const TERM = '[data-mode="term"]';
+  for (let i = 0; i < 3; i++) {
+    await tab.send("Input.insertText", { text: "help" });
+    await tab.key("Enter");
+  }
+  await sleep(300);
+  await tab.evaluate(`${shellBox(TERM)}.scrollTop = 0`);
+  await sleep(200);
+  const tAway = await tab.evaluate(atBottom(TERM));
+  check("terminal mode has output to scroll", tAway > 100, { tAway });
+  await tab.evaluate(`document.querySelector('${TERM} input').focus()`);
+  await tab.send("Input.insertText", { text: "l" });
+  await sleep(300);
+  const tBack = await tab.evaluate(atBottom(TERM));
+  check("typing brings terminal mode back to its prompt", tBack <= 2, { tBack });
   // Focusing the prompt with no keyboard (a headless browser has none) isn't a keyboard: the
   // frame follows the visible area and the shortcut bar stays.
   await tab.evaluate(`document.querySelector('[data-mode="term"] input').focus()`);
@@ -651,6 +671,12 @@ await run("phone terminal mode (390×844, touch)", { ...PHONE, mobile: true }, a
     !focus.kb && focus.vvH === focus.h + "px" && focus.bar !== "none",
     focus,
   );
+  const sizes = await tab.evaluate(`(() => {
+    const px = (e) => parseFloat(getComputedStyle(e).fontSize);
+    const t = document.querySelector('[data-mode="term"]');
+    return { log: px(t.querySelector('[role="log"]')), input: px(t.querySelector("input")) };
+  })()`);
+  check("terminal mode's output is the same size as its prompt", sizes.log === sizes.input, sizes);
   const bars = await tab.evaluate(`(() => {
     const term = document.querySelector('[data-mode="term"] > div');
     const head = term.firstElementChild, tabs = term.lastElementChild;
@@ -663,7 +689,7 @@ await run("phone terminal mode (390×844, touch)", { ...PHONE, mobile: true }, a
       body: cs(document.body).position,
       tabsPan: cs(tabs).touchAction,
       headPan: cs(head).touchAction,
-      spark: [...term.querySelectorAll("span")].some((s) => /git log/.test(s.textContent) && s.getClientRects().length > 0),
+      spark: [...tabs.querySelectorAll("span")].some((s) => /git log/.test(s.textContent) && s.getClientRects().length > 0),
     };
   })()`);
   check("the header and the shortcut bar are the same height", bars.head === bars.tabs, bars);
@@ -726,6 +752,12 @@ await run(
         );
       }
     };
+    // iOS's rubber-band bounce moved the whole page, the nav and bar included (phone telemetry:
+    // the nav reached top +157 at the top, the bar went past the screen's bottom at the end).
+    const bounce = await tab.evaluate(
+      `getComputedStyle(document.documentElement).overscrollBehaviorY`,
+    );
+    check("the page doesn't rubber-band on touch", bounce === "none", { bounce });
     await holds("at 844px");
     for (const height of [760, 844, 700]) {
       await tab.send("Emulation.setDeviceMetricsOverride", {
@@ -737,6 +769,63 @@ await run(
       await sleep(400);
       await holds("after the window became " + height + "px tall");
     }
+  },
+);
+
+// The embedded shell on a phone with a keyboard up (set by hand: a headless browser has no
+// keyboard, the real one is covered by the phone check): the panel is the visible area above
+// the keyboard, inset 8px, wherever iOS has panned the page to.
+await run(
+  "phone embedded shell with a keyboard (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("#home");
+    await tab.tap(navButton("menu"));
+    await sleep(300);
+    await tab.tap(menuRow("terminal"));
+    await sleep(700);
+    const shell = `document.querySelector('[aria-label="embedded shell"]')`;
+    // Typing returns the output to the prompt, even after scrolling up to read.
+    const EMBED = '[aria-label="embedded shell"]';
+    for (let i = 0; i < 3; i++) {
+      await tab.send("Input.insertText", { text: "help" });
+      await tab.key("Enter");
+    }
+    await sleep(300);
+    await tab.evaluate(`${shellBox(EMBED)}.scrollTop = 0`);
+    await sleep(200);
+    const away = await tab.evaluate(atBottom(EMBED));
+    check("the embedded shell has output to scroll", away > 100, { away });
+    await tab.evaluate(`document.querySelector('${EMBED} input').focus()`);
+    await tab.send("Input.insertText", { text: "l" });
+    await sleep(300);
+    const back = await tab.evaluate(atBottom(EMBED));
+    check("typing brings the embedded shell back to its prompt", back <= 2, { back });
+    const rest = await tab.evaluate(`(() => {
+    const r = ${shell}.getBoundingClientRect();
+    return { top: Math.round(r.top), bottom: Math.round(r.bottom), h: innerHeight };
+  })()`);
+    check(
+      "without a keyboard the panel sits between the bars",
+      rest.top > 40 && rest.bottom < rest.h - 40,
+      rest,
+    );
+    await tab.evaluate(`(() => {
+    const el = ${shell};
+    el.style.setProperty("--vv-top", "40px");
+    el.style.setProperty("--vv-h", "400px");
+    el.dataset.kb = "";
+  })()`);
+    await sleep(300);
+    const kb = await tab.evaluate(`(() => {
+    const r = ${shell}.getBoundingClientRect();
+    return { top: Math.round(r.top), bottom: Math.round(r.bottom) };
+  })()`);
+    check(
+      "with a keyboard the panel fills the visible area, inset 8px",
+      kb.top === 48 && kb.bottom === 432,
+      kb,
+    );
   },
 );
 
@@ -795,6 +884,10 @@ await run("touch screens show no key labels (390×844)", { ...PHONE, mobile: tru
     `parseFloat(getComputedStyle(document.querySelector('[aria-label="embedded shell"] input')).fontSize)`,
   );
   check("the shell's prompt is 16px or more, so iOS doesn't zoom", px >= 16, { px });
+  const logPx = await tab.evaluate(
+    `parseFloat(getComputedStyle(document.querySelector('[aria-label="embedded shell"] [role="log"]')).fontSize)`,
+  );
+  check("the embedded shell's output is the same size as its prompt", logPx === px, { logPx, px });
   check(
     "the shell's close button has no [esc] label",
     !(

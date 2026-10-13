@@ -92,6 +92,14 @@ html[data-keys="off"] [data-hint] {
   html [data-touch] {
     display: inline;
   }
+
+  /* No rubber-band: iOS's bounce at the ends of the page moved everything, the pinned nav
+     and bar included (measured on an iPhone: the nav reached 157px below the top, the bar
+     went past the screen's bottom). Vertical only: a horizontal value would also switch off
+     the browser's swipe back. */
+  html {
+    overscroll-behavior-y: none;
+  }
 }
 
 /* A full-screen app (terminal mode, useVisualViewportFrame) owns the screen: the page itself
