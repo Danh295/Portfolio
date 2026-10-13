@@ -563,6 +563,46 @@ for (const size of [
   );
 }
 
+// Project pages and the folder list on a phone: the buttons above a project share one row
+// and are 44px tall, the folder rows are at least 28px (WCAG 2.5.8 spacing needs 24px).
+await run(
+  "phone project page and folder rows (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("projects/ai-room-editor/");
+    const r = await tab.evaluate(`(() => {
+      const row = [...document.querySelectorAll("button")].filter((b) =>
+        /cd \\.\\.|previous project|next project/.test(b.innerText + " " + b.ariaLabel));
+      const box = row.map((b) => b.getBoundingClientRect());
+      return {
+        n: row.length,
+        tops: box.map((x) => Math.round(x.top)),
+        heights: box.map((x) => Math.round(x.height)),
+        text: row.map((b) => b.innerText.trim()),
+      };
+    })()`);
+    check("cd .., previous and next are three buttons", r.n === 3, r);
+    check("they share one row", Math.max(...r.tops) - Math.min(...r.tops) <= 2, r);
+    check(
+      "each is 44px tall",
+      r.heights.every((h) => h >= 44),
+      r,
+    );
+    check(
+      "the project names are hidden",
+      r.text.every((x) => x === "← cd .." || x === "←" || x === "→"),
+      r,
+    );
+    await tab.go("#projects");
+    const rows = await tab.evaluate(
+      `[...document.querySelectorAll('[aria-label="project folders"] button')].map((b) => Math.round(b.getBoundingClientRect().height))`,
+    );
+    check("the folder rows are 28px or more", rows.length > 0 && rows.every((h) => h >= 28), {
+      rows,
+    });
+  },
+);
+
 await run(
   "the menu closes when the window grows past 600px",
   { ...PHONE, mobile: true },
