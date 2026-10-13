@@ -3,6 +3,9 @@
 import { useEffect } from "react";
 import { frameFor, nextBaseline } from "@/lib/viewportFrame";
 
+/** How long (ms) a keyboard still counts after its prompt lost focus: the screen settles. */
+const SETTLE_MS = 700;
+
 /** Whether something that opens a phone's keyboard has focus. */
 const editableFocused = () => {
   const a = document.activeElement;
@@ -32,7 +35,9 @@ export function useVisualViewportFrame(frameRef, { lock = "always" } = {}) {
     const root = document.documentElement;
     if (lock === "always") root.classList.add("locked");
     if (!vv) return () => root.classList.remove("locked");
-    let baseline = null;
+    let baseline = null,
+      blurredAt = -1e9,
+      settle = 0;
     const update = () => {
       baseline = nextBaseline(baseline, {
         innerHeight: window.innerHeight,
@@ -44,7 +49,9 @@ export function useVisualViewportFrame(frameRef, { lock = "always" } = {}) {
         vvHeight: vv.height,
         vvOffsetTop: vv.offsetTop,
         vvScale: vv.scale,
-        editableFocused: editableFocused(),
+        // Just blurred counts too: iOS hands the screen back about half a second after the
+        // prompt loses focus, and treating that gap as 'no keyboard' flashed the layout.
+        editableFocused: editableFocused() || performance.now() - blurredAt < SETTLE_MS,
       });
       if (!f) {
         el.style.removeProperty("--vv-top");
@@ -58,18 +65,25 @@ export function useVisualViewportFrame(frameRef, { lock = "always" } = {}) {
       else delete el.dataset.kb;
       if (lock === "keyboard") root.classList.toggle("locked", f.keyboard);
     };
+    const onFocusOut = () => {
+      blurredAt = performance.now();
+      window.clearTimeout(settle);
+      settle = window.setTimeout(update, SETTLE_MS + 50);
+      update();
+    };
     update();
     vv.addEventListener("resize", update);
     vv.addEventListener("scroll", update);
     window.addEventListener("resize", update);
     document.addEventListener("focusin", update);
-    document.addEventListener("focusout", update);
+    document.addEventListener("focusout", onFocusOut);
     return () => {
       vv.removeEventListener("resize", update);
       vv.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
       document.removeEventListener("focusin", update);
-      document.removeEventListener("focusout", update);
+      document.removeEventListener("focusout", onFocusOut);
+      window.clearTimeout(settle);
       root.classList.remove("locked");
       el.style.removeProperty("--vv-top");
       el.style.removeProperty("--vv-h");

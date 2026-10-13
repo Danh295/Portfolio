@@ -829,6 +829,39 @@ await run(
   },
 );
 
+// While a shell has the keyboard up (html.locked), nothing may drag the page: telemetry from an
+// iPhone showed the page panning 216px under the pinned nav and bar, which teleported. The
+// gui's bars are hidden while it's locked, the page takes only pinch zoom, and a shell's
+// output scrolls without handing the drag on to the page.
+await run(
+  "a locked page can't be dragged (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("#home");
+    await tab.tap(navButton("menu"));
+    await sleep(300);
+    await tab.tap(menuRow("terminal"));
+    await sleep(700);
+    await tab.evaluate(`document.documentElement.classList.add("locked")`);
+    const s = await tab.evaluate(`(() => {
+    const cs = (e) => getComputedStyle(e);
+    let box = document.querySelector('[aria-label="embedded shell"] [role="log"]');
+    while (box && cs(box).overflowY !== "auto") box = box.parentElement;
+    return {
+      html: cs(document.documentElement).touchAction,
+      nav: cs(document.querySelector("nav")).visibility,
+      bar: cs(document.querySelector("footer")).visibility,
+      boxPan: cs(box).touchAction,
+      boxChain: cs(box).overscrollBehaviorY,
+    };
+  })()`);
+    check("the page takes only pinch zoom", s.html === "pinch-zoom", s);
+    check("the gui's bars are hidden", s.nav === "hidden" && s.bar === "hidden", s);
+    check("the shell's output scrolls up and down", s.boxPan === "pan-y", s);
+    check("and doesn't hand the drag on to the page", s.boxChain === "contain", s);
+  },
+);
+
 await run(
   "the menu closes when the window grows past 600px",
   { ...PHONE, mobile: true },

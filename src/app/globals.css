@@ -114,6 +114,17 @@ html.locked body {
   inset: 0;
   width: 100%;
 }
+/* iOS lets a page with a keyboard open be dragged by up to the keyboard's height (measured:
+   scrollY 0 to 216 under the pinned nav and bar, which then teleported back). So while locked
+   the page takes only pinch zoom (a scroll box that is its own scroller, like a shell's
+   output, still scrolls) and the gui's bars, which would be dragged, are hidden. */
+html.locked {
+  touch-action: pinch-zoom;
+}
+html.locked [data-mode="gui"] nav,
+html.locked [data-mode="gui"] footer {
+  visibility: hidden;
+}
 
 /* No double-tap zoom on controls (it delays a tap, which the timed egg buttons can't
    take), and no inflated text when a phone turns sideways (the ASCII and the egg grid
