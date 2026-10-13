@@ -1,9 +1,11 @@
 "use client";
 
+import { useRef } from "react";
 import { BANNER } from "@/lib/ascii/banner";
 import Hint, { KeyLabel } from "@/components/Hint";
 import { pstr } from "@/lib/shell/fs";
 import { SHORTCUT_CMDS } from "@/lib/shell/spec";
+import { useVisualViewportFrame } from "@/lib/useVisualViewportFrame";
 import ShellPane from "./ShellPane";
 import Vim from "./Vim";
 import styles from "./Terminal.module.css";
@@ -29,8 +31,10 @@ export default function Terminal({
   onKey,
   onExit,
 }) {
+  const frameRef = useRef(null);
+  useVisualViewportFrame(frameRef);
   return (
-    <div className={styles.term}>
+    <div ref={frameRef} className={styles.term}>
       <div className={styles.head}>
         <span className={styles.mid}>danny@portfolio: {pstr(session.cwd)} — zsh</span>
         <button type="button" onClick={onExit} data-tip="exit or ctrl-d" className={styles.exit}>

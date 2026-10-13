@@ -603,6 +603,56 @@ await run(
   },
 );
 
+// Terminal mode on a phone fills the screen: the header at the very top, the shortcut bar at
+// the very bottom, nothing scrolling. (The on-screen keyboard, which a headless browser
+// can't open, is covered by useVisualViewportFrame and the real-phone check.)
+await run("phone terminal mode (390×844, touch)", { ...PHONE, mobile: true }, async (tab) => {
+  await tab.go("#home");
+  await tab.evaluate(`sessionStorage.setItem("danny-mode", "term")`);
+  await tab.send("Page.reload");
+  await sleep(2500);
+  const r = await tab.evaluate(`(() => {
+    const term = document.querySelector('[data-mode="term"] > div');
+    const head = term?.firstElementChild?.getBoundingClientRect();
+    const bar = term?.lastElementChild?.getBoundingClientRect();
+    return {
+      mode: document.querySelector("[data-mode]")?.dataset.mode,
+      headTop: head && Math.round(head.top),
+      barBottom: bar && Math.round(bar.bottom),
+      h: innerHeight,
+      scroll: scrollY,
+      overflow: document.documentElement.scrollHeight - innerHeight,
+    };
+  })()`);
+  check("terminal mode is on", r.mode === "term", r);
+  check("the header is at the top of the screen", r.headTop === 0, r);
+  check("the shortcut bar is at the bottom of the screen", r.barBottom === r.h, r);
+  check("the page doesn't scroll", r.scroll === 0 && r.overflow <= 0, r);
+  // A keyboard up, simulated with the variables useVisualViewportFrame sets: the frame is the
+  // 500px above it (shifted down 40px, as if iOS had panned), the prompt stays inside, and the
+  // shortcut bar is below that area, under the keyboard.
+  await tab.evaluate(`(() => {
+    const term = document.querySelector('[data-mode="term"] > div');
+    term.style.setProperty("--vv-top", "40px");
+    term.style.setProperty("--vv-h", "500px");
+    term.dataset.kb = "";
+  })()`);
+  await sleep(300); // the output re-pins to the prompt when its pane resizes
+  const k = await tab.evaluate(`(() => {
+    const term = document.querySelector('[data-mode="term"] > div');
+    const rect = (e) => e.getBoundingClientRect();
+    const input = term.querySelector("input");
+    return {
+      headTop: Math.round(rect(term.firstElementChild).top),
+      barTop: Math.round(rect(term.lastElementChild).top),
+      inputBottom: Math.round(rect(input).bottom),
+    };
+  })()`);
+  check("with a keyboard the header stays at the top of the visible area", k.headTop === 40, k);
+  check("the shortcut bar goes under the keyboard", k.barTop >= 540, k);
+  check("the prompt stays above the keyboard", k.inputBottom <= 540, k);
+});
+
 await run(
   "the menu closes when the window grows past 600px",
   { ...PHONE, mobile: true },
