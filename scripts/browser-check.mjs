@@ -535,6 +535,22 @@ for (const size of [
       const max = size.width >= 360 ? 48 : 90;
       check("nav is one row (~44px)", c.nav <= max, c);
       check("bottom bar is one row (~44px)", c.bar <= 48, c);
+      // The nav's five items are spread across the row like the bottom bar's four links: the gaps
+      // between them are even (they were ~8px between the section links and all the spare room
+      // before the menu button).
+      if (size.width >= 360) {
+        const gaps = await tab.evaluate(`(() => {
+          const items = [...document.querySelectorAll("nav button")].filter((b) => b.getClientRects().length > 0);
+          const box = items.map((b) => b.getBoundingClientRect());
+          const gaps = box.slice(1).map((b, i) => Math.round(b.left - box[i].right));
+          return { n: items.length, gaps };
+        })()`);
+        check(
+          "the nav's items are evenly spread (" + gaps.gaps.join(", ") + "px apart)",
+          gaps.n === 5 && Math.max(...gaps.gaps) - Math.min(...gaps.gaps) <= 2,
+          gaps,
+        );
+      }
       const inset = await tab.evaluate(`(() => {
         const pad = (q) => getComputedStyle(document.querySelector(q)).paddingLeft;
         return { nav: pad("nav > div"), bar: pad("footer > div") };
