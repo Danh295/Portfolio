@@ -5,7 +5,7 @@ import { projects } from "@/data/projects";
 import { useTextFx } from "@/lib/useTextFx";
 import { pad } from "@/lib/format";
 import { fmtDate, repoFor } from "@/lib/github";
-import { KeyLabel } from "@/components/Hint";
+import { KeyLabel, TouchText } from "@/components/Hint";
 import styles from "./ProjectDetail.module.css";
 
 export default function ProjectDetail({ slug, onBack, onOpen }) {
@@ -51,17 +51,25 @@ export default function ProjectDetail({ slug, onBack, onOpen }) {
             type="button"
             onClick={() => onOpen(prev.slug)}
             data-key="ArrowLeft"
+            data-tip={prev.title}
+            aria-label={"previous project: " + prev.title}
             className={styles.step}
           >
-            <KeyLabel className={styles.dim}>[←]</KeyLabel> {prev.title}
+            <KeyLabel className={styles.dim}>[←]</KeyLabel>
+            <TouchText>←</TouchText>
+            <span className={styles.stepName}> {prev.title}</span>
           </button>
           <button
             type="button"
             onClick={() => onOpen(next.slug)}
             data-key="ArrowRight"
+            data-tip={next.title}
+            aria-label={"next project: " + next.title}
             className={styles.step}
           >
-            {next.title} <KeyLabel className={styles.dim}>[→]</KeyLabel>
+            <span className={styles.stepName}>{next.title} </span>
+            <KeyLabel className={styles.dim}>[→]</KeyLabel>
+            <TouchText>→</TouchText>
           </button>
         </div>
       </div>

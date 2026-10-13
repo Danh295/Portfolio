@@ -228,6 +228,30 @@
 }
 
 @media (max-width: 600px) {
+  /* The buttons above the frame share one row: ← cd .. on the left, ← → on the right
+     (the project names move to the buttons' labels), each a 44px target. */
+  .page {
+    --row-h: 44px;
+  }
+
+  .nav,
+  .pn {
+    flex-wrap: nowrap;
+  }
+
+  .back,
+  .step {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stepName {
+    display: none;
+  }
+
   .frame {
     padding: 28px 16px 20px;
   }
