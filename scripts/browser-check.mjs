@@ -688,6 +688,15 @@ await run("phone terminal mode (390×844, touch)", { ...PHONE, mobile: true }, a
     sizes.log === 14 && Math.abs(sizes.input - sizes.log) < 0.1 && sizes.real >= 16,
     sizes,
   );
+  const termRow = await tab.evaluate(`(() => {
+    const t = document.querySelector('[data-mode="term"]');
+    return { input: t.querySelector("input").offsetHeight, line: parseFloat(getComputedStyle(t.querySelector('[role="log"]')).lineHeight) };
+  })()`);
+  check(
+    "terminal mode's prompt is as tall as a printed line",
+    Math.abs(termRow.input - termRow.line) < 0.5,
+    termRow,
+  );
   const bars = await tab.evaluate(`(() => {
     const term = document.querySelector('[data-mode="term"] > div');
     const head = term.firstElementChild, tabs = term.lastElementChild;
@@ -991,6 +1000,18 @@ await run("touch screens show no key labels (390×844)", { ...PHONE, mobile: tru
     "the embedded shell's output is 14px and its prompt looks the same size",
     looks.log === 14 && Math.abs(looks.input - looks.log) < 0.1,
     looks,
+  );
+  // The prompt line and a printed line are the same height, or pressing Enter shifts the text
+  // (a 16px prompt scaled to look 14px sat in a row ~3px taller than the 14px lines).
+  const rowH = await tab.evaluate(`(() => {
+    const sh = document.querySelector('[aria-label="embedded shell"]');
+    const input = sh.querySelector("input");
+    return { input: input.offsetHeight, line: parseFloat(getComputedStyle(sh.querySelector('[role="log"]')).lineHeight) };
+  })()`);
+  check(
+    "the embedded shell's prompt is as tall as a printed line",
+    Math.abs(rowH.input - rowH.line) < 0.5,
+    rowH,
   );
   check(
     "the shell's close button has no [esc] label",

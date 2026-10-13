@@ -81,4 +81,15 @@
     transform: scale(0.875);
     transform-origin: 0 50%;
   }
+
+  /* The prompt row is as tall as a printed line (the shells' 14px × their line-height), or
+     pressing Enter, which turns it into one, shifted the text by the 3px a 16px line is
+     taller. The scale keeps its centre on the row's centre, like the printed text's. */
+  .embed .input {
+    line-height: calc(1.55 * 14px);
+  }
+
+  .term .input {
+    line-height: calc(1.6 * 14px);
+  }
 }
