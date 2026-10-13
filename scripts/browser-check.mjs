@@ -633,6 +633,24 @@ await run("phone terminal mode (390×844, touch)", { ...PHONE, mobile: true }, a
   check("the header is at the top of the screen", r.headTop === 0, r);
   check("the shortcut bar is at the bottom of the screen", r.barBottom === r.h, r);
   check("the page doesn't scroll", r.scroll === 0 && r.overflow <= 0, r);
+  // Focusing the prompt with no keyboard (a headless browser has none) isn't a keyboard: the
+  // frame follows the visible area and the shortcut bar stays.
+  await tab.evaluate(`document.querySelector('[data-mode="term"] input').focus()`);
+  await sleep(300);
+  const focus = await tab.evaluate(`(() => {
+    const term = document.querySelector('[data-mode="term"] > div');
+    return {
+      kb: term.dataset.kb !== undefined,
+      vvH: term.style.getPropertyValue("--vv-h"),
+      h: innerHeight,
+      bar: getComputedStyle(term.lastElementChild).display,
+    };
+  })()`);
+  check(
+    "focusing the prompt without a keyboard keeps the bar",
+    !focus.kb && focus.vvH === focus.h + "px" && focus.bar !== "none",
+    focus,
+  );
   const bars = await tab.evaluate(`(() => {
     const term = document.querySelector('[data-mode="term"] > div');
     const head = term.firstElementChild, tabs = term.lastElementChild;
@@ -680,6 +698,47 @@ await run("phone terminal mode (390×844, touch)", { ...PHONE, mobile: true }, a
   check("the shortcut bar is out of the way", k.bar === "none", k);
   check("the prompt stays above the keyboard", k.inputBottom <= 540, k);
 });
+
+// The gui's bars stay put on a phone: the nav at the very top and the bottom bar at the very
+// bottom of the screen at every scroll position, and again after the window's height changes
+// (Safari's toolbar collapsing and coming back changes innerHeight like this).
+await run(
+  "phone bars stay put while scrolling (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("#home");
+    const edges = () =>
+      tab.evaluate(`(() => ({
+      navTop: Math.round(document.querySelector("nav").getBoundingClientRect().top),
+      barBottom: Math.round(document.querySelector("footer").getBoundingClientRect().bottom),
+      h: innerHeight,
+      y: Math.round(scrollY),
+    }))()`);
+    const holds = async (label) => {
+      for (const y of [0, 700, 1800, 1e6]) {
+        await tab.evaluate(`scrollTo(0, ${y})`);
+        await sleep(250);
+        const e = await edges();
+        check(
+          `${label}: the nav is at the top and the bar at the bottom (scrolled to ${e.y})`,
+          e.navTop === 0 && Math.abs(e.barBottom - e.h) <= 1, // at the page's end a fractional height can leave <1px
+          e,
+        );
+      }
+    };
+    await holds("at 844px");
+    for (const height of [760, 844, 700]) {
+      await tab.send("Emulation.setDeviceMetricsOverride", {
+        width: 390,
+        height,
+        deviceScaleFactor: 1,
+        mobile: true,
+      });
+      await sleep(400);
+      await holds("after the window became " + height + "px tall");
+    }
+  },
+);
 
 await run(
   "the menu closes when the window grows past 600px",
