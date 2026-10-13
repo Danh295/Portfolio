@@ -106,16 +106,18 @@
   .inner {
     padding: 4px 12px;
     min-height: 36px; /* + the padding: a 44px row */
-    gap: 6px 8px;
+    gap: 6px 2px; /* the least the items sit apart; the row's spare room is shared out between them */
+    justify-content: space-between; /* like the bottom bar */
   }
 
   .actions {
     display: none;
   }
 
+  /* The three section links are flex items of the row like ~/danny and menu, so the five are
+     spread evenly (grouped in a box they sat 2px apart with all the room left before menu). */
   .links {
-    gap: 2px;
-    flex-wrap: nowrap;
+    display: contents;
   }
 
   .home,
@@ -130,7 +132,6 @@
 
   .menu {
     display: block;
-    margin-left: auto;
     padding: 2px 6px;
   }
 
