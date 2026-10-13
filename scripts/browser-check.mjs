@@ -548,7 +548,9 @@ for (const size of [
         let egg = document.querySelector("[data-egg]");
         while (egg && getComputedStyle(egg).containerType !== "inline-size") egg = egg.parentElement;
         const bar = document.querySelector("footer").getBoundingClientRect().top;
-        return { lines: Math.round(h.getBoundingClientRect().height / (fs * 1.05)), fs, peek: Math.round(bar - egg.getBoundingClientRect().top) };
+        const cs = getComputedStyle(h),
+          box = h.getBoundingClientRect().height - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+        return { lines: Math.round(box / (fs * 1.05)), fs, peek: Math.round(bar - egg.getBoundingClientRect().top) };
       })()`);
       check("the heading is one line", hero.lines === 1, hero);
       if (size.height >= 800)
