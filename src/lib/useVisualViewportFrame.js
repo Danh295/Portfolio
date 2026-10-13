@@ -20,7 +20,40 @@ export function useVisualViewportFrame(frameRef) {
     if (!el) return;
     document.documentElement.classList.add("locked");
     if (!vv) return () => document.documentElement.classList.remove("locked");
+    // TEMPORARY, for diagnosing the keyboard on a real iPhone: ?vvdebug prints the numbers.
+    let dbg = null;
+    if (location.search.includes("vvdebug")) {
+      dbg = document.createElement("pre");
+      dbg.style.cssText =
+        "position:fixed;left:4px;top:70px;z-index:99999;background:#000;color:#0f0;font:11px/1.3 monospace;padding:4px;margin:0;pointer-events:none;white-space:pre";
+      document.body.appendChild(dbg);
+    }
     const update = () => {
+      if (dbg) {
+        const tabs = el.querySelector('[class*="tabs"]')?.getBoundingClientRect();
+        dbg.textContent = [
+          "innerH " + window.innerHeight + "  clientH " + document.documentElement.clientHeight,
+          "vv.h " +
+            Math.round(vv.height) +
+            "  top " +
+            Math.round(vv.offsetTop) +
+            "  pageTop " +
+            Math.round(vv.pageTop),
+          "scale " + vv.scale + "  scrollY " + Math.round(window.scrollY),
+          "kb " +
+            (window.innerHeight - vv.height - vv.offsetTop) +
+            "  data-kb " +
+            (el.dataset.kb !== undefined),
+          "frame top " +
+            Math.round(el.getBoundingClientRect().top) +
+            " bottom " +
+            Math.round(el.getBoundingClientRect().bottom),
+          "tabs top " +
+            (tabs ? Math.round(tabs.top) : "-") +
+            " bottom " +
+            (tabs ? Math.round(tabs.bottom) : "-"),
+        ].join("\n");
+      }
       if (vv.scale > 1.01) {
         el.style.removeProperty("--vv-top");
         el.style.removeProperty("--vv-h");
@@ -38,6 +71,7 @@ export function useVisualViewportFrame(frameRef) {
     return () => {
       vv.removeEventListener("resize", update);
       vv.removeEventListener("scroll", update);
+      dbg?.remove();
       document.documentElement.classList.remove("locked");
       el.style.removeProperty("--vv-top");
       el.style.removeProperty("--vv-h");
