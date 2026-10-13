@@ -57,10 +57,11 @@
   height: calc(var(--vv-h, 100dvh) - 16px);
 }
 
-/* Touch: the whole shell is 16px, the size its prompt has to be so iOS doesn't zoom the page
-   when it takes focus (a smaller output above a larger prompt read as two sizes). */
+/* Touch: the shell is 14px like the terminal mode and the site's text; its prompt is 16px
+   (smaller and iOS zooms the page when it takes focus) scaled down to look the same
+   (ShellPane.module.css). */
 @media (hover: none) and (pointer: coarse) {
   .panel {
-    font-size: 16px;
+    font-size: 14px;
   }
 }
