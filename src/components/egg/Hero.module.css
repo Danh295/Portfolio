@@ -38,7 +38,12 @@
 }
 
 .h1 {
-  margin: 0;
+  /* The heading's box has to contain its typing cursor's ink: the full-block cursor (█, from a
+     fallback font) sticks out ~0.2em below and above the line box, Safari repaints only the
+     box, and a strip of the block was left under the first letter on load until the page was
+     scrolled. The padding is cancelled by the negative margin, so nothing moves. */
+  padding: 0.3em 0;
+  margin: -0.3em 0;
   font-size: 48px;
   font-weight: 500;
   letter-spacing: -0.04em;

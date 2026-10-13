@@ -99,7 +99,9 @@
 }
 
 .h1 {
-  margin: 0;
+  /* Contains the typing cursor's ink, like the hero heading (Hero.module.css). */
+  padding: 0.3em 0;
+  margin: -0.3em 0;
   font-size: 64px;
   font-weight: 500;
   letter-spacing: -0.05em;
