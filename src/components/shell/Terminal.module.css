@@ -84,13 +84,12 @@
   display: none;
 }
 
-/* A keyboard is up: the shortcut bar stays at the bottom of the screen, under the keyboard
-   (like the gui's bottom bar), instead of riding on top of it. */
+/* A keyboard is up: the shortcut bar goes. Parked below the visible area it still showed in
+   the strip iOS 26 leaves between the page and the keyboard, under Safari's address pill
+   (measured on an iPhone: visualViewport.height 358 of 695, the bar just under it); it
+   comes back when the keyboard closes. */
 .term[data-kb] .tabs {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  display: none;
 }
 
 /* The colour is the token itself (not inherited) and the hover fill snaps, like every

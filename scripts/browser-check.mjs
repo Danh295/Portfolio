@@ -658,7 +658,7 @@ await run("phone terminal mode (390×844, touch)", { ...PHONE, mobile: true }, a
   );
   // A keyboard up, simulated with the variables useVisualViewportFrame sets: the frame is the
   // 500px above it (shifted down 40px, as if iOS had panned), the prompt stays inside, and the
-  // shortcut bar is below that area, under the keyboard.
+  // shortcut bar is gone (it comes back with the keyboard closed).
   await tab.evaluate(`(() => {
     const term = document.querySelector('[data-mode="term"] > div');
     term.style.setProperty("--vv-top", "40px");
@@ -672,12 +672,12 @@ await run("phone terminal mode (390×844, touch)", { ...PHONE, mobile: true }, a
     const input = term.querySelector("input");
     return {
       headTop: Math.round(rect(term.firstElementChild).top),
-      barTop: Math.round(rect(term.lastElementChild).top),
+      bar: getComputedStyle(term.lastElementChild).display,
       inputBottom: Math.round(rect(input).bottom),
     };
   })()`);
   check("with a keyboard the header stays at the top of the visible area", k.headTop === 40, k);
-  check("the shortcut bar goes under the keyboard", k.barTop >= 540, k);
+  check("the shortcut bar is out of the way", k.bar === "none", k);
   check("the prompt stays above the keyboard", k.inputBottom <= 540, k);
 });
 

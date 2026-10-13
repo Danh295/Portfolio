@@ -25,10 +25,20 @@ export function useVisualViewportFrame(frameRef) {
     if (location.search.includes("vvdebug")) {
       dbg = document.createElement("pre");
       dbg.style.cssText =
-        "position:fixed;left:4px;top:70px;z-index:99999;background:#000;color:#0f0;font:11px/1.3 monospace;padding:4px;margin:0;pointer-events:none;white-space:pre";
-      document.body.appendChild(dbg);
+        "position:absolute;left:4px;top:50px;z-index:99999;background:#000;color:#0f0;font:11px/1.3 monospace;padding:4px;margin:0;pointer-events:none;white-space:pre";
+      el.appendChild(dbg);
     }
     const update = () => {
+      if (vv.scale > 1.01) {
+        el.style.removeProperty("--vv-top");
+        el.style.removeProperty("--vv-h");
+        delete el.dataset.kb;
+        return;
+      }
+      el.style.setProperty("--vv-top", Math.round(vv.offsetTop) + "px");
+      el.style.setProperty("--vv-h", Math.round(vv.height) + "px");
+      if (window.innerHeight - vv.height - vv.offsetTop > 80) el.dataset.kb = "";
+      else delete el.dataset.kb;
       if (dbg) {
         const tabs = el.querySelector('[class*="tabs"]')?.getBoundingClientRect();
         dbg.textContent = [
@@ -54,16 +64,6 @@ export function useVisualViewportFrame(frameRef) {
             (tabs ? Math.round(tabs.bottom) : "-"),
         ].join("\n");
       }
-      if (vv.scale > 1.01) {
-        el.style.removeProperty("--vv-top");
-        el.style.removeProperty("--vv-h");
-        delete el.dataset.kb;
-        return;
-      }
-      el.style.setProperty("--vv-top", Math.round(vv.offsetTop) + "px");
-      el.style.setProperty("--vv-h", Math.round(vv.height) + "px");
-      if (window.innerHeight - vv.height - vv.offsetTop > 80) el.dataset.kb = "";
-      else delete el.dataset.kb;
     };
     update();
     vv.addEventListener("resize", update);
