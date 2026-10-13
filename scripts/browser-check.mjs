@@ -674,9 +674,18 @@ await run("phone terminal mode (390×844, touch)", { ...PHONE, mobile: true }, a
   const sizes = await tab.evaluate(`(() => {
     const px = (e) => parseFloat(getComputedStyle(e).fontSize);
     const t = document.querySelector('[data-mode="term"]');
-    return { log: px(t.querySelector('[role="log"]')), input: px(t.querySelector("input")) };
+    const input = t.querySelector("input");
+    return {
+      log: px(t.querySelector('[role="log"]')),
+      input: px(input) * new DOMMatrix(getComputedStyle(input).transform).a,
+      real: px(input),
+    };
   })()`);
-  check("terminal mode's output is the same size as its prompt", sizes.log === sizes.input, sizes);
+  check(
+    "terminal mode's output is 14px, its prompt looks the same and is 16px for iOS",
+    sizes.log === 14 && Math.abs(sizes.input - sizes.log) < 0.1 && sizes.real >= 16,
+    sizes,
+  );
   const bars = await tab.evaluate(`(() => {
     const term = document.querySelector('[data-mode="term"] > div');
     const head = term.firstElementChild, tabs = term.lastElementChild;
@@ -917,10 +926,22 @@ await run("touch screens show no key labels (390×844)", { ...PHONE, mobile: tru
     `parseFloat(getComputedStyle(document.querySelector('[aria-label="embedded shell"] input')).fontSize)`,
   );
   check("the shell's prompt is 16px or more, so iOS doesn't zoom", px >= 16, { px });
-  const logPx = await tab.evaluate(
-    `parseFloat(getComputedStyle(document.querySelector('[aria-label="embedded shell"] [role="log"]')).fontSize)`,
+  // The prompt stays 16px (smaller and iOS zooms the page when it takes focus) but is scaled
+  // down, so it looks like the 14px output above it.
+  const looks = await tab.evaluate(`(() => {
+    const sh = document.querySelector('[aria-label="embedded shell"]');
+    const input = sh.querySelector("input");
+    const scale = new DOMMatrix(getComputedStyle(input).transform).a;
+    return {
+      log: parseFloat(getComputedStyle(sh.querySelector('[role="log"]')).fontSize),
+      input: parseFloat(getComputedStyle(input).fontSize) * scale,
+    };
+  })()`);
+  check(
+    "the embedded shell's output is 14px and its prompt looks the same size",
+    looks.log === 14 && Math.abs(looks.input - looks.log) < 0.1,
+    looks,
   );
-  check("the embedded shell's output is the same size as its prompt", logPx === px, { logPx, px });
   check(
     "the shell's close button has no [esc] label",
     !(

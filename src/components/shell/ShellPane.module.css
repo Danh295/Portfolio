@@ -72,9 +72,13 @@
   }
 }
 
-/* iOS Safari zooms the page when a field under 16px takes focus. */
+/* iOS Safari zooms the page when a field under 16px takes focus, and only looks at the
+   computed size, not a transform. So the prompt is 16px scaled down to the shell's size
+   (14px / 16px = 0.875), from its left edge: the same size as the output above it. */
 @media (hover: none) and (pointer: coarse) {
   .input {
-    font-size: max(16px, 1em);
+    font-size: 16px;
+    transform: scale(0.875);
+    transform-origin: 0 50%;
   }
 }
