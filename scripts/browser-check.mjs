@@ -871,6 +871,54 @@ await run(
   },
 );
 
+// A heading's box must contain its typing cursor's ink. The "type" effect draws a full-block
+// cursor that sticks out below (and above) the heading's line box; Safari repaints only the
+// box, so on a phone a strip of the block was left under the first letter ("hey, i'm_danny")
+// until the page was scrolled. The check measures the glyph with the heading's own font.
+const INK_OVERFLOW = (sel) => `(async () => {
+  await document.fonts.ready;
+  const h = document.querySelector(${JSON.stringify(sel)});
+  const cs = getComputedStyle(h);
+  const c = document.createElement("canvas").getContext("2d");
+  c.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+  const m = c.measureText("█");
+  const fs = parseFloat(cs.fontSize);
+  const lh = cs.lineHeight === "normal" ? fs * 1.2 : parseFloat(cs.lineHeight);
+  const half = (lh - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2;
+  return {
+    above: Math.max(0, m.actualBoundingBoxAscent - (m.fontBoundingBoxAscent + half)),
+    below: Math.max(0, m.actualBoundingBoxDescent - (m.fontBoundingBoxDescent + half)),
+    padTop: parseFloat(cs.paddingTop),
+    padBottom: parseFloat(cs.paddingBottom),
+    marginTop: parseFloat(cs.marginTop),
+    marginBottom: parseFloat(cs.marginBottom),
+  };
+})()`;
+await run(
+  "headings contain their cursor's ink (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("#home");
+    for (const [label, path, sel] of [
+      ["the hero heading", "#home", "h1"],
+      ["a project's heading", "projects/ai-room-editor/", "[data-detail-title]"],
+    ]) {
+      await tab.go(path);
+      const k = await tab.evaluate(INK_OVERFLOW(sel));
+      check(
+        label + "'s box covers the cursor's ink above and below",
+        k.padTop >= k.above && k.padBottom >= k.below,
+        k,
+      );
+      check(
+        label + " keeps its layout (the padding is cancelled by an equal negative margin)",
+        k.marginTop === -k.padTop && k.marginBottom === -k.padBottom,
+        k,
+      );
+    }
+  },
+);
+
 await run(
   "the menu closes when the window grows past 600px",
   { ...PHONE, mobile: true },
