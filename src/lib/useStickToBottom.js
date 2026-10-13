@@ -5,7 +5,10 @@ import { useEffect, useRef } from "react";
 /**
  * Keep a shell's output pinned to its bottom (the latest prompt):
  * - on first render, and when the content or pane resizes, unless the user scrolled up;
- * - always when `output` changes (a command ran), like a real terminal.
+ * - always when `output` changes (a command ran), like a real terminal;
+ * - always when the prompt takes focus or a key is typed into it, even after scrolling up to
+ *   read: typing is the prompt asking to be seen (and a phone's keyboard opening shrinks the
+ *   pane, which would otherwise leave the prompt behind it).
  * `bodyRef` is the scroll container, `contentRef` wraps everything inside it.
  */
 export function useStickToBottom(bodyRef, contentRef, output) {
@@ -22,6 +25,13 @@ export function useStickToBottom(bodyRef, contentRef, output) {
     const stick = () => {
       if (pinned.current) body.scrollTop = body.scrollHeight;
     };
+    // Typing, or focusing the prompt, brings it back into view.
+    const toPrompt = () => {
+      pinned.current = true;
+      stick();
+    };
+    body.addEventListener("input", toPrompt);
+    body.addEventListener("focusin", toPrompt);
     const ro = new ResizeObserver(stick);
     ro.observe(body);
     ro.observe(content);
@@ -30,6 +40,8 @@ export function useStickToBottom(bodyRef, contentRef, output) {
     return () => {
       ro.disconnect();
       body.removeEventListener("scroll", onScroll);
+      body.removeEventListener("input", toPrompt);
+      body.removeEventListener("focusin", toPrompt);
     };
   }, [bodyRef, contentRef]);
 

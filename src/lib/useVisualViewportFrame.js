@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { frameFor } from "@/lib/viewportFrame";
+import { frameFor, nextBaseline } from "@/lib/viewportFrame";
 
 /** Whether something that opens a phone's keyboard has focus. */
 const editableFocused = () => {
@@ -20,18 +20,27 @@ const editableFocused = () => {
  * the element's own CSS defaults apply. What counts as a keyboard is decided by the pure
  * `frameFor` (src/lib/viewportFrame.js); this only reads the browser and applies it,
  * again whenever the viewport, the focus or the page moves. Also locks the page itself
- * (`html.locked`, globals.css) so nothing but the app's own scroll boxes move.
+ * (`html.locked`, globals.css) so nothing but the app's own scroll boxes move: always
+ * (terminal mode owns the screen), or `lock: "keyboard"` only while a keyboard is up (the
+ * embedded shell, a panel over a page that scrolls the rest of the time).
  */
-export function useVisualViewportFrame(frameRef) {
+export function useVisualViewportFrame(frameRef, { lock = "always" } = {}) {
   useEffect(() => {
     const el = frameRef.current,
       vv = window.visualViewport;
     if (!el) return;
-    document.documentElement.classList.add("locked");
-    if (!vv) return () => document.documentElement.classList.remove("locked");
+    const root = document.documentElement;
+    if (lock === "always") root.classList.add("locked");
+    if (!vv) return () => root.classList.remove("locked");
+    let baseline = null;
     const update = () => {
-      const f = frameFor({
+      baseline = nextBaseline(baseline, {
         innerHeight: window.innerHeight,
+        vvHeight: vv.height,
+        orientation: screen.orientation?.type ?? "",
+      });
+      const f = frameFor({
+        baselineHeight: baseline.height,
         vvHeight: vv.height,
         vvOffsetTop: vv.offsetTop,
         vvScale: vv.scale,
@@ -47,6 +56,7 @@ export function useVisualViewportFrame(frameRef) {
       el.style.setProperty("--vv-h", f.height + "px");
       if (f.keyboard) el.dataset.kb = "";
       else delete el.dataset.kb;
+      if (lock === "keyboard") root.classList.toggle("locked", f.keyboard);
     };
     update();
     vv.addEventListener("resize", update);
@@ -60,10 +70,10 @@ export function useVisualViewportFrame(frameRef) {
       window.removeEventListener("resize", update);
       document.removeEventListener("focusin", update);
       document.removeEventListener("focusout", update);
-      document.documentElement.classList.remove("locked");
+      root.classList.remove("locked");
       el.style.removeProperty("--vv-top");
       el.style.removeProperty("--vv-h");
       delete el.dataset.kb;
     };
-  }, [frameRef]);
+  }, [frameRef, lock]);
 }

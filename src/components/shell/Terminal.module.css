@@ -185,3 +185,11 @@
     display: none;
   }
 }
+
+/* Touch: the output is the size of the prompt (16px: smaller and iOS zooms the page when the
+   prompt takes focus), so every line reads as one size. */
+@media (hover: none) and (pointer: coarse) {
+  .term {
+    font-size: 16px;
+  }
+}
