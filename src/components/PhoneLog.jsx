@@ -43,33 +43,6 @@ export default function PhoneLog() {
         ae: document.activeElement?.tagName,
         orient: screen.orientation?.type,
       };
-      if (ev === "mark") {
-        // What is under the hero heading's bottom-left corner (an odd underline seen there).
-        const h1 = document.querySelector("h1");
-        if (h1) {
-          const b = h1.getBoundingClientRect();
-          const name = (e) =>
-            e.tagName + "." + String(e.className?.baseVal ?? e.className).slice(0, 50);
-          rec.probe = {
-            h1: [Math.round(b.left), Math.round(b.top), Math.round(b.right), Math.round(b.bottom)],
-            h1Text: h1.textContent,
-            deco: getComputedStyle(h1).textDecorationLine,
-            points: [-4, 0, 4, 8, 12].map((dy) => ({
-              dy,
-              at: document
-                .elementsFromPoint(b.left + 10, b.bottom + dy)
-                .slice(0, 4)
-                .map(name),
-            })),
-            pressed: [...document.querySelectorAll("[data-pressed]")].map(name),
-            fx: [...document.querySelectorAll("[data-fx],[data-typing]")].map(
-              (e) => name(e) + ":" + (e.dataset.fx ?? "") + "/" + (e.dataset.typing ?? "-"),
-            ),
-            focus: document.activeElement && name(document.activeElement),
-            html: document.documentElement.className,
-          };
-        }
-      }
       const key = JSON.stringify({ ...rec, ev: 0 });
       if (key === last) return;
       last = key;
