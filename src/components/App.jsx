@@ -85,6 +85,7 @@ export default function App({ initialView = null }) {
     termPreRef,
     termFxRef,
     termStatusRef,
+    termFrameRef,
     termBoxRef: termBodyRef,
   } = egg;
   const embedPanelRef = useRef(null),
@@ -140,6 +141,52 @@ export default function App({ initialView = null }) {
     window.scrollTo({ top, behavior });
   };
 
+  // On a phone, park the egg panel's top under the nav, so the whole panel (it is as tall as
+  // the band between the bars) is on screen for a round. Its own scroll-margin-top is the
+  // nav's height, not a section jump's --nav-offset. Returns whether it scrolled.
+  const parkEgg = (behavior = smooth) => {
+    const box = guiBoxRef.current;
+    if (!box || !window.matchMedia("(max-width: 600px)").matches) return false;
+    const top = alignTarget(box);
+    holdNav(navLock, 400, top);
+    window.scrollTo({ top, behavior });
+    // The hero above the panel can grow for a moment after the page lands (measured on a loaded
+    // machine: +40px, then back), and the browser's scroll anchoring answers by moving the
+    // scroll the same way; when the hero returns to size nothing moves it back, leaving the
+    // panel off by the difference. So for a moment the hero changing size, and a short ladder
+    // of timers, re-park it, until the visitor scrolls or presses anything.
+    const repark = () => {
+      const want = alignTarget(box);
+      if (Math.abs(window.scrollY - want) > 1) window.scrollTo({ top: want, behavior: "auto" });
+    };
+    const ro = new ResizeObserver(repark);
+    const heroFrame = box.closest("[data-sec]");
+    if (heroFrame) ro.observe(heroFrame);
+    ro.observe(document.body);
+    const timers = [150, 400, 800, 1200].map((ms) => setTimeout(repark, ms));
+    const USER = ["wheel", "touchstart", "pointerdown", "keydown"];
+    const parkedAt = performance.now();
+    const stop = () => {
+      ro.disconnect();
+      timers.forEach(clearTimeout);
+      clearTimeout(end);
+      for (const ev of USER) window.removeEventListener(ev, takeover);
+    };
+    // Only an event that began after the park is the visitor taking over: the Enter that ran
+    // `./egg` can still be on its way to `window` (React lands the project page's leave inside
+    // that dispatch), and it would stop the re-park the moment it was set up.
+    const takeover = (e) => {
+      if (e.timeStamp > parkedAt) stop();
+    };
+    const end = setTimeout(stop, 1500);
+    for (const ev of USER) window.addEventListener(ev, takeover, { passive: true });
+    return true;
+  };
+  // The egg wanted from a project page (the embedded shell's ./egg): when it was asked for
+  // (0 = not asked), so it parks once the list, and with it the hero, is back (landOnList)
+  // and a request that never landed can't misfire on a later jump home.
+  const parkOnLand = useRef(0);
+
   // Leaving a project page for the section list ({ scrollTo }: the list position it was
   // opened from; { sec }: a section aligned under the nav). State first, from the leave
   // or Back/Forward itself: the active section, and a keyboard selection follows the
@@ -153,8 +200,10 @@ export default function App({ initialView = null }) {
   // spy pick the active section) and move focus, which was on the page that is gone, to
   // that project's row.
   const landOnList = (land, prevSlug) => {
+    const park = land.sec === 0 && performance.now() - parkOnLand.current < 2000;
+    parkOnLand.current = 0;
     if (land.scrollTo != null) window.scrollTo({ top: land.scrollTo, behavior: "auto" });
-    else scrollSec(land.sec, "auto");
+    else if (!(park && parkEgg("auto"))) scrollSec(land.sec, "auto");
     // A project outside the current filter has no row: fall back to the selected one.
     const row = list.findIndex((p) => p.slug === prevSlug);
     const focusRow = row >= 0 ? row : sel;
@@ -181,6 +230,7 @@ export default function App({ initialView = null }) {
 
   const openProject = (slug) => {
     setRulesOpen(false);
+    egg.release();
     // Stepping with ←/→ keeps a keyboard selection on the project being shown (←/→ walk
     // every project; one outside the current filter leaves the selection where it was).
     const row = list.findIndex((p) => p.slug === slug);
@@ -231,6 +281,7 @@ export default function App({ initialView = null }) {
     }
     // Leaving the terminal with ./egg still running quits it, as closing a shell would.
     if (m === "gui" && termEggRunning) quitEgg();
+    egg.release();
     setMode(m);
     setTermOpen(false);
     if (m === "gui") setVim(null);
@@ -268,8 +319,11 @@ export default function App({ initialView = null }) {
     const to = fx.sec0 ? 0 : k === "embed" && fx.sec != null && !fx.open ? fx.sec : null;
     if (fx.sec0) selectHero("egg");
     if (to != null) {
-      if (view) leaveProject(to);
-      else setTimeout(() => scrollSec(to), 50);
+      // Only `./egg` wants the egg panel; `cd ~` and the like go to the top of the hero.
+      if (view) {
+        parkOnLand.current = fx.sec0 ? performance.now() : 0;
+        leaveProject(to);
+      } else setTimeout(() => (fx.sec0 && parkEgg()) || scrollSec(to), 50);
     }
   };
 
@@ -779,6 +833,7 @@ export default function App({ initialView = null }) {
       active={activeSec === 0}
       heroSel={heroSel}
       rulesOpen={rulesOpen}
+      held={egg.held}
       keysOn={keysOn}
       onRules={() => {
         selectHero("rules");
@@ -788,6 +843,7 @@ export default function App({ initialView = null }) {
       onSelectEgg={() => selectHero("egg")}
       onStart={() => {
         selectHero("egg");
+        parkEgg();
         startEgg();
       }}
       onMore={() => {
@@ -910,6 +966,15 @@ export default function App({ initialView = null }) {
             eggPreRef={termPreRef}
             eggFxRef={termFxRef}
             eggStatusRef={termStatusRef}
+            eggFrameRef={termFrameRef}
+            eggTouch={{
+              held: egg.held,
+              stage: egg.view.stage,
+              enter: egg.view.enter,
+              prompt: egg.view.prompt,
+              play: egg.crack,
+              quit: quitEgg,
+            }}
             running={termEggRunning}
             pressedTab={pressedTab}
             keysOn={keysOn}

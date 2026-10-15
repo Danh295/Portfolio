@@ -17,6 +17,12 @@
   min-height: var(--egg-h);
 }
 
+/* Held (a tap in the frame, src/lib/egg/held.js): one finger turns the pot and the page
+   doesn't scroll from it; a pinch still zooms. The rest of the page still scrolls. */
+[data-held] .pre {
+  touch-action: pinch-zoom;
+}
+
 .fx {
   position: absolute;
   inset: 0;

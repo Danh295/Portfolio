@@ -35,6 +35,8 @@ export default function ShellPane({
   eggPreRef,
   eggFxRef,
   eggStatusRef,
+  eggFrameRef,
+  eggTouch,
 }) {
   const ownBodyRef = useRef(null),
     contentRef = useRef(null);
@@ -42,7 +44,8 @@ export default function ShellPane({
   const labels = LABELS[variant];
   useStickToBottom(boxRef, contentRef, session.lines);
 
-  const focus = () => {
+  const focus = (e) => {
+    if (e.target.closest("[data-no-focus]")) return; // the touch egg's buttons play, no keyboard
     if (inputRef.current && window.getSelection().isCollapsed)
       inputRef.current.focus({ preventScroll: true });
   };
@@ -59,6 +62,8 @@ export default function ShellPane({
             eggPreRef={eggPreRef}
             eggFxRef={eggFxRef}
             eggStatusRef={eggStatusRef}
+            eggFrameRef={eggFrameRef}
+            eggTouch={eggTouch}
           />
         </div>
         <div className={promptHidden ? styles.promptHidden : styles.promptRow}>

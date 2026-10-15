@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { shell, pstr } from "@/lib/shell";
 import { SHORTCUT_CMDS } from "@/lib/shell/spec";
 import { histStep } from "@/lib/shell/history";
+import { isTouch } from "@/lib/egg/screen";
 import { spark } from "@/lib/github";
 
 const bootCtx = { cwd: [], spark, hist: [] };
@@ -134,7 +135,12 @@ export function useShell({ keysOn, resetEgg, crackEgg, vimOpen, termInputRef, on
     const cmd = SHORTCUT_CMDS[i];
     if (!cmd || autoType.current || vimOpen) return; // vim owns the screen until :q
     if (termEggRunning) quitEgg();
-    termInputRef.current?.focus({ preventScroll: true });
+    // On a touch screen a shortcut only plays its typing animation: focusing the prompt would
+    // open the keyboard, and an on-screen one that's already up (the frame is marked `data-kb`,
+    // useVisualViewportFrame) is put away. A hardware keyboard has none, so it stays usable.
+    const input = termInputRef.current;
+    if (!isTouch()) input?.focus({ preventScroll: true });
+    else if (input?.closest("[data-kb]")) input.blur();
     setPressedTab(i);
     const finish = () => {
       stopAutoType();

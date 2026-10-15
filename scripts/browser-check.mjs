@@ -634,6 +634,474 @@ await run(
 // Terminal mode on a phone fills the screen: the header at the very top, the shortcut bar at
 // the very bottom, nothing scrolling. (The on-screen keyboard, which a headless browser
 // can't open, is covered by useVisualViewportFrame and the real-phone check.)
+// The egg on a phone (CONTEXT.md "held"): the panel is exactly the band between the bars, so a
+// whole round can be seen and played, and starting scrolls it into place just under the nav.
+const EGG_POT = `document.querySelector('[data-sec="0"] pre[role="img"]')`;
+// The hero's egg panel: the pot's nearest ancestor that is a size container.
+const EGG_PANEL = `(() => { let e = ${EGG_POT}; while (e && getComputedStyle(e).containerType !== "inline-size") e = e.parentElement; return e; })()`;
+const PANEL_RECT = `(() => { const r = ${EGG_PANEL}.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height) }; })()`;
+for (const size of [
+  { width: 390, height: 844 },
+  { width: 375, height: 667 },
+  { width: 320, height: 568 },
+]) {
+  await run(
+    `phone egg fits the band between the bars (${size.width}×${size.height}, touch)`,
+    { ...size, mobile: true },
+    async (tab) => {
+      await tab.go("#home");
+      const band = await tab.band();
+      const before = await tab.evaluate(PANEL_RECT);
+      const want = size.height - band.nav - band.bar;
+      check(
+        "the egg panel is as tall as the band between the bars",
+        Math.abs(before.h - want) <= 1,
+        { before, want },
+      );
+      await tab.evaluate(
+        `document.querySelector("[data-egg]").scrollIntoView({ block: "center" })`,
+      );
+      await sleep(400);
+      await tab.tap(`document.querySelector("[data-egg]")`);
+      await sleep(1500);
+      const p = await tab.evaluate(PANEL_RECT);
+      check(
+        "starting scrolls the panel's top to just under the nav",
+        Math.abs(p.top - band.nav) <= 1,
+        {
+          p,
+          nav: band.nav,
+        },
+      );
+      check(
+        "the whole panel is between the bars",
+        p.top >= band.nav - 1 && p.bottom <= band.bottom + 1,
+        {
+          p,
+          band,
+        },
+      );
+      check("the panel keeps its height once started", Math.abs(p.h - before.h) <= 1, {
+        p,
+        before,
+      });
+    },
+  );
+}
+
+// Held (CONTEXT.md): a tap in the egg frame hands the pot one finger. Its drags turn the egg
+// and don't scroll the page (touch-action: pinch-zoom, so a pinch still zooms); everything
+// else on the page still scrolls, so there's no trap. A tap outside, the round ending or
+// leaving the gui lets go.
+await run(
+  "phone egg: a held pot takes one finger (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("#home");
+    const NAV = `parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--nav-h"))`;
+    const panelUnderNav = async () => {
+      await tab.evaluate(
+        `scrollTo(0, ${EGG_PANEL}.getBoundingClientRect().top + scrollY - ${NAV})`,
+      );
+      await sleep(500);
+    };
+    const pan = () => tab.evaluate(`getComputedStyle(${EGG_POT}).touchAction`);
+    const held = () => tab.evaluate(`${EGG_PANEL}.hasAttribute("data-held")`);
+    // Where a finger lands on `find`'s element: its middle, or (`corner`) near its top left,
+    // clear of the start button that sits over the pot's middle.
+    const where = (find, corner) =>
+      tab.evaluate(
+        `(() => { const r = (${find}).getBoundingClientRect(); return ${
+          corner
+            ? "{ x: Math.round(r.x + 20), y: Math.round(r.y + 20) }"
+            : "{ x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }"
+        }; })()`,
+      );
+    const tapPot = async () => {
+      const p = await where(EGG_POT, true);
+      await tab.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [p] });
+      await tab.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await sleep(200);
+    };
+    // A finger drag up from `find`'s element; how far the page scrolled.
+    const drag = async (find, corner) => {
+      const p = await where(find, corner);
+      const y0 = await tab.evaluate(`scrollY`);
+      await tab.send("Input.synthesizeScrollGesture", {
+        ...p,
+        yDistance: -150,
+        speed: 800,
+        gestureSourceType: "touch",
+        preventFling: true,
+      });
+      await sleep(600);
+      return (await tab.evaluate(`scrollY`)) - y0;
+    };
+    await panelUnderNav();
+    check("an untouched pot lets the page scroll (pan-y)", (await pan()) === "pan-y", {
+      pan: await pan(),
+    });
+    check("and isn't held", !(await held()));
+    check("a drag on it scrolls the page", (await drag(EGG_POT, true)) > 20);
+    await panelUnderNav();
+    await tapPot();
+    check("a tap in the frame holds it", (await held()) && (await pan()) === "pinch-zoom", {
+      held: await held(),
+      pan: await pan(),
+    });
+    check("a held pot's drag leaves the page where it is", (await drag(EGG_POT, true)) === 0);
+    await panelUnderNav();
+    check(
+      "the egg's header still scrolls the page while held",
+      (await drag(`${EGG_PANEL}.firstElementChild`)) > 20,
+    );
+    // A tap outside the frame (the hero's heading) lets go.
+    await tab.evaluate(`scrollTo(0, 0)`);
+    await sleep(400);
+    await tab.tap(`document.querySelector('[data-sec="0"] h1')`);
+    await sleep(200);
+    check("a tap outside the frame lets go", !(await held()) && (await pan()) === "pan-y", {
+      held: await held(),
+      pan: await pan(),
+    });
+    // Play a round: the start tap holds; the result lets go.
+    await tab.evaluate(`document.querySelector("[data-egg]").scrollIntoView({ block: "center" })`);
+    await sleep(400);
+    await tab.tap(`document.querySelector("[data-egg]")`);
+    await sleep(600);
+    await tab.tap(`document.querySelector('[role="dialog"][aria-label="how to play"]')`);
+    check("tapping the start box holds the frame", await held());
+    const text = () => tab.evaluate(`document.querySelector("[data-egg]")?.innerText ?? ""`);
+    const until = async (re, ms) => {
+      for (let t = 0; t < ms && !re.test(await text()); t += 500) await sleep(500);
+      return re.test(await text());
+    };
+    check("the round reaches the pull button", await until(/pull them out/, 12000));
+    await tab.tap(`document.querySelector("[data-egg]")`);
+    check("and the result", await until(/play again/, 30000));
+    check("the round ending lets go", !(await held()) && (await pan()) === "pan-y", {
+      held: await held(),
+      pan: await pan(),
+    });
+    // A tap holds it again, to turn the finished egg; leaving the gui lets go.
+    await panelUnderNav();
+    await tapPot();
+    check("a tap on the result holds it again", await held());
+    // Any tap outside lets go, so leaving is tried by keyboard only: the embedded shell
+    // (`), terminal mode (./app --mode terminal), and back (exit).
+    await tab.key("`");
+    await sleep(400);
+    await tab.send("Input.insertText", { text: "./app --mode terminal" });
+    await tab.key("Enter");
+    await sleep(1500);
+    await tab.send("Input.insertText", { text: "exit" });
+    await tab.key("Enter");
+    await sleep(1500);
+    check(
+      "leaving the gui for terminal mode and coming back lets go",
+      !(await held()) && (await pan()) === "pan-y",
+      { held: await held(), pan: await pan() },
+    );
+  },
+);
+
+// `./egg` in the embedded shell closes it and takes the visitor to the egg: on a phone that is
+// the panel under the nav (the hero's top has only the intro), on a desktop the top of the page.
+const EMBED_RUN = async (tab, cmd) => {
+  await tab.key("`");
+  await sleep(500);
+  await tab.send("Input.insertText", { text: cmd });
+  await tab.key("Enter");
+  await sleep(1800);
+};
+const EMBED_EGG = (tab) => EMBED_RUN(tab, "./egg");
+await run(
+  "embedded ./egg lands on the egg panel (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("#home");
+    const band = await tab.band();
+    await EMBED_EGG(tab);
+    const p = await tab.evaluate(PANEL_RECT);
+    check("the panel's top is just under the nav", Math.abs(p.top - band.nav) <= 1, {
+      p,
+      nav: band.nav,
+    });
+    check("and the whole panel is between the bars", p.bottom <= band.bottom + 1, { p, band });
+    check(
+      "the shell is closed",
+      await tab.evaluate(`!document.querySelector('[aria-label="embedded shell"]')`),
+    );
+  },
+);
+await run(
+  "embedded ./egg from a project page lands on the egg panel (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("projects/ai-room-editor/");
+    const nav = await tab.evaluate(
+      `Math.ceil(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--nav-h")))`,
+    );
+    await EMBED_EGG(tab);
+    check(
+      "the project page is left",
+      await tab.evaluate(`!!document.querySelector('[data-sec="0"]')`),
+    );
+    const p = await tab.evaluate(PANEL_RECT);
+    check("the panel's top is just under the nav", Math.abs(p.top - nav) <= 1, { p, nav });
+  },
+);
+// The hero's layout can still settle for a moment after the page lands (fonts, hydration; a
+// heavy machine made it up to 40px): the parked panel follows it instead of being left off by
+// the difference. Made certain here: 40px sit above the panel while ./egg lands and are taken
+// away a moment later.
+await run(
+  "the parked egg panel follows a layout that settles (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("projects/ai-room-editor/");
+    const nav = await tab.evaluate(
+      `Math.ceil(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--nav-h")))`,
+    );
+    // The hero doesn't exist on a project page: add the extra 40px when it comes back.
+    await tab.evaluate(
+      `new MutationObserver((m, o) => { const h = document.querySelector('[data-sec="0"]'); if (h) { h.style.paddingTop = "40px"; o.disconnect(); } }).observe(document.body, { childList: true, subtree: true })`,
+    );
+    await tab.key("`");
+    await sleep(500);
+    await tab.send("Input.insertText", { text: "./egg" });
+    await tab.key("Enter");
+    await sleep(700);
+    await tab.evaluate(`document.querySelector('[data-sec="0"]').style.paddingTop = ""`);
+    await sleep(600);
+    const p = await tab.evaluate(PANEL_RECT);
+    check("the panel's top is still just under the nav", Math.abs(p.top - nav) <= 1, { p, nav });
+  },
+);
+await run(
+  "embedded cd ~ goes to the top of the hero, not the egg (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("#home");
+    await tab.evaluate(`scrollTo(0, 1200)`);
+    await sleep(400);
+    await EMBED_RUN(tab, "cd ~");
+    check("the page is at the top", (await tab.evaluate(`scrollY`)) <= 2, {
+      y: await tab.evaluate(`scrollY`),
+    });
+  },
+);
+// A narrow window that is short too (a desktop browser squeezed below the phone layout's 600px)
+// must not squash the egg panel: it keeps room for its header, pot and footer.
+await run(
+  "the egg panel keeps a usable height in a short narrow window (580×300)",
+  { width: 580, height: 300 },
+  async (tab) => {
+    await tab.go("#home");
+    const h = await tab.evaluate(`Math.round(${EGG_PANEL}.getBoundingClientRect().height)`);
+    check("the panel is at least 360px tall", h >= 360, { h });
+  },
+);
+await run(
+  "embedded ./egg goes to the top of the page on a desktop (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#home");
+    await tab.evaluate(`scrollTo(0, 900)`);
+    await sleep(400);
+    await EMBED_EGG(tab);
+    check("the page is at the top", (await tab.evaluate(`scrollY`)) <= 2, {
+      y: await tab.evaluate(`scrollY`),
+    });
+  },
+);
+
+// ./egg in terminal mode on a phone (CONTEXT.md "held"): the same as the gui. Shortcut tabs and
+// ./egg keep the keyboard away (the buttons play, the prompt is hidden), the egg block fills the
+// visible output area exactly and keeps itself aligned to it through a keyboard closing, the
+// status text wraps instead of running off the screen, a tap on the pot only holds it, the
+// stages are played with buttons, and `quit` brings the prompt back.
+const TERM = '[data-mode="term"]';
+const T_POT = `document.querySelector('${TERM} pre[aria-label="ascii egg minigame"]')`;
+const T_BTN = (label) =>
+  `[...document.querySelectorAll('${TERM} button')].find((b) => b.textContent.trim() === '${label}')`;
+// The egg block is the pot's nearest ancestor with a --s style (the pot's scale).
+const TERM_STATE = `(() => {
+  const body = ${shellBox(TERM)};
+  const pot = ${T_POT};
+  let blk = pot; while (blk && !blk.style.getPropertyValue("--s")) blk = blk.parentElement;
+  const bb = body.getBoundingClientRect(), eb = blk && blk.getBoundingClientRect();
+  return {
+    active: document.activeElement?.tagName,
+    top: eb && Math.round(eb.top - bb.top),
+    bottom: eb && Math.round(bb.bottom - eb.bottom),
+    // What sits under the block when the output is pinned to its bottom: the log's row gap and
+    // the area's bottom padding (the block stops above them, so that pin leaves it in place).
+    slack: Math.round(
+      (parseFloat(getComputedStyle(body.firstElementChild).rowGap) || 0) +
+        parseFloat(getComputedStyle(body).paddingBottom),
+    ),
+    over: body.scrollWidth - body.clientWidth,
+    held: !!blk && blk.hasAttribute("data-held"),
+    pan: pot && getComputedStyle(pot).touchAction,
+    tail: body.innerText.slice(-100),
+  };
+})()`;
+const TERM_TEXT = `${shellBox(TERM)}.innerText`;
+const openTerm = async (tab) => {
+  await tab.go("#home");
+  await tab.evaluate(`sessionStorage.setItem("danny-mode", "term")`);
+  await tab.send("Page.reload");
+  await sleep(2500);
+  // The boot intro (a deep link doesn't skip it after a reload) takes every key while it plays,
+  // and terminal mode types a couple of commands itself at load: keys wait for both.
+  await tab.evaluate(
+    `(async () => { for (let t = 0; t < 12000; t += 250) { const intro = document.documentElement.classList.contains("boot-intro") || document.querySelector('[class*="Intro-module"]'); if (!intro && /try: tree projects/.test(${TERM_TEXT})) return; await new Promise((r) => setTimeout(r, 250)); } })()`,
+  );
+  await sleep(600);
+};
+// `keyboard`: pretend the on-screen keyboard is up (a headless browser has none): the page
+// marks the frame `data-kb` for it, and that is what tells it to put the keyboard away.
+const typeEgg = async (tab, keyboard = false) => {
+  await tab.evaluate(`document.querySelector('${TERM} input').focus()`);
+  await tab.send("Input.insertText", { text: "./egg" });
+  if (keyboard) await tab.evaluate(`document.querySelector('${TERM} > div').dataset.kb = ""`);
+  // A synthetic Enter on the prompt: a real key press sent first thing in a fresh tab can be
+  // dropped by the headless browser (no page focus yet), which says nothing about the page.
+  await tab.evaluate(
+    `document.querySelector('${TERM} input').dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }))`,
+  );
+  await sleep(900);
+};
+const aligned = (st) =>
+  st.top !== null &&
+  st.bottom !== null &&
+  Math.abs(st.top) <= 1 &&
+  Math.abs(st.bottom - st.slack) <= 2;
+await run(
+  "phone terminal egg keeps the keyboard away (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await openTerm(tab);
+    // The prompt has focus from the start (the terminal autofocuses it); put it away, then tap
+    // the `ls -la` tab, whose long listing nothing before it printed.
+    await tab.evaluate(`document.activeElement.blur()`);
+    await tab.tap(
+      `[...document.querySelectorAll('${TERM} button[aria-pressed]')].find((b) => /ls -la/.test(b.textContent))`,
+    );
+    await sleep(250); // still typing itself out
+    let st = await tab.evaluate(TERM_STATE);
+    check("a shortcut tab doesn't focus the prompt (no keyboard)", st.active !== "INPUT", st);
+    await sleep(1800);
+    const out = await tab.evaluate(TERM_TEXT);
+    check("but it still types and runs the command", /184k/.test(out), { tail: out.slice(-120) });
+    await typeEgg(tab, true);
+    st = await tab.evaluate(TERM_STATE);
+    check("the egg is running", st.top !== null && st.pan !== null, st);
+    check(
+      "typing ./egg with the keyboard up puts it away (the prompt loses focus)",
+      st.active !== "INPUT",
+      st,
+    );
+  },
+);
+// An iPad with a hardware keyboard counts as touch but has no on-screen keyboard (no `data-kb`):
+// the prompt keeps its focus, so Enter and ctrl-c still work.
+await run(
+  "phone terminal egg keeps the prompt without an on-screen keyboard (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await openTerm(tab);
+    await typeEgg(tab);
+    const st = await tab.evaluate(TERM_STATE);
+    check("the egg is running", st.top !== null, st);
+    check("the prompt keeps focus", st.active === "INPUT", st);
+  },
+);
+for (const size of [
+  { width: 390, height: 844 },
+  { width: 375, height: 667 },
+]) {
+  await run(
+    `phone terminal egg fills the output area (${size.width}×${size.height}, touch)`,
+    { ...size, mobile: true },
+    async (tab) => {
+      await openTerm(tab);
+      await typeEgg(tab);
+      await sleep(1300);
+      let st = await tab.evaluate(TERM_STATE);
+      check("the block fills the output area, top edge to its bottom padding", aligned(st), st);
+      check("nothing runs off the side of the screen", st.over <= 0, st);
+      // A keyboard coming up and going away in steps, as iOS does (--vv-h/data-kb are the
+      // visible area the viewport hook sets; a headless browser has no keyboard).
+      const frame = (js) =>
+        tab.evaluate(`(() => { const t = document.querySelector('${TERM} > div'); ${js} })()`);
+      await frame(`t.style.setProperty("--vv-h", "${size.height - 336}px"); t.dataset.kb = "";`);
+      await sleep(500);
+      await frame(`t.style.setProperty("--vv-h", "${size.height - 140}px");`);
+      await sleep(200);
+      await frame(`t.style.removeProperty("--vv-h"); delete t.dataset.kb;`);
+      await sleep(1600);
+      st = await tab.evaluate(TERM_STATE);
+      check("after the keyboard goes away it is aligned again", aligned(st), st);
+    },
+  );
+}
+await run(
+  "phone terminal egg is played with buttons and held (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await openTerm(tab);
+    await typeEgg(tab);
+    await sleep(800);
+    // A finger near the pot's top left, clear of the buttons.
+    const tapPot = async () => {
+      const p = await tab.evaluate(
+        `(() => { const r = ${T_POT}.getBoundingClientRect(); return { x: Math.round(r.x + 20), y: Math.round(r.y + 20) }; })()`,
+      );
+      await tab.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [p] });
+      await tab.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await sleep(300);
+    };
+    let st = await tab.evaluate(TERM_STATE);
+    check("an untouched pot isn't held", st.top !== null && !st.held && st.pan === "pan-y", st);
+    await tapPot();
+    st = await tab.evaluate(TERM_STATE);
+    check("a tap on the pot holds it", st.held && st.pan === "pinch-zoom", st);
+    check("and doesn't open the keyboard", st.active !== "INPUT", st);
+    check("or start the round", /soft-boiled/.test(await tab.evaluate(TERM_TEXT)), {
+      tail: st.tail,
+    });
+    // A tap outside the block (the terminal's header text) lets go.
+    await tab.tap(`document.querySelector('${TERM} > div').firstElementChild.firstElementChild`);
+    await sleep(300);
+    st = await tab.evaluate(TERM_STATE);
+    check("a tap outside the block lets go", !st.held && st.pan === "pan-y", st);
+    const logHas = (re, ms) =>
+      tab.evaluate(
+        `(async () => { for (let t = 0; t < ${ms}; t += 300) { if (${re}.test(${TERM_TEXT})) return true; await new Promise((r) => setTimeout(r, 300)); } return false; })()`,
+      );
+    check(
+      "the start button starts the round",
+      (await tab.tap(T_BTN("start"))) && (await logHas("/waiting for a rolling boil/", 3000)),
+    );
+    check("the round reaches the pull button", await logHas("/pull it at/", 12000));
+    await tab.tap(T_BTN("pull them out"));
+    check("the pull button pulls the eggs", await logHas("/into the ice bath/", 4000));
+    check("and the round gets to the result", await logHas("/cooked on this device/", 20000));
+    st = await tab.evaluate(TERM_STATE);
+    check("the result's status fits the width", st.over <= 0, st);
+    await tab.tap(T_BTN("quit"));
+    await sleep(500);
+    check(
+      "quit brings the prompt back",
+      await tab.evaluate(
+        `getComputedStyle(document.querySelector('${TERM} input').parentElement).height !== "0px"`,
+      ),
+    );
+  },
+);
+
 await run("phone terminal mode (390×844, touch)", { ...PHONE, mobile: true }, async (tab) => {
   await tab.go("#home");
   await tab.evaluate(`sessionStorage.setItem("danny-mode", "term")`);
@@ -970,6 +1438,30 @@ await run(
 // are on screen, and the touch wording that stands in for them.
 const LABELS_SHOWN = `[...document.querySelectorAll("[data-hint],[data-keyhint]")].filter((e) => e.getClientRects().length > 0).length`;
 const START_TEXT = `document.querySelector("[data-egg]")?.innerText.trim()`;
+
+// Desktop is unchanged by all of the above: a mouse never holds the egg, and the pot keeps its
+// own touch-action and no outline.
+await run("the egg frame is unchanged on a desktop (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  await tab.evaluate(`${EGG_PANEL}.scrollIntoView({ block: "center" })`);
+  await sleep(400);
+  await tab.click(`document.querySelector("[data-egg]")`);
+  await sleep(500);
+  const s = await tab.evaluate(`(() => {
+    const panel = ${EGG_PANEL};
+    return {
+      held: panel.hasAttribute("data-held"),
+      pan: getComputedStyle(${EGG_POT}).touchAction,
+      outline: getComputedStyle(panel).outlineStyle,
+      h: Math.round(panel.getBoundingClientRect().height),
+      vh: innerHeight,
+    };
+  })()`);
+  check("a mouse press in the frame doesn't hold it", !s.held, s);
+  check("the pot keeps pan-y", s.pan === "pan-y", s);
+  check("and there is no outline", s.outline === "none", s);
+  check("the panel isn't stretched to the viewport", s.h < s.vh - 100, s);
+});
 
 await run("touch screens show no key labels (390×844)", { ...PHONE, mobile: true }, async (tab) => {
   await tab.go("#home");

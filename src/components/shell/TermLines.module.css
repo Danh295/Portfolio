@@ -192,6 +192,53 @@
   line-height: 1.6;
 }
 
+/* On a touch screen the egg is played with buttons (a tap on the pot only holds it: held.js),
+   the status wraps instead of running off the screen, and a held block gets the same thin
+   square outline as the hero's. The pot is scaled to fit the area (TermEgg.jsx, fit.js). */
+.eggScaled {
+  transform: scale(var(--s, 1));
+  transform-origin: 0 0;
+}
+
+.eggButtons {
+  display: none;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .egg {
+    box-sizing: border-box;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .egg[data-held] {
+    outline: 1px solid var(--fg);
+    outline-offset: -1px;
+  }
+
+  .eggStatus {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    min-height: calc(9 * 1.6em);
+  }
+
+  .eggButtons {
+    display: flex;
+    gap: 12px;
+    min-height: 44px;
+    margin-top: auto;
+  }
+
+  .eggBtn {
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid var(--fg);
+    background: var(--bg);
+    color: var(--fg);
+    font: inherit;
+  }
+}
+
 @media (max-width: 600px) {
   .kv,
   .kv.term,
