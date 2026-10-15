@@ -134,7 +134,11 @@ export function useShell({ keysOn, resetEgg, crackEgg, vimOpen, termInputRef, on
     const cmd = SHORTCUT_CMDS[i];
     if (!cmd || autoType.current || vimOpen) return; // vim owns the screen until :q
     if (termEggRunning) quitEgg();
-    termInputRef.current?.focus({ preventScroll: true });
+    // PROTOTYPE: on a touch screen a shortcut only plays its typing animation; the prompt
+    // isn't focused (that would open the keyboard), and an open keyboard is put away.
+    if (window.matchMedia("(hover: none) and (pointer: coarse)").matches)
+      termInputRef.current?.blur();
+    else termInputRef.current?.focus({ preventScroll: true });
     setPressedTab(i);
     const finish = () => {
       stopAutoType();

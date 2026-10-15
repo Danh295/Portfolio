@@ -140,6 +140,20 @@ export default function App({ initialView = null }) {
     window.scrollTo({ top, behavior });
   };
 
+  // PROTOTYPE: on a phone, park the egg panel's top under the nav (not --nav-offset: its
+  // 26px would come out of the band). Returns whether it scrolled.
+  const parkEgg = () => {
+    const box = guiBoxRef.current;
+    if (!box || !window.matchMedia("(max-width: 600px)").matches) return false;
+    const nav =
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--nav-h")) || 45;
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const top = Math.max(0, Math.min(max, box.getBoundingClientRect().top + window.scrollY - nav));
+    holdNav(navLock, 400, top);
+    window.scrollTo({ top, behavior: smooth });
+    return true;
+  };
+
   // Leaving a project page for the section list ({ scrollTo }: the list position it was
   // opened from; { sec }: a section aligned under the nav). State first, from the leave
   // or Back/Forward itself: the active section, and a keyboard selection follows the
@@ -269,7 +283,7 @@ export default function App({ initialView = null }) {
     if (fx.sec0) selectHero("egg");
     if (to != null) {
       if (view) leaveProject(to);
-      else setTimeout(() => scrollSec(to), 50);
+      else setTimeout(() => (to === 0 && parkEgg()) || scrollSec(to), 50);
     }
   };
 
@@ -788,6 +802,7 @@ export default function App({ initialView = null }) {
       onSelectEgg={() => selectHero("egg")}
       onStart={() => {
         selectHero("egg");
+        parkEgg();
         startEgg();
       }}
       onMore={() => {
@@ -910,6 +925,13 @@ export default function App({ initialView = null }) {
             eggPreRef={termPreRef}
             eggFxRef={termFxRef}
             eggStatusRef={termStatusRef}
+            eggTouch={{
+              stage: egg.view.stage,
+              enter: egg.view.enter,
+              prompt: egg.view.prompt,
+              play: egg.crack,
+              quit: quitEgg,
+            }}
             running={termEggRunning}
             pressedTab={pressedTab}
             keysOn={keysOn}

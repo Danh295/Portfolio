@@ -22,3 +22,8 @@
   inset: 0;
   pointer-events: none;
 }
+
+/* PROTOTYPE: held (a tap in the frame): one finger on the pot turns the egg. */
+[data-held] .pre {
+  touch-action: pinch-zoom;
+}

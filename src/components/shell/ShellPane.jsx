@@ -35,6 +35,7 @@ export default function ShellPane({
   eggPreRef,
   eggFxRef,
   eggStatusRef,
+  eggTouch,
 }) {
   const ownBodyRef = useRef(null),
     contentRef = useRef(null);
@@ -59,6 +60,7 @@ export default function ShellPane({
             eggPreRef={eggPreRef}
             eggFxRef={eggFxRef}
             eggStatusRef={eggStatusRef}
+            eggTouch={eggTouch}
           />
         </div>
         <div className={promptHidden ? styles.promptHidden : styles.promptRow}>

@@ -84,6 +84,7 @@ function statusText(L, t) {
     lines.push("", sv.head);
     sv.rows.forEach((r) => lines.push(r.name.padEnd(14) + r.bar + "  " + r.n));
   }
+  if (window.matchMedia("(hover: none) and (pointer: coarse)").matches) return lines.join("\n");
   lines.push(
     "",
     L.stage === 5

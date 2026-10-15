@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import SectionFrame from "@/components/frame/SectionFrame";
 import Hint, { KeyLabel, TouchText } from "@/components/Hint";
 import { homeContent } from "@/data/home";
@@ -41,6 +41,19 @@ export default function Hero({
   useEffect(() => {
     if (rulesUp) rulesRef.current?.focus({ preventScroll: true, focusVisible: false });
   }, [rulesUp]);
+  // PROTOTYPE held state: a touch in the frame holds; a touch outside or stage 5 lets go.
+  const [held, setHeld] = useState(false);
+  const eggBox = boxRef;
+  useEffect(() => {
+    const onDown = (e) => {
+      if (e.pointerType !== "touch") return;
+      const inside = !!eggBox.current && eggBox.current.contains(e.target);
+      setHeld(inside);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [eggBox]);
+  const heldNow = held && view.stage !== 5;
   useTextFx(h1, homeContent.heading, "load");
   const headPlayed = usePlayed("load", homeContent.heading);
 
@@ -131,7 +144,12 @@ export default function Hero({
       </div>
 
       {/* Pointer-down anywhere in the egg frame selects its prompt (Enter then plays). */}
-      <div ref={boxRef} className={styles.egg} onPointerDown={onSelectEgg}>
+      <div
+        ref={boxRef}
+        className={styles.egg}
+        onPointerDown={onSelectEgg}
+        data-held={heldNow ? "" : undefined}
+      >
         <div className={styles.eggHead}>
           <div className={styles.eggTitleCol}>
             <span className={styles.eggTitleRow}>
