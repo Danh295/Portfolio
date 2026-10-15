@@ -122,6 +122,8 @@ export function useEggGame({ clockMode, mode }) {
   // doesn't scroll there). The rule is the pure `heldAfter` (src/lib/egg/held.js).
   const [held, setHeldState] = useState(false);
   const applyHeld = useCallback((event) => setHeldState((h) => heldAfter(h, event)), []);
+  // The egg left the gui (a project page, terminal mode) or its terminal block went: let go.
+  const release = useCallback(() => applyHeld({ type: "leave" }), [applyHeld]);
 
   const scene = useRef(null);
   const live = useRef({
@@ -431,16 +433,18 @@ export function useEggGame({ clockMode, mode }) {
       getScene().drag = null;
     };
     for (const ev of DRAG_END) document.addEventListener(ev, endDrag, opts);
-    // Any press on the page: a finger inside the frame holds, a finger outside lets go.
-    const onPress = (e) => {
+    // A finger outside the frame lets go the moment it lands; one inside holds only when it
+    // lifts, so a swipe that starts on the pot (scrolling the page, which ends in a
+    // pointercancel, never a pointerup) doesn't leave the next swipe turning the egg.
+    const press = (e, inside) => {
       const frame = live.current.mode === "term" ? termFrame.current : guiBox.current;
-      applyHeld({
-        type: "press",
-        pointerType: e.pointerType,
-        inFrame: !!frame && frame.contains(e.target),
-      });
+      const inFrame = !!frame && frame.contains(e.target);
+      if (inFrame === inside) applyHeld({ type: "press", pointerType: e.pointerType, inFrame });
     };
-    document.addEventListener("pointerdown", onPress, opts);
+    const onDown = (e) => press(e, false),
+      onUp = (e) => press(e, true);
+    document.addEventListener("pointerdown", onDown, opts);
+    document.addEventListener("pointerup", onUp, opts);
     window.addEventListener("resize", run);
     window.addEventListener("popstate", run);
     document.addEventListener("visibilitychange", run);
@@ -451,7 +455,8 @@ export function useEggGame({ clockMode, mode }) {
       document.removeEventListener("mousemove", onMove);
       for (const ev of WAKE) document.removeEventListener(ev, run, opts);
       for (const ev of DRAG_END) document.removeEventListener(ev, endDrag, opts);
-      document.removeEventListener("pointerdown", onPress, opts);
+      document.removeEventListener("pointerdown", onDown, opts);
+      document.removeEventListener("pointerup", onUp, opts);
       window.removeEventListener("resize", run);
       window.removeEventListener("popstate", run);
       document.removeEventListener("visibilitychange", run);
@@ -514,8 +519,7 @@ export function useEggGame({ clockMode, mode }) {
     crack,
     reset,
     held,
-    // The egg left the gui (a project page, terminal mode): let go.
-    release: () => applyHeld({ type: "leave" }),
+    release,
     handlers,
     view,
     guiPreRef: guiPre,

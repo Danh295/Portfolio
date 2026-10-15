@@ -631,9 +631,6 @@ await run(
   },
 );
 
-// Terminal mode on a phone fills the screen: the header at the very top, the shortcut bar at
-// the very bottom, nothing scrolling. (The on-screen keyboard, which a headless browser
-// can't open, is covered by useVisualViewportFrame and the real-phone check.)
 // The egg on a phone (CONTEXT.md "held"): the panel is exactly the band between the bars, so a
 // whole round can be seen and played, and starting scrolls it into place just under the nav.
 const EGG_POT = `document.querySelector('[data-sec="0"] pre[role="img"]')`;
@@ -743,6 +740,12 @@ await run(
     });
     check("and isn't held", !(await held()));
     check("a drag on it scrolls the page", (await drag(EGG_POT, true)) > 20);
+    // Only a completed tap holds: a swipe that starts on the pot (the pot fills most of a
+    // phone's screen) is scrolling the page, and must not leave the next swipe turning the egg.
+    check("and a swipe that scrolls the page doesn't hold it", !(await held()), {
+      held: await held(),
+      pan: await pan(),
+    });
     await panelUnderNav();
     await tapPot();
     check("a tap in the frame holds it", (await held()) && (await pan()) === "pinch-zoom", {
@@ -777,7 +780,20 @@ await run(
       return re.test(await text());
     };
     check("the round reaches the pull button", await until(/pull them out/, 12000));
+    // Pulling the eggs is timing-critical: the press must not move the page (only starting parks).
+    await tab.evaluate(`scrollBy(0, 30)`);
+    await sleep(300);
+    const yBeforePull = await tab.evaluate(`scrollY`);
     await tab.tap(`document.querySelector("[data-egg]")`);
+    await sleep(500);
+    check(
+      "pulling the eggs doesn't move the page",
+      Math.abs((await tab.evaluate(`scrollY`)) - yBeforePull) <= 2,
+      {
+        before: yBeforePull,
+        after: await tab.evaluate(`scrollY`),
+      },
+    );
     check("and the result", await until(/play again/, 30000));
     check("the round ending lets go", !(await held()) && (await pan()) === "pan-y", {
       held: await held(),
@@ -876,6 +892,66 @@ await run(
     await sleep(600);
     const p = await tab.evaluate(PANEL_RECT);
     check("the panel's top is still just under the nav", Math.abs(p.top - nav) <= 1, { p, nav });
+  },
+);
+// Nothing asked for the egg here: going home from a project page just after it loaded lands at
+// the top of the hero (a "not asked" flag of 0 once counted as asked for the first 2s of a load).
+await run(
+  "going home from a freshly loaded project page lands at the top (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("projects/ai-room-editor/", 300);
+    await tab.tap(navButton("~/danny"));
+    await sleep(1500);
+    check("the page is at the top, not parked on the egg", (await tab.evaluate(`scrollY`)) <= 2, {
+      y: await tab.evaluate(`scrollY`),
+    });
+  },
+);
+// The keyboard path starts the egg too (a narrow window or an iPad with a keyboard): Enter on the
+// selected egg parks the panel just like the tap.
+// With motion allowed the park is a smooth scroll; the re-park that follows it (for a layout
+// that settles) must not cancel it by jumping to the target on the next frame.
+await run(
+  "starting scrolls the panel smoothly (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("#home");
+    const nav = await tab.evaluate(
+      `Math.ceil(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--nav-h")))`,
+    );
+    // 200px short of the parked position, with the start box still on screen.
+    await tab.evaluate(
+      `scrollTo(0, Math.round(${EGG_PANEL}.getBoundingClientRect().top + scrollY - ${nav} - 200))`,
+    );
+    await sleep(500);
+    const y0 = await tab.evaluate(`scrollY`);
+    await tab.tap(`document.querySelector("[data-egg]")`);
+    await sleep(80);
+    const y1 = await tab.evaluate(`scrollY`);
+    await sleep(1500);
+    const y2 = await tab.evaluate(`scrollY`);
+    check("it scrolls to the parked position", y2 - y0 >= 150, { y0, y2 });
+    check("and was still on its way 80ms in (not jumped)", y1 < y2 - 10, { y0, y1, y2 });
+  },
+);
+await run(
+  "keyboard Enter on the selected egg parks the panel (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("#home");
+    const band = await tab.band();
+    await tab.key("j");
+    await tab.key("j");
+    await tab.evaluate(`scrollTo(0, 0)`);
+    await sleep(500);
+    await tab.key("Enter");
+    await sleep(1500);
+    const p = await tab.evaluate(PANEL_RECT);
+    check("the panel's top is just under the nav", Math.abs(p.top - band.nav) <= 1, {
+      p,
+      nav: band.nav,
+    });
   },
 );
 await run(
@@ -1005,6 +1081,20 @@ await run(
     );
   },
 );
+// The smallest phones: the pot's narrowest frame (288px) must fit between the terminal's side
+// padding, so nothing runs off the side at 320px either.
+await run(
+  "phone terminal egg fits the width at 320px (320×900, touch)",
+  { width: 320, height: 900, mobile: true },
+  async (tab) => {
+    await openTerm(tab);
+    await typeEgg(tab);
+    await sleep(1300);
+    const st = await tab.evaluate(TERM_STATE);
+    check("the egg is running", st.top !== null, st);
+    check("nothing runs off the side of the screen", st.over <= 0, st);
+  },
+);
 // An iPad with a hardware keyboard counts as touch but has no on-screen keyboard (no `data-kb`):
 // the prompt keeps its focus, so Enter and ctrl-c still work.
 await run(
@@ -1016,6 +1106,25 @@ await run(
     const st = await tab.evaluate(TERM_STATE);
     check("the egg is running", st.top !== null, st);
     check("the prompt keeps focus", st.active === "INPUT", st);
+  },
+);
+// The alignment is a phone thing: on a desktop terminal shorter than the egg (a short window,
+// browser zoom) the output stays pinned to the bottom, where the key hints are.
+await run(
+  "terminal egg stays pinned to the bottom on a short desktop window (1291×400)",
+  { width: 1291, height: 400 },
+  async (tab) => {
+    await openTerm(tab);
+    await typeEgg(tab);
+    await sleep(1600); // past the settle timers
+    const gap = await tab.evaluate(atBottom(TERM));
+    check("the output is at its bottom", gap <= 2, { gap });
+    check(
+      "and the hints are in view",
+      await tab.evaluate(
+        `(() => { const b = ${shellBox(TERM)}; return /click the pot to start/.test(b.innerText) && b.scrollHeight - b.scrollTop - b.clientHeight <= 2; })()`,
+      ),
+    );
   },
 );
 for (const size of [
@@ -1099,9 +1208,17 @@ await run(
         `getComputedStyle(document.querySelector('${TERM} input').parentElement).height !== "0px"`,
       ),
     );
+    // The quit press was a tap inside the block, which held it: running ./egg again must not
+    // start already held (the outline and touch-action on an untouched pot).
+    await typeEgg(tab);
+    st = await tab.evaluate(TERM_STATE);
+    check("a new ./egg starts untouched", st.top !== null && !st.held && st.pan === "pan-y", st);
   },
 );
 
+// Terminal mode on a phone fills the screen: the header at the very top, the shortcut bar at
+// the very bottom, nothing scrolling. (The on-screen keyboard, which a headless browser
+// can't open, is covered by useVisualViewportFrame and the real-phone check.)
 await run("phone terminal mode (390×844, touch)", { ...PHONE, mobile: true }, async (tab) => {
   await tab.go("#home");
   await tab.evaluate(`sessionStorage.setItem("danny-mode", "term")`);
