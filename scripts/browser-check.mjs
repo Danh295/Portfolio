@@ -954,6 +954,78 @@ await run(
     });
   },
 );
+// With the keyboard up the embedded shell locks the page (html.locked: body fixed), which used to
+// throw the scroll position away (the document is one screen tall while locked): `./egg` then
+// scrolled from the top of the page, and `cd` computed its target from the locked page and went
+// nowhere. A headless browser has no keyboard, so the visual viewport is shrunk by hand and its
+// resize fired, which drives the real lock.
+const KEYBOARD = (tab, height) =>
+  tab.evaluate(`(() => {
+    const vv = visualViewport;
+    ${height ? `Object.defineProperty(vv, "height", { get: () => ${height}, configurable: true });` : `delete vv.height;`}
+    vv.dispatchEvent(new Event("resize"));
+  })()`);
+const LOCKED = `document.documentElement.classList.contains("locked")`;
+// Opens the embedded shell with the keyboard "up", runs `cmd` on its prompt.
+const RUN_WITH_KEYBOARD = async (tab, cmd) => {
+  await tab.key("`");
+  await sleep(500);
+  await KEYBOARD(tab, 508);
+  await sleep(300);
+  await tab.send("Input.insertText", { text: cmd });
+  await tab.evaluate(
+    `document.querySelector('[aria-label="embedded shell"] input').dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }))`,
+  );
+};
+await run(
+  "embedded cd with the keyboard up lands on the section once the shell closes (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("#home");
+    const band = await tab.band();
+    await tab.evaluate(`scrollTo(0, 620)`);
+    await sleep(400);
+    await RUN_WITH_KEYBOARD(tab, "cd projects");
+    await sleep(700);
+    check("the page is locked while the keyboard is up", await tab.evaluate(LOCKED));
+    // Close the shell and let the keyboard go.
+    await KEYBOARD(tab, 0);
+    await tab.evaluate(`document.activeElement.blur()`);
+    await tab.key("Escape");
+    await sleep(2200);
+    check("the page is unlocked again", !(await tab.evaluate(LOCKED)));
+    const top = await tab.top(1);
+    check("projects is parked under the nav", Math.abs(top - band.parked) <= 3, {
+      top,
+      parked: band.parked,
+    });
+  },
+);
+await run(
+  "embedded ./egg with the keyboard up scrolls from where the page is (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("#home");
+    await tab.evaluate(
+      `scrollTo(0, Math.round(${EGG_PANEL}.getBoundingClientRect().top + scrollY - parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--nav-h"))))`,
+    );
+    await sleep(500);
+    const y0 = await tab.evaluate(`scrollY`);
+    await RUN_WITH_KEYBOARD(tab, "./egg");
+    // Once the page is unlocked, it is where it was: never back at the top on the way.
+    await tab.evaluate(
+      `(async () => { for (let t = 0; t < 3000 && ${LOCKED}; t += 50) await new Promise((r) => setTimeout(r, 50)); })()`,
+    );
+    const ys = await tab.evaluate(
+      `(async () => { const out = []; for (let t = 0; t < 1500; t += 40) { out.push(Math.round(scrollY)); await new Promise((r) => setTimeout(r, 40)); } return out; })()`,
+    );
+    check("the page never goes back to the top", Math.min(...ys) >= y0 - 5, {
+      y0,
+      min: Math.min(...ys),
+      max: Math.max(...ys),
+    });
+  },
+);
 await run(
   "embedded cd ~ goes to the top of the hero, not the egg (390×844, touch)",
   { ...PHONE, mobile: true },
