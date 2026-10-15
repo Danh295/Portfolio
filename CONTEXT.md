@@ -93,6 +93,10 @@ A step of an egg round, 0–5: ready, heating, boiling (pull it out), ice bath, 
 **Pot**:
 The ASCII pot the egg cooks in. Clicking it only pans the view.
 
+**Held**:
+The egg frame after a tap on a touch screen: one finger on the pot turns the egg and the page doesn't scroll there (drags elsewhere still scroll). A tap outside the frame, the round ending or leaving the gui lets go. Separate from the _selection_ (the j/k stop).
+_Avoid_: focused, grabbed, locked (the page lock is the shells')
+
 **Rules card**:
 The first-round briefing shown before the stove starts.
 _Avoid_: tutorial, instructions
