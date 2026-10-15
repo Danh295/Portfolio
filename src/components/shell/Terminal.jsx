@@ -22,6 +22,8 @@ export default function Terminal({
   eggPreRef,
   eggFxRef,
   eggStatusRef,
+  eggFrameRef,
+  eggTouch,
   running,
   keysOn = true,
   pressedTab,
@@ -78,6 +80,8 @@ export default function Terminal({
           eggPreRef={eggPreRef}
           eggFxRef={eggFxRef}
           eggStatusRef={eggStatusRef}
+          eggFrameRef={eggFrameRef}
+          eggTouch={eggTouch}
         >
           <pre className={styles.banner} role="img" aria-label="danny hu">
             {BANNER}

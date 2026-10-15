@@ -137,6 +137,12 @@
   container-type: inline-size;
 }
 
+/* Held: a thin square outline inside the frame, so it moves nothing. */
+.egg[data-held] {
+  outline: 1px solid var(--fg);
+  outline-offset: -1px;
+}
+
 /* Header and footer have fixed heights, so the stage between them (and with it the
    ASCII frame's scale) never changes as the game moves through its stages. They only
    change with the viewport. */
@@ -523,8 +529,29 @@
     padding: 8px 0;
   }
 
+  /* The panel is exactly the band between the bars, so a whole round fits the screen and can
+     be played. svh, not dvh: Safari's toolbar moving must not resize the pot mid-round. The
+     header keeps its height (the result's stats need it); the padding, the gaps and the
+     footer give, and the stage hands what's left to the pot (--egg-scale, Hero.jsx). Starting
+     parks the panel's top under the nav (App.jsx parkEgg): the nav's height, not a section
+     jump's --nav-offset, whose extra 26px would come out of the band. The floor keeps a short
+     narrow window (a squeezed desktop browser) from squashing the header, pot and footer. */
   .egg {
-    padding: 24px 12px 16px;
+    flex: none;
+    width: 100%;
+    height: max(360px, calc(100svh - var(--nav-h, 45px) - var(--bar-h, 45px)));
+    padding: 12px 12px 8px;
+    gap: 8px;
+    scroll-margin-top: var(--nav-h, 45px);
+  }
+
+  .stage {
+    min-height: 0;
+  }
+
+  .eggFoot {
+    height: 20px;
+    flex-direction: row;
   }
 }
 

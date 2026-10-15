@@ -1,4 +1,4 @@
-import EggCanvas from "@/components/egg/EggCanvas";
+import TermEgg from "./TermEgg";
 import { promptText } from "@/lib/shell/spec";
 import styles from "./TermLines.module.css";
 
@@ -15,6 +15,8 @@ export default function TermLines({
   eggPreRef,
   eggFxRef,
   eggStatusRef,
+  eggFrameRef,
+  eggTouch,
 }) {
   const v = variant === "term" ? styles.term : styles.embed;
   return lines.map((l, i) => {
@@ -162,17 +164,15 @@ export default function TermLines({
       case "egg":
         if (!eggPreRef) return null;
         return (
-          <div key={key} className={styles.egg}>
-            <div className={styles.eggStage}>
-              <EggCanvas
-                preRef={eggPreRef}
-                fxRef={eggFxRef}
-                handlers={eggHandlers}
-                label="ascii egg minigame"
-              />
-            </div>
-            <div ref={eggStatusRef} className={styles.eggStatus} />
-          </div>
+          <TermEgg
+            key={key}
+            preRef={eggPreRef}
+            fxRef={eggFxRef}
+            statusRef={eggStatusRef}
+            frameRef={eggFrameRef}
+            handlers={eggHandlers}
+            egg={eggTouch}
+          />
         );
       default:
         return null;

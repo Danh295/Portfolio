@@ -15,6 +15,8 @@ import { eggStages, eggTypes, eggRules } from "@/data/egg";
 
 import { EGG_ROWS, EGG_GRID_SCALE, colsFor } from "@/lib/egg/grid";
 import { paint } from "@/lib/egg/paint";
+import { heldAfter } from "@/lib/egg/held";
+import { isTouch } from "@/lib/egg/screen";
 
 const FRAME_H = EGG_ROWS;
 // Events that end a drag of the pot, caught on the document (see endDrag).
@@ -84,6 +86,8 @@ function statusText(L, t) {
     lines.push("", sv.head);
     sv.rows.forEach((r) => lines.push(r.name.padEnd(14) + r.bar + "  " + r.n));
   }
+  // On a touch screen the buttons under the pot say what to do, not the keys.
+  if (L.touch) return lines.join("\n");
   lines.push(
     "",
     L.stage === 5
@@ -112,6 +116,12 @@ export function useEggGame({ clockMode, mode }) {
   const briefed = useRef(false);
   // Once seen, the rules collapse to a small "[i] rules" chip the hero can reopen.
   const [rulesSeen, setRulesSeen] = useState(false);
+  // The terminal's inline egg block (TermEgg), for "was that press inside the frame?".
+  const termFrame = useRef(null);
+  // Held: a tap in the hero's egg frame on a touch screen hands the pot one finger (the page
+  // doesn't scroll there). The rule is the pure `heldAfter` (src/lib/egg/held.js).
+  const [held, setHeldState] = useState(false);
+  const applyHeld = useCallback((event) => setHeldState((h) => heldAfter(h, event)), []);
 
   const scene = useRef(null);
   const live = useRef({
@@ -121,6 +131,7 @@ export function useEggGame({ clockMode, mode }) {
     briefing: false,
     mode,
     clockMode,
+    touch: false, // set once the page is up (a static media query)
   });
   const guiPre = useRef(null),
     guiFx = useRef(null),
@@ -141,11 +152,15 @@ export function useEggGame({ clockMode, mode }) {
 
   const getScene = () => scene.current || (scene.current = freshScene());
 
-  const setStage = useCallback((s) => {
-    live.current.stage = s;
-    setStageState(s);
-    wake.current();
-  }, []);
+  const setStage = useCallback(
+    (s) => {
+      live.current.stage = s;
+      setStageState(s);
+      applyHeld({ type: "stage", stage: s });
+      wake.current();
+    },
+    [applyHeld],
+  );
   const setResult = useCallback((r) => {
     live.current.result = r;
     setResultState(r);
@@ -241,6 +256,7 @@ export function useEggGame({ clockMode, mode }) {
   // scroll, resize, key, pointer, stage or mode change wakes it. The egg plays under reduced
   // motion too: it's contained in its own box, and a frozen egg read as a stuck page.
   useEffect(() => {
+    live.current.touch = isTouch();
     let raf = 0,
       last = 0,
       odd = false,
@@ -415,6 +431,16 @@ export function useEggGame({ clockMode, mode }) {
       getScene().drag = null;
     };
     for (const ev of DRAG_END) document.addEventListener(ev, endDrag, opts);
+    // Any press on the page: a finger inside the frame holds, a finger outside lets go.
+    const onPress = (e) => {
+      const frame = live.current.mode === "term" ? termFrame.current : guiBox.current;
+      applyHeld({
+        type: "press",
+        pointerType: e.pointerType,
+        inFrame: !!frame && frame.contains(e.target),
+      });
+    };
+    document.addEventListener("pointerdown", onPress, opts);
     window.addEventListener("resize", run);
     window.addEventListener("popstate", run);
     document.addEventListener("visibilitychange", run);
@@ -425,11 +451,12 @@ export function useEggGame({ clockMode, mode }) {
       document.removeEventListener("mousemove", onMove);
       for (const ev of WAKE) document.removeEventListener(ev, run, opts);
       for (const ev of DRAG_END) document.removeEventListener(ev, endDrag, opts);
+      document.removeEventListener("pointerdown", onPress, opts);
       window.removeEventListener("resize", run);
       window.removeEventListener("popstate", run);
       document.removeEventListener("visibilitychange", run);
     };
-  }, [crack, finish, setStage, setTimer]);
+  }, [crack, finish, setStage, setTimer, applyHeld]);
 
   const handlers = {
     onPointerDown: (e) => {
@@ -486,6 +513,9 @@ export function useEggGame({ clockMode, mode }) {
   return {
     crack,
     reset,
+    held,
+    // The egg left the gui (a project page, terminal mode): let go.
+    release: () => applyHeld({ type: "leave" }),
     handlers,
     view,
     guiPreRef: guiPre,
@@ -496,6 +526,7 @@ export function useEggGame({ clockMode, mode }) {
     termPreRef: termPre,
     termFxRef: termFx,
     termStatusRef: termStatus,
+    termFrameRef: termFrame,
     termBoxRef: termBox,
   };
 }

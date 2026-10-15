@@ -20,6 +20,7 @@ export default function Hero({
   active,
   heroSel,
   rulesOpen,
+  held = false,
   onSelectEgg,
   onMore,
   onRules,
@@ -131,7 +132,12 @@ export default function Hero({
       </div>
 
       {/* Pointer-down anywhere in the egg frame selects its prompt (Enter then plays). */}
-      <div ref={boxRef} className={styles.egg} onPointerDown={onSelectEgg}>
+      <div
+        ref={boxRef}
+        className={styles.egg}
+        onPointerDown={onSelectEgg}
+        data-held={held ? "" : undefined}
+      >
         <div className={styles.eggHead}>
           <div className={styles.eggTitleCol}>
             <span className={styles.eggTitleRow}>
