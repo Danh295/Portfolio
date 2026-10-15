@@ -448,8 +448,7 @@
   }
 }
 
-/* Narrow frames: stats lose their bars, the title shrinks, and the footer takes two
-   fixed lines, so every stage is still the same size. */
+/* Narrow frames: stats lose their bars and the title shrinks. */
 @container (max-width: 480px) {
   .eggTitle {
     font-size: 16px;
@@ -461,12 +460,6 @@
 
   .statRow .bar {
     display: none;
-  }
-
-  .eggFoot {
-    height: 40px;
-    flex-direction: column;
-    gap: 0;
   }
 }
 

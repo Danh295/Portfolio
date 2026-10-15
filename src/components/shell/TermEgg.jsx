@@ -4,12 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import EggCanvas from "@/components/egg/EggCanvas";
 import { EGG_PX } from "@/lib/egg/grid";
 import { eggFit } from "@/lib/egg/fit";
-import { isPhone, isTouch } from "@/lib/egg/screen";
+import { isPhone, isTouch, useIsTouch } from "@/lib/egg/screen";
 import styles from "./TermLines.module.css";
 
-// Status lines are reserved at their tallest (stage 5: a wrapped title, blank, head, 5 rows) so
-// the pot never changes size between stages, plus the button row, gaps and padding.
-const RESERVE = 9 * 22.4 + 44 + 8 * 2 + 16;
 // iOS gives the screen back to the page in steps after a keyboard closes: look again then.
 const SETTLE_MS = [60, 250, 600, 1100];
 
@@ -21,15 +18,17 @@ const SETTLE_MS = [60, 250, 600, 1100];
  * area changes, instead of relying on the output staying pinned to its bottom (that pin
  * lets go mid keyboard change). It ends above the area's bottom padding, so the pin and the
  * alignment agree. `frameRef` is the hook's, to tell a press inside the block from one outside (held.js);
- * `egg`: { held, stage, enter, prompt, play, quit }.
+ * `egg`: { held, stage, enter, prompt, play, quit, release }.
  */
 export default function TermEgg({ preRef, fxRef, statusRef, frameRef, handlers, egg }) {
   const root = useRef(null),
     boxRef = useRef(null),
+    buttonsRef = useRef(null),
     lastType = useRef("mouse");
   const [fill, setFill] = useState(0); // the block's height on a phone; 0 = leave it be
   const [scale, setScale] = useState(1);
-  const touch = typeof window !== "undefined" && isTouch();
+  const touch = useIsTouch();
+  const { release } = egg;
 
   // Park the block's top at the top of the output area, over its padding, so the line above
   // (the typed `./egg`) doesn't peek in.
@@ -62,10 +61,20 @@ export default function TermEgg({ preRef, fxRef, statusRef, frameRef, handlers, 
       const below =
         (parseFloat(getComputedStyle(box.firstElementChild).rowGap) || 0) +
         (parseFloat(getComputedStyle(box).paddingBottom) || 0);
+      // What the block needs under the pot, measured: the status (CSS reserves its tallest, 9
+      // lines, so the pot doesn't resize between stages) and the buttons, plus the block's own
+      // padding and the two gaps between its three rows.
+      const own = getComputedStyle(el);
+      const reservePx =
+        (statusRef.current?.offsetHeight || 0) +
+        (buttonsRef.current?.offsetHeight || 0) +
+        (parseFloat(own.paddingTop) || 0) +
+        (parseFloat(own.paddingBottom) || 0) +
+        2 * (parseFloat(own.rowGap) || 0);
       const f = eggFit({
         areaPx: box.clientHeight - below,
         framePx: EGG_PX,
-        reservePx: RESERVE,
+        reservePx,
         touchPhone: onTouch && isPhone(),
       });
       setFill(f.fill);
@@ -73,15 +82,17 @@ export default function TermEgg({ preRef, fxRef, statusRef, frameRef, handlers, 
     };
     const ro = new ResizeObserver(fit);
     ro.observe(box);
+    // The status can wrap differently from one stage to the next; the observer also fires once
+    // as it starts, which makes the first fit.
+    if (statusRef.current) ro.observe(statusRef.current);
     const vv = window.visualViewport;
     vv?.addEventListener("resize", fit);
     const timers = SETTLE_MS.map((ms) =>
       setTimeout(() => {
         fit();
-        align();
+        if (onTouch && isPhone()) align(); // a desktop terminal stays pinned to its bottom
       }, ms),
     );
-    fit();
     // The block fills the area, so there's nothing else to scroll to while the egg runs:
     // anything that moves it (iOS panning during a keyboard change) is put back at once. Unless
     // the block is taller than the area (a very short screen): then it must scroll, or the
@@ -102,8 +113,9 @@ export default function TermEgg({ preRef, fxRef, statusRef, frameRef, handlers, 
       box.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
       timers.forEach(clearTimeout);
+      release(); // the block is going (quit, ctrl-c, another command): a hold goes with it
     };
-  }, []);
+  }, [release, statusRef]);
 
   // After the block's size changes, put its top back at the top of the area.
   useEffect(() => {
@@ -147,7 +159,7 @@ export default function TermEgg({ preRef, fxRef, statusRef, frameRef, handlers, 
         </div>
       </div>
       <div ref={statusRef} className={styles.eggStatus} />
-      <div className={styles.eggButtons}>
+      <div ref={buttonsRef} className={styles.eggButtons}>
         {label && (
           <button type="button" className={styles.eggBtn} onClick={egg.play}>
             {label}

@@ -9,7 +9,8 @@
  * @param {{ type: "press", pointerType: string, inFrame: boolean }
  *   | { type: "stage", stage: number }
  *   | { type: "leave" }} event
- *   `press`: a pointer went down (anywhere on the page); `stage`: the egg moved to a stage
+ *   `press`: a pointer landed outside the frame, or lifted inside it (a tap; a swipe that
+ *   scrolls the page never lifts); `stage`: the egg moved to a stage
  *   (0–5, 5 is the result); `leave`: the egg left the screen's gui (a project page, terminal).
  */
 export function heldAfter(held, event) {

@@ -29,7 +29,8 @@ import { useTheme } from "@/lib/useTheme";
 import { useKeysPref } from "@/lib/useKeysPref";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { openBuffer, vimKey as vimStep } from "@/lib/vim";
-import { alignTarget, focusQuiet, freeNav, holdNav, parseLocation } from "@/lib/nav";
+import { isPhone } from "@/lib/egg/screen";
+import { alignTarget, focusQuiet, freeNav, holdNav, keepAligned, parseLocation } from "@/lib/nav";
 import { parsePath, projUrl } from "@/lib/urls";
 import { useOnChange } from "@/lib/useOnChange";
 import { BARS_MEASURED } from "@/lib/bars";
@@ -144,44 +145,18 @@ export default function App({ initialView = null }) {
   // On a phone, park the egg panel's top under the nav, so the whole panel (it is as tall as
   // the band between the bars) is on screen for a round. Its own scroll-margin-top is the
   // nav's height, not a section jump's --nav-offset. Returns whether it scrolled.
+  const unpark = useRef(null);
   const parkEgg = (behavior = smooth) => {
     const box = guiBoxRef.current;
-    if (!box || !window.matchMedia("(max-width: 600px)").matches) return false;
+    if (!box || !isPhone()) return false;
     const top = alignTarget(box);
     holdNav(navLock, 400, top);
     window.scrollTo({ top, behavior });
-    // The hero above the panel can grow for a moment after the page lands (measured on a loaded
-    // machine: +40px, then back), and the browser's scroll anchoring answers by moving the
-    // scroll the same way; when the hero returns to size nothing moves it back, leaving the
-    // panel off by the difference. So for a moment the hero changing size, and a short ladder
-    // of timers, re-park it, until the visitor scrolls or presses anything.
-    const repark = () => {
-      const want = alignTarget(box);
-      if (Math.abs(window.scrollY - want) > 1) window.scrollTo({ top: want, behavior: "auto" });
-    };
-    const ro = new ResizeObserver(repark);
-    const heroFrame = box.closest("[data-sec]");
-    if (heroFrame) ro.observe(heroFrame);
-    ro.observe(document.body);
-    const timers = [150, 400, 800, 1200].map((ms) => setTimeout(repark, ms));
-    const USER = ["wheel", "touchstart", "pointerdown", "keydown"];
-    const parkedAt = performance.now();
-    const stop = () => {
-      ro.disconnect();
-      timers.forEach(clearTimeout);
-      clearTimeout(end);
-      for (const ev of USER) window.removeEventListener(ev, takeover);
-    };
-    // Only an event that began after the park is the visitor taking over: the Enter that ran
-    // `./egg` can still be on its way to `window` (React lands the project page's leave inside
-    // that dispatch), and it would stop the re-park the moment it was set up.
-    const takeover = (e) => {
-      if (e.timeStamp > parkedAt) stop();
-    };
-    const end = setTimeout(stop, 1500);
-    for (const ev of USER) window.addEventListener(ev, takeover, { passive: true });
+    unpark.current?.();
+    unpark.current = keepAligned(box, { smooth: behavior === "smooth" });
     return true;
   };
+
   // The egg wanted from a project page (the embedded shell's ./egg): when it was asked for
   // (0 = not asked), so it parks once the list, and with it the hero, is back (landOnList)
   // and a request that never landed can't misfire on a later jump home.
@@ -200,7 +175,8 @@ export default function App({ initialView = null }) {
   // spy pick the active section) and move focus, which was on the page that is gone, to
   // that project's row.
   const landOnList = (land, prevSlug) => {
-    const park = land.sec === 0 && performance.now() - parkOnLand.current < 2000;
+    const park =
+      land.sec === 0 && parkOnLand.current > 0 && performance.now() - parkOnLand.current < 2000;
     parkOnLand.current = 0;
     if (land.scrollTo != null) window.scrollTo({ top: land.scrollTo, behavior: "auto" });
     else if (!(park && parkEgg("auto"))) scrollSec(land.sec, "auto");
@@ -268,6 +244,9 @@ export default function App({ initialView = null }) {
 
   // Starting or advancing the egg puts the rules card away (it would sit over the pot).
   const startEgg = () => {
+    // Starting a round parks the panel on a phone (tap or keyboard, since both come here); the
+    // later presses (pull the eggs, play again) must not move the page: they are timed.
+    if (egg.view.stage === 0) parkEgg();
     setRulesOpen(false);
     egg.crack();
   };
@@ -843,7 +822,6 @@ export default function App({ initialView = null }) {
       onSelectEgg={() => selectHero("egg")}
       onStart={() => {
         selectHero("egg");
-        parkEgg();
         startEgg();
       }}
       onMore={() => {
@@ -974,6 +952,7 @@ export default function App({ initialView = null }) {
               prompt: egg.view.prompt,
               play: egg.crack,
               quit: quitEgg,
+              release: egg.release,
             }}
             running={termEggRunning}
             pressedTab={pressedTab}
