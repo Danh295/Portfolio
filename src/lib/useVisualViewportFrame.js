@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { frameFor, nextBaseline } from "@/lib/viewportFrame";
+import { setPageLocked } from "@/lib/pageLock";
 
 /** How long (ms) a keyboard still counts after its prompt lost focus: the screen settles. */
 const SETTLE_MS = 700;
@@ -32,9 +33,8 @@ export function useVisualViewportFrame(frameRef, { lock = "always" } = {}) {
     const el = frameRef.current,
       vv = window.visualViewport;
     if (!el) return;
-    const root = document.documentElement;
-    if (lock === "always") root.classList.add("locked");
-    if (!vv) return () => root.classList.remove("locked");
+    if (lock === "always") setPageLocked(true);
+    if (!vv) return () => setPageLocked(false);
     let baseline = null,
       blurredAt = -1e9,
       settle = 0;
@@ -63,7 +63,7 @@ export function useVisualViewportFrame(frameRef, { lock = "always" } = {}) {
       el.style.setProperty("--vv-h", f.height + "px");
       if (f.keyboard) el.dataset.kb = "";
       else delete el.dataset.kb;
-      if (lock === "keyboard") root.classList.toggle("locked", f.keyboard);
+      if (lock === "keyboard") setPageLocked(f.keyboard);
     };
     const onFocusOut = () => {
       blurredAt = performance.now();
@@ -84,7 +84,7 @@ export function useVisualViewportFrame(frameRef, { lock = "always" } = {}) {
       document.removeEventListener("focusin", update);
       document.removeEventListener("focusout", onFocusOut);
       window.clearTimeout(settle);
-      root.classList.remove("locked");
+      setPageLocked(false);
       el.style.removeProperty("--vv-top");
       el.style.removeProperty("--vv-h");
       delete el.dataset.kb;
