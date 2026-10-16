@@ -4,6 +4,7 @@
 
 import { setJump } from "@/lib/jump";
 import { parsePath } from "@/lib/urls";
+import { pageMaxScroll, pageScrollY, scrollPageTo } from "@/lib/pageLock";
 
 export const parseLocation = () => parsePath(window.location.pathname, window.location.hash);
 
@@ -38,9 +39,11 @@ export function freeNav(lock, quiet = false) {
 
 /** scrollY that parks `el` just under the nav (its scroll-margin-top), within page bounds. */
 export function alignTarget(el) {
-  const margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0,
-    max = document.documentElement.scrollHeight - window.innerHeight;
-  return Math.max(0, Math.min(max, el.getBoundingClientRect().top + window.scrollY - margin));
+  const margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+  return Math.max(
+    0,
+    Math.min(pageMaxScroll(), el.getBoundingClientRect().top + pageScrollY() - margin),
+  );
 }
 
 /**
@@ -60,7 +63,7 @@ export function keepAligned(el, { smooth = false, ms = 1500 } = {}) {
   const repark = () => {
     if (performance.now() < quietUntil) return;
     const want = alignTarget(el);
-    if (Math.abs(window.scrollY - want) > 1) window.scrollTo({ top: want, behavior: "auto" });
+    if (Math.abs(pageScrollY() - want) > 1) scrollPageTo(want);
   };
   const ro = new ResizeObserver(repark);
   const frame = el.closest("[data-sec]");

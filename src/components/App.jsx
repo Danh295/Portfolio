@@ -30,7 +30,7 @@ import { useKeysPref } from "@/lib/useKeysPref";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { openBuffer, vimKey as vimStep } from "@/lib/vim";
 import { isPhone } from "@/lib/egg/screen";
-import { afterUnlock } from "@/lib/pageLock";
+import { scrollPageTo } from "@/lib/pageLock";
 import { alignTarget, focusQuiet, freeNav, holdNav, keepAligned, parseLocation } from "@/lib/nav";
 import { parsePath, projUrl } from "@/lib/urls";
 import { useOnChange } from "@/lib/useOnChange";
@@ -138,12 +138,9 @@ export default function App({ initialView = null }) {
   const scrollSec = (n, behavior = smooth) => {
     const el = n === 0 ? null : document.querySelector('[data-sec="' + n + '"]');
     if (n !== 0 && !el) return;
-    // Not while the page is locked (a keyboard up in a shell): that waits for the unlock.
-    afterUnlock(() => {
-      const top = el ? alignTarget(el) : 0;
-      holdNav(navLock, 400, top);
-      window.scrollTo({ top, behavior });
-    });
+    const top = el ? alignTarget(el) : 0;
+    holdNav(navLock, 400, top);
+    scrollPageTo(top, behavior);
   };
 
   // On a phone, park the egg panel's top under the nav, so the whole panel (it is as tall as
@@ -153,13 +150,11 @@ export default function App({ initialView = null }) {
   const parkEgg = (behavior = smooth) => {
     const box = guiBoxRef.current;
     if (!box || !isPhone()) return false;
-    afterUnlock(() => {
-      const top = alignTarget(box);
-      holdNav(navLock, 400, top);
-      window.scrollTo({ top, behavior });
-      unpark.current?.();
-      unpark.current = keepAligned(box, { smooth: behavior === "smooth" });
-    });
+    const top = alignTarget(box);
+    holdNav(navLock, 400, top);
+    scrollPageTo(top, behavior);
+    unpark.current?.();
+    unpark.current = keepAligned(box, { smooth: behavior === "smooth" });
     return true;
   };
 

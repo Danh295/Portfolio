@@ -959,10 +959,12 @@ await run(
 // scrolled from the top of the page, and `cd` computed its target from the locked page and went
 // nowhere. A headless browser has no keyboard, so the visual viewport is shrunk by hand and its
 // resize fired, which drives the real lock.
-const KEYBOARD = (tab, height) =>
+const KEYBOARD = (tab, height, shrinkInner = false) =>
   tab.evaluate(`(() => {
     const vv = visualViewport;
     ${height ? `Object.defineProperty(vv, "height", { get: () => ${height}, configurable: true });` : `delete vv.height;`}
+    // iOS also shrinks the layout viewport itself once the keyboard is fully up.
+    ${shrinkInner ? (height ? `Object.defineProperty(window, "innerHeight", { get: () => ${height}, configurable: true });` : `delete window.innerHeight;`) : ""}
     vv.dispatchEvent(new Event("resize"));
   })()`);
 const LOCKED = `document.documentElement.classList.contains("locked")`;
@@ -978,7 +980,7 @@ const RUN_WITH_KEYBOARD = async (tab, cmd) => {
   );
 };
 await run(
-  "embedded cd with the keyboard up lands on the section once the shell closes (390×844, touch)",
+  "embedded cd with the keyboard up moves the page underneath at once (390×844, touch)",
   { ...PHONE, mobile: true },
   async (tab) => {
     await tab.go("#home");
@@ -988,17 +990,67 @@ await run(
     await RUN_WITH_KEYBOARD(tab, "cd projects");
     await sleep(700);
     check("the page is locked while the keyboard is up", await tab.evaluate(LOCKED));
-    // Close the shell and let the keyboard go.
+    check(
+      "the shell is still open",
+      await tab.evaluate(`!!document.querySelector('[aria-label="embedded shell"]')`),
+    );
+    // Behind the open shell the page is already at the section: its top sits where a jump
+    // parks it (the locked page is shifted, not scrolled, so its rect is what is on screen).
+    const behind = await tab.top(1);
+    check("projects is already parked behind the shell", Math.abs(behind - band.parked) <= 3, {
+      behind,
+      parked: band.parked,
+    });
+    // Close the shell and let the keyboard go: the page stays there.
     await KEYBOARD(tab, 0);
     await tab.evaluate(`document.activeElement.blur()`);
     await tab.key("Escape");
-    await sleep(2200);
+    await sleep(1500);
     check("the page is unlocked again", !(await tab.evaluate(LOCKED)));
     const top = await tab.top(1);
-    check("projects is parked under the nav", Math.abs(top - band.parked) <= 3, {
+    check("and projects is still parked under the nav", Math.abs(top - band.parked) <= 3, {
       top,
       parked: band.parked,
     });
+  },
+);
+// The last section is where the page's end clamps a jump. With the keyboard up (and iOS's
+// layout viewport shrunk with it) the shell's `cd skills` must land where an unlocked jump
+// would, both behind the open shell and after it closes: the furthest the page can scroll is
+// measured on the unlocked page first.
+await run(
+  "embedded cd to the last section clamps like an unlocked jump (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await tab.go("#home");
+    const want = await tab.evaluate(`(() => {
+      const el = document.querySelector('[data-sec="3"]');
+      const margin = parseFloat(getComputedStyle(el).scrollMarginTop);
+      const doc = el.getBoundingClientRect().top + scrollY;
+      const y = Math.min(document.documentElement.scrollHeight - innerHeight, doc - margin);
+      return { y: Math.round(y), top: Math.round(doc - y) };
+    })()`);
+    await tab.key("`");
+    await sleep(500);
+    await KEYBOARD(tab, 508, true);
+    await sleep(300);
+    await tab.send("Input.insertText", { text: "cd skills" });
+    await tab.evaluate(
+      `document.querySelector('[aria-label="embedded shell"] input').dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }))`,
+    );
+    await sleep(700);
+    const behind = await tab.top(3);
+    check(
+      "behind the open shell the last section is where an unlocked jump puts it",
+      Math.abs(behind - want.top) <= 2,
+      { behind, want },
+    );
+    await KEYBOARD(tab, 0, true);
+    await tab.evaluate(`document.activeElement.blur()`);
+    await tab.key("Escape");
+    await sleep(1500);
+    const y = await tab.evaluate(`scrollY`);
+    check("and so is the page once the shell closes", Math.abs(y - want.y) <= 2, { y, want });
   },
 );
 await run(
