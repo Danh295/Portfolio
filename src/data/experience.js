@@ -13,11 +13,13 @@ const entries = [
     company: "IESO",
     loc: "mississauga, on",
     date: "sep 2026 – dec 2026",
-    summary: "working on Python proofs of concept and data pipelines, along with SQL databases",
+    summary:
+      "building a Python performance monitor on psutil for a Windows QA server, and code-reviewing data pipelines and Oracle SQL",
     details: [
-      "building Python proofs of concept",
-      "working on data pipelines",
-      "working with SQL databases",
+      "developing a Python performance monitoring wrapper on psutil for a Windows QA server, capturing process-level CPU and memory metrics from scripts without modifying their source",
+      "black-box and integration tested psutil, py-spy, line_profiler and tracemalloc against unmodifiable programs, validating Windows compatibility under enterprise-approved packages",
+      "benchmarked profiling overhead from 0.5% (psutil) to 31.8% (tracemalloc) and presented the trade-offs to the Solutions Development team, scoping psutil for the first production rollout",
+      "code-reviewed Python data pipelines and Oracle SQL queries for correctness, security and maintainability",
     ],
   },
   {
@@ -26,24 +28,24 @@ const entries = [
     loc: "waterloo, on",
     date: "jan 2026 – apr 2026",
     summary:
-      "built internal software and contributed to practical web-based tools that support day-to-day workflows and service delivery",
+      "built a full-stack web app that digitizes handwritten parking tickets with a 10-stage computer vision pipeline, reaching 92.3% per-field accuracy",
     details: [
-      "worked across frontend implementation and broader product polish for production-facing internal tools",
-      "contributed to UI improvements, maintainable components, and cleaner engineering workflows",
-      "focused on reliable delivery, practical collaboration, and learning through shipped work",
+      "independently built a full-stack web app to digitize handwritten parking tickets, reaching 92.3% per-field accuracy across 15 extracted fields per page on a 39-page labeled benchmark dataset",
+      "designed a 10-stage computer vision pipeline in Python with OpenCV and FastAPI: grid-snap zone detection, contour-based checkbox analysis, and a plate OCR fallback that merges PaddleOCR with a fine-tuned TrOCR model through character-level SequenceMatcher alignment",
+      "fine-tuned Microsoft's TrOCR-base-handwritten on real plate crops with PEFT/LoRA, merging the adapter into the base weights at startup so inference adds no latency",
+      "shipped a Next.js, React and TypeScript frontend with in-browser camera capture and an editable multi-page review, running fully local inference with no cloud APIs to meet municipal data-privacy requirements",
     ],
   },
   {
-    title: "web developer",
+    title: "web developer associate",
     company: "CiviConnect",
-    loc: "ontario, canada",
-    date: "2024 – 2025",
+    loc: "lincoln, on",
+    date: "jan 2025 – apr 2025",
     summary:
-      "worked on website development and digital experiences with a stronger emphasis on frontend delivery and implementation detail",
+      "built a travel-agency web app and a law association's client site in React, Next.js and Strapi",
     details: [
-      "developed websites and supporting pages across multiple initiatives",
-      "worked through website builds, JavaScript-heavy frontend work, and Strapi-backed content changes",
-      "contributed to design-minded implementation and Figma-based UI translation",
+      "developed a travel-agency web app for lincoln, on in React, Next.js and Strapi, with a Google Places API map, filterable events, user authentication, reviews and a calendar-based itinerary builder",
+      "delivered a client site for the Welland Law Association in React, Tailwind CSS and Next.js, backed by a custom Strapi schema with search and filtering across site content",
     ],
   },
   {
