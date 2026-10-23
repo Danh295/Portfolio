@@ -48,7 +48,7 @@ for (let v = -0.999; v <= 0.999; v += dv) {
     const key = Math.max(0, (dir * (n[0] * light[0] + n[1] * light[1] + n[2] * light[2])) / nl);
     // Weak bounce light from the lower right so the shadow side keeps a gradient.
     const bounce = Math.max(0, (dir * (n[0] * 0.8 - n[1] * 0.3)) / nl);
-    const lam = Math.min(1, key + 0.35 * bounce * (1 - key));
+    const lam = Math.min(1, key ** 1.6 + 0.35 * bounce * (1 - key));
     if (p[2] <= 0) continue; // far side hidden
     const x = Math.floor(N / 2 + p[0] * scale);
     const y = Math.floor(N / 2 - p[1] * scale);
