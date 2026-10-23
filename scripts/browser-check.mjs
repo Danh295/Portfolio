@@ -1780,12 +1780,48 @@ await run(
     const legends = await tab.evaluate(
       `[...document.querySelectorAll("[data-sec] > span")].filter((e) => e.getClientRects().length > 0).map((e) => e.innerText.trim()).join("|")`,
     );
-    check("the skills legend shows", legends.includes("bar = share of"), { legends });
+    check("the skills legend shows", legends.includes("share of"), { legends });
+    check(
+      "its hover wording is a key label, so touch drops it",
+      !legends.includes("hover or tab"),
+      {
+        legends,
+      },
+    );
     check("no key legend shows", !legends.includes("[↲]") && !legends.includes("move"), {
       legends,
     });
   },
 );
+
+// A skill row is a name, a 16-cell bar and the project·job·course counts: all three must fit
+// their columns (the longest name is "Hugging Face"), down to the smallest phones.
+for (const size of [
+  { width: 390, height: 844 },
+  { width: 360, height: 740 },
+  { width: 320, height: 640 },
+]) {
+  await run(
+    `skills rows fit at ${size.width}px (${size.width}×${size.height}, touch)`,
+    { ...size, mobile: true },
+    async (tab) => {
+      await tab.go("#skills");
+      const st = await tab.evaluate(`(() => {
+        const rows = [...document.querySelectorAll("#skills [tabindex='0']")];
+        const over = (e) => e.scrollWidth - e.clientWidth;
+        return {
+          rows: rows.length,
+          page: document.documentElement.scrollWidth - innerWidth,
+          row: Math.max(...rows.map(over)),
+          name: Math.max(...rows.map((r) => over(r.firstElementChild))),
+        };
+      })()`);
+      check("the skill rows are there", st.rows > 20, st);
+      check("no row runs past its box, no name past its column", st.row <= 0 && st.name <= 0, st);
+      check("the page doesn't scroll sideways", st.page <= 0, st);
+    },
+  );
+}
 
 await run("desktop shows key labels (1291×808)", DESKTOP, async (tab) => {
   await tab.go("#home");

@@ -3,7 +3,6 @@ export const ui = {
   introFx: "boot", // boot | wipe | none
   headerFx: "type", // decode | type | shade | none
   eggClock: "seconds", // seconds (goal 6.50s) | minutes (goal 6:30)
-  barStyle: "blocks", // blocks ████░░ | boxes [■■□□]
   eggFontPx: 7, // egg frame character size: smaller = higher resolution (6–10; was 10)
 };
 

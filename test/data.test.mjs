@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { projects, projectCategories } from "@/data/projects";
 import { experienceEntries } from "@/data/experience";
-import { coreTechStack, homeContent, whoamiFacts } from "@/data/home";
-import { buildSkills } from "@/lib/skills";
+import { coreTechStack, courses, homeContent, whoamiFacts } from "@/data/home";
+import { buildItems, buildSkills } from "@/lib/skills";
 
 test("projects: unique slugs, known category, required fields, https links", () => {
   const slugs = projects.map((p) => p.slug);
@@ -51,26 +51,26 @@ test("the working fact names an experience entry's company", async () => {
   assert.equal(!!working, current, "shown exactly while the role is current");
 });
 
-test("skills match tags exactly or as a prefix word", () => {
-  const p = [{ title: "a", tags: ["Tailwind CSS", "CSS Modules", "GitHub Pages"] }];
-  const items = buildSkills(
-    [{ label: "x", items: [{ name: "Tailwind" }, { name: "C" }, { name: "Git" }] }],
-    p,
-  )[0].items;
-  assert.deepEqual(
-    items.map((i) => i.coursework),
-    [false, true, true],
-  );
+// Every skill row must be used by something, or its bar would be empty.
+const allSources = { projects, jobs: experienceEntries, courses };
+test("every skill is used by a project, a job or a course", () => {
+  const unused = buildSkills(coreTechStack, allSources)
+    .flatMap((g) => g.items)
+    .filter((i) => i.used === 0)
+    .map((i) => i.name);
+  assert.deepEqual(unused, []);
 });
 
-const coursework = buildSkills(coreTechStack, projects)
-  .flatMap((g) => g.items)
-  .filter((i) => i.coursework && /\[course\]/.test(i.tip))
-  .map((i) => i.name);
-test(
-  "coursework skills name their courses",
-  { todo: coursework.length ? "still placeholders: " + coursework.join(", ") : false },
-  () => {
-    assert.deepEqual(coursework, []);
-  },
-);
+test("a job's project link names a real project", () => {
+  const slugs = new Set(projects.map((p) => p.slug));
+  for (const e of experienceEntries)
+    if (e.project) assert.ok(slugs.has(e.project), e.company + " links " + e.project);
+});
+
+test("Git is used by every item", () => {
+  const total = buildItems(allSources).length;
+  const git = buildSkills(coreTechStack, allSources)
+    .flatMap((g) => g.items)
+    .find((i) => i.name === "Git");
+  assert.equal(git.used, total);
+});

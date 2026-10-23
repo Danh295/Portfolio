@@ -22,7 +22,7 @@ import Intro from "@/components/overlay/Intro";
 import { site } from "@/config/site";
 import { ui } from "@/config/ui";
 import { projects, projectFolders } from "@/data/projects";
-import { skills } from "@/lib/shell";
+import { skills, skillTotal } from "@/lib/shell";
 import { spark } from "@/lib/github";
 import { useShell } from "@/components/shell/useShell";
 import { useTheme } from "@/lib/useTheme";
@@ -860,7 +860,7 @@ export default function App({ initialView = null }) {
   );
   const tail = (
     <div className={styles.tail}>
-      <Skills skills={skills} active={activeSec === 3} />
+      <Skills skills={skills} total={skillTotal} active={activeSec === 3} />
       <div className={styles.foot}>
         <span suppressHydrationWarning>© {YEAR} danny hu · ontario, canada</span>
         <KeyLabel>

@@ -1,16 +1,20 @@
 import SectionFrame from "@/components/frame/SectionFrame";
-import Hint from "@/components/Hint";
-import { projects } from "@/data/projects";
+import Hint, { KeyLabel } from "@/components/Hint";
 import styles from "./Skills.module.css";
 
-export default function Skills({ skills, active }) {
+export default function Skills({ skills, total, active }) {
   return (
     <SectionFrame
       id="skills"
       sec={3}
       prefix={<Hint>[3] </Hint>}
       title="~/skills"
-      right={"bar = share of " + projects.length + " projects · hover or tab for details"}
+      right={
+        <>
+          {"█ project ▓ job ▒ course · share of " + total}
+          <KeyLabel> · hover or tab for details</KeyLabel>
+        </>
+      }
       active={active}
       className={styles.skills}
     >
@@ -29,13 +33,13 @@ export default function Skills({ skills, active }) {
                 className={styles.row}
               >
                 <span className={styles.raw}>{s.name}</span>
-                <span className={s.coursework ? styles.course : styles.bar} aria-hidden="true">
+                <span className={styles.bar} aria-hidden="true">
                   {s.bar}
                 </span>
                 <span className={styles.count} aria-hidden="true">
                   {s.count}
                 </span>
-                <span className="sr-only">{s.coursework ? "coursework, " + s.tip : s.tip}</span>
+                <span className="sr-only">{s.tip}</span>
               </div>
             ))}
           </div>

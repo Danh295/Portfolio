@@ -151,7 +151,7 @@ export function createFs(data) {
       case "skills": {
         const g = skills[node.g];
         return [
-          "# " + g.label + ", by how many projects use them",
+          "# " + g.label + ", by share of projects (█), jobs (▓) and courses (▒)",
           "",
           ...g.items.map((s) => s.name.padEnd(12) + " " + s.bar + (s.count ? " " + s.count : "")),
         ];

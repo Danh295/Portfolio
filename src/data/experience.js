@@ -7,12 +7,15 @@ const BUILT = new Date(process.env.BUILD_DATE ?? Date.now());
 // Casing is stored exactly as displayed (nothing transforms it): the site's voice is
 // lowercase, including locations; companies, products and acronyms keep their casing.
 // `now` (the "● now" badge, the hero's "working" fact) comes from `date` at build time.
+// `tags` feed the skills bars only (nothing shows them); `project` names the project that is
+// the same work, so the two count once. Roles without `tags` aren't counted.
 const entries = [
   {
     title: "software solutions developer (co-op)",
     company: "IESO",
     loc: "mississauga, on",
     date: "sep 2026 – dec 2026",
+    tags: ["Python", "SQL", "Oracle Database", "Anaconda", "psutil", "py-spy", "line_profiler"],
     summary:
       "building a Python performance monitor on psutil for a Windows QA server, and code-reviewing data pipelines and Oracle SQL",
     details: [
@@ -27,6 +30,19 @@ const entries = [
     company: "City of Waterloo",
     loc: "waterloo, on",
     date: "jan 2026 – apr 2026",
+    project: "ppeo-scan",
+    tags: [
+      "Python",
+      "OpenCV",
+      "FastAPI",
+      "PaddleOCR",
+      "TrOCR",
+      "PyTorch",
+      "Hugging Face",
+      "Next.js",
+      "React",
+      "TypeScript",
+    ],
     summary:
       "built a full-stack web app that digitizes handwritten parking tickets with a 10-stage computer vision pipeline, reaching 92.3% per-field accuracy",
     details: [
@@ -41,6 +57,16 @@ const entries = [
     company: "CiviConnect",
     loc: "lincoln, on",
     date: "jan 2025 – apr 2025",
+    tags: [
+      "React",
+      "Next.js",
+      "Tailwind CSS",
+      "JavaScript",
+      "TypeScript",
+      "Strapi",
+      "HTML/CSS",
+      "Figma",
+    ],
     summary:
       "built a travel-agency web app and a law association's client site in React, Next.js and Strapi",
     details: [

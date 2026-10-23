@@ -46,37 +46,57 @@ export const whoamiFacts = [
   { k: "into", v: factText(fact("into")) },
 ];
 
-// Skills section. A skill's bar is the share of projects whose tags include it
-// (see src/lib/skills.js). Skills used in no project show "coursework" and list
-// `courses` in the tooltip.
-// TODO(danny): fill in the course names for the coursework skills.
+// Skills section. A skill's bar is its share of everything it can be used in: the projects
+// (src/data/projects.js), the jobs with `tags` (src/data/experience.js) and the courses
+// below, shaded █ project ▓ job ▒ course (src/lib/skills.js). A job with a `project` slug
+// is the same work as that project and counts once. `all` is a skill every item uses
+// (Git: every project lives on GitHub, and every course and job used it); `via` names tags
+// that count as the skill (Oracle Database for SQL) and show beside the item in "used in".
+const csCourse = ["C/C++", "Linux", "Make", "GDB", "Valgrind"];
+export const courses = [
+  { code: "CS 136", tags: csCourse },
+  { code: "CS 136L", tags: csCourse },
+  { code: "CS 246", tags: csCourse },
+];
+
 export const coreTechStack = [
   {
     label: "languages",
     items: [
-      { name: "C", courses: [] },
-      { name: "C++", courses: [] },
-      { name: "Python" },
       { name: "JavaScript" },
       { name: "TypeScript" },
+      { name: "Python" },
+      { name: "SQL", via: ["Oracle Database"] },
+      { name: "C/C++" },
+      { name: "HTML/CSS" },
     ],
   },
   {
     label: "frameworks",
-    items: [{ name: "React" }, { name: "Next.js" }, { name: "Tailwind" }, { name: "FastAPI" }],
+    items: [
+      { name: "React" },
+      { name: "Next.js" },
+      { name: "FastAPI" },
+      { name: "Node.js" },
+      { name: "Tailwind" },
+    ],
   },
   {
     label: "libraries",
-    items: [{ name: "OpenCV" }, { name: "NumPy", courses: [] }, { name: "Pillow" }],
+    items: [{ name: "OpenCV" }, { name: "PyTorch" }, { name: "Hugging Face" }, { name: "Pillow" }],
   },
   {
     label: "tools",
     items: [
-      { name: "Git", courses: [] },
-      { name: "Bash", courses: [] },
-      { name: "Linux", courses: [] },
-      { name: "Uvicorn", courses: [] },
+      { name: "Git", all: true },
+      { name: "Linux" },
+      { name: "Make" },
+      { name: "GDB" },
+      { name: "Valgrind" },
+      { name: "MongoDB" },
+      { name: "Figma" },
       { name: "Supabase" },
+      { name: "Anaconda" },
     ],
   },
 ];

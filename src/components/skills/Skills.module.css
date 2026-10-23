@@ -24,7 +24,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: 110px auto 28px;
+  grid-template-columns: 110px auto auto;
   gap: 14px;
   align-items: center;
   justify-content: start;
@@ -40,13 +40,12 @@
   text-transform: none;
 }
 
-.bar,
-.course {
+.bar {
   letter-spacing: 0;
 }
 
+/* project·job·course counts */
 .count {
-  text-align: right;
   color: var(--mid);
 }
 
@@ -56,7 +55,19 @@
   }
 
   .row {
-    grid-template-columns: 84px auto 24px;
+    grid-template-columns: 96px auto auto;
     gap: 8px;
+  }
+}
+
+/* The smallest phones (320px): the longest row, "Hugging Face" + 16 cells + counts, ran 8px
+   past its box with the padding and gaps above. */
+@media (max-width: 340px) {
+  .skills {
+    padding: 28px 8px 20px;
+  }
+
+  .row {
+    gap: 6px;
   }
 }
