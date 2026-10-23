@@ -81,11 +81,12 @@ export const metadata = {
   },
   // Listed by hand: Next's generated links left favicon.ico off the home page, so
   // browsers that skip SVG icons asked for /favicon.ico at the domain root (outside
-  // /Portfolio) and got a 404. Setting `icons` replaces the generated links, so all three
-  // files in src/app are listed here.
+  // /Portfolio) and got a 404. Setting `icons` replaces the generated links, so every
+  // file in src/app is listed here.
   icons: {
     icon: [
       { url: `${site.basePath}/favicon.ico`, sizes: "48x48" },
+      { url: `${site.basePath}/icon.png`, sizes: "192x192", type: "image/png" },
       { url: `${site.basePath}/icon.svg`, type: "image/svg+xml" },
     ],
     apple: `${site.basePath}/apple-icon.png`,
