@@ -59,6 +59,15 @@ for (let v = -0.999; v <= 0.999; v += dv) {
   }
 }
 
+// The widest part of the egg bulges one column out for a few rows and the outline steps in
+// sharply on either side of it. Where a row just inside that band stops short of the next
+// row's edge, one dim "-" is added so the edge eases in and out instead.
+const edge = (row) => row.findLastIndex((c) => c !== " ");
+for (let y = N / 2 - 1; y <= N / 2 + 4; y++) {
+  const e = edge(grid[y]);
+  if (e + 1 === edge(grid[y + 1]) || e + 1 === edge(grid[y - 1])) grid[y][e + 1] = "-";
+}
+
 const esc = (c) => (c === "<" ? "&lt;" : c === "&" ? "&amp;" : c);
 const rows = grid
   .map(
