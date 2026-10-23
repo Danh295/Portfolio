@@ -24,7 +24,13 @@ export default function BottomBar({ spark, barRef, inert }) {
           <Hint className={styles.key}>[l] </Hint>
           LinkedIn ↗
         </a>
-        <a href={site.resume} target="_blank" rel="noreferrer" data-key="r" data-tip="pdf">
+        <a
+          href={site.resume}
+          target="_blank"
+          rel="noreferrer"
+          data-key="r"
+          data-tip="view or download the pdf"
+        >
           <Hint className={styles.key}>[r] </Hint>
           resume ↗
         </a>

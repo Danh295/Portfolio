@@ -4,13 +4,14 @@ import { projPath } from "@/lib/urls";
 
 export const dynamic = "force-static";
 
-// Real pages only: home and one page per project. /projects/, /experience/ and /skills/
+// Real pages only: home, the resume viewer and one page per project. /projects/, /experience/ and /skills/
 // are redirect stubs (Search Console reports them as "page with redirect"). No
 // lastModified: a build date changes on every daily deploy and teaches crawlers to
 // ignore it.
 export default function sitemap() {
   return [
     { url: `${site.url}/`, changeFrequency: "monthly", priority: 1 },
+    { url: `${site.url}/resume/`, changeFrequency: "monthly", priority: 0.6 },
     ...projects.map((p) => ({
       url: site.url + projPath(p.slug),
       changeFrequency: "yearly",

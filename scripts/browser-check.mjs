@@ -45,6 +45,9 @@ const KEY = {
   3: ["Digit3", 51],
   j: ["KeyJ", 74],
   t: ["KeyT", 84],
+  "+": ["Equal", 187],
+  "-": ["Minus", 189],
+  0: ["Digit0", 48],
 };
 // Page-side expressions: the nav button whose label includes `label`; the hero's heading
 // as typed so far, and in full (its aria-label, src/data/home.js `heading`).
@@ -71,6 +74,7 @@ if (!existsSync(join(OUT, "index.html"))) {
 const TYPES = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript",
+  ".mjs": "text/javascript", // pdf.js's worker (the resume page); GitHub Pages sends the same
   ".css": "text/css",
   ".json": "application/json",
   ".txt": "text/plain",
@@ -1850,6 +1854,179 @@ await run(
     check("no used-in line takes space under a row", shown === 0, { shown });
   },
 );
+
+// The resume page: a viewer that draws public/Danny_s_Resume.pdf with pdf.js (a worker, a
+// canvas, a selectable text layer, the file's links laid over it) and the controls of a
+// basic reader. `d` and `p` aren't sent here (a download and a print dialog); the key
+// decisions are pinned by test/resumeKeys.test.mjs.
+const RESUME = {
+  // Dark pixels on the page's canvas: it is drawn, not blank.
+  ink: `(() => { const c = document.querySelector("[data-page] canvas"); if (!c) return 0;
+    const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i] < 100 && d[i + 3] > 0) n++; return n; })()`,
+  zoom: `document.querySelector("output").textContent.trim()`,
+  pageW: `Math.round(document.querySelector("[data-page]").getBoundingClientRect().width)`,
+  text: `document.querySelector("[data-page]").innerText`,
+};
+await run("the resume link leads to the viewer, in a new tab (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  const a = await tab.evaluate(`(() => { const a = document.querySelector('footer a[data-key="r"]');
+    return { href: new URL(a.href).pathname, target: a.target, rel: a.rel }; })()`);
+  check(
+    "resume ↗ is the viewer page, opened in a new tab",
+    a.href === "/Portfolio/resume/" && a.target === "_blank" && a.rel.includes("noreferrer"),
+    a,
+  );
+});
+
+await run("resume page draws the pdf (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("resume/", 4000);
+  check("one page is drawn, with ink on it", (await tab.evaluate(RESUME.ink)) > 5000, {
+    ink: await tab.evaluate(RESUME.ink),
+  });
+  const text = await tab.evaluate(RESUME.text);
+  check(
+    "its text is selectable (a text layer)",
+    text.includes("Danny Hu") && text.includes("IESO"),
+    {
+      text: text.slice(0, 80),
+    },
+  );
+  check("the text carries no phone number or school email", !/0199|example|jdoe0000/.test(text));
+  check("it opens at its printed size", (await tab.evaluate(RESUME.zoom)) === "100%", {
+    zoom: await tab.evaluate(RESUME.zoom),
+  });
+  // The file's GitHub link sits over the header and is what a click would hit.
+  const link = await tab.evaluate(`(() => {
+    const a = document.querySelector('[data-page] a[href="https://github.com/Danh295"]');
+    if (!a) return null;
+    const r = a.getBoundingClientRect(), p = document.querySelector("[data-page]").getBoundingClientRect();
+    const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+    return { hit: hit === a, fromTop: Math.round(r.top - p.top), pageH: Math.round(p.height),
+      blank: a.target === "_blank" && a.rel.includes("noreferrer") };
+  })()`);
+  check(
+    "the GitHub link is in the header, on top, and opens in a new tab",
+    link && link.hit && link.fromTop < link.pageH * 0.12 && link.blank,
+    link,
+  );
+  const dl = await tab.evaluate(`(() => { const a = document.querySelector("a[download]");
+    return { href: a.getAttribute("href"), name: a.getAttribute("download") }; })()`);
+  check(
+    "download offers the file under a clean name",
+    dl.href.endsWith("/Danny_s_Resume.pdf") && dl.name === "Danny_Hu_Resume.pdf",
+    dl,
+  );
+  const home = await tab.evaluate(
+    `document.querySelector('a[href$="/Portfolio/"], a[href="/"]')?.textContent`,
+  );
+  check("cd ~ leads home", home && home.includes("cd ~"), { home });
+});
+
+await run("resume page zooms in steps (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("resume/", 4000);
+  const w0 = await tab.evaluate(RESUME.pageW);
+  await tab.key("+");
+  await sleep(500);
+  check("+ goes to 125%", (await tab.evaluate(RESUME.zoom)) === "125%", {
+    zoom: await tab.evaluate(RESUME.zoom),
+  });
+  const w1 = await tab.evaluate(RESUME.pageW);
+  check("and the page grew by a quarter", Math.abs(w1 - Math.round((w0 - 2) * 1.25) - 2) <= 2, {
+    w0,
+    w1,
+  });
+  check("still drawn after the redraw", (await tab.evaluate(RESUME.ink)) > 5000);
+  await tab.key("-");
+  await tab.key("-");
+  check("- twice goes to 75%", (await tab.evaluate(RESUME.zoom)) === "75%", {
+    zoom: await tab.evaluate(RESUME.zoom),
+  });
+  await tab.key("0");
+  await sleep(300);
+  const fit = await tab.evaluate(`(() => { const s = document.querySelector("main");
+    return { page: ${RESUME.pageW}, room: s.clientWidth - 32, zoom: ${RESUME.zoom} }; })()`);
+  check("0 fits the page to the width", Math.abs(fit.page - fit.room) <= 2, fit);
+  // Shortcuts off: the same keys do nothing.
+  await tab.evaluate(`localStorage.setItem("danny-keys", "off")`);
+  await tab.go("resume/", 4000);
+  await tab.key("+");
+  await sleep(300);
+  check("with shortcuts off + does nothing", (await tab.evaluate(RESUME.zoom)) === "100%");
+  const btn = await tab.click(
+    `[...document.querySelectorAll("button")].find((b) => b.getAttribute("aria-label") === "zoom in")`,
+  );
+  await sleep(500);
+  check("the zoom in button still works", btn && (await tab.evaluate(RESUME.zoom)) === "125%", {
+    zoom: await tab.evaluate(RESUME.zoom),
+  });
+  await tab.evaluate(`localStorage.removeItem("danny-keys")`);
+});
+
+for (const size of [
+  { width: 390, height: 844 },
+  { width: 320, height: 640 },
+]) {
+  await run(
+    `resume page fits a phone at ${size.width}px (${size.width}×${size.height}, touch)`,
+    { ...size, mobile: true },
+    async (tab) => {
+      await tab.go("resume/", 4000);
+      const st = await tab.evaluate(`(() => ({
+        page: document.documentElement.scrollWidth - innerWidth,
+        stage: document.querySelector("main").scrollWidth - document.querySelector("main").clientWidth,
+        bar: document.querySelector("header").scrollWidth - document.querySelector("header").clientWidth,
+        pageW: ${RESUME.pageW}, zoom: ${RESUME.zoom},
+        labels: [...document.querySelectorAll("[data-hint]")].filter((e) => e.getClientRects().length).length,
+      }))()`);
+      check(
+        "the page opens fitted to the width, nothing sideways",
+        st.page <= 0 && st.stage <= 0,
+        st,
+      );
+      check("the toolbar fits", st.bar <= 0, st);
+      check("no key labels on a touch screen", st.labels === 0, st);
+      check("it is drawn, with ink on it", (await tab.evaluate(RESUME.ink)) > 3000, {
+        ink: await tab.evaluate(RESUME.ink),
+      });
+    },
+  );
+}
+
+// Zoomed past the screen's width, the page has to pan from its own left edge. In a centred
+// flex column the overflow is split over both sides and the left half can't be scrolled to.
+await run(
+  "resume page pans to its left edge when zoomed in (390×844, touch)",
+  { width: 390, height: 844, mobile: true },
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    for (let i = 0; i < 6; i++) {
+      await tab.tap(
+        `[...document.querySelectorAll("button")].find((b) => b.getAttribute("aria-label") === "zoom in")`,
+      );
+      await sleep(150);
+    }
+    await sleep(800);
+    const st =
+      await tab.evaluate(`(() => { const m = document.querySelector("main"); m.scrollLeft = 0;
+      return { zoom: ${RESUME.zoom}, left: Math.round(document.querySelector("[data-page]").getBoundingClientRect().left),
+        over: m.scrollWidth - m.clientWidth }; })()`);
+    check("the page is wider than the screen", st.over > 0, st);
+    check("and its left edge is on screen when scrolled to the start", st.left >= 0, st);
+  },
+);
+
+// Leaving while the page is still being drawn must not log an error (a render the destroyed
+// document rejects is not a failure).
+await run("resume page can be left mid-render (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("resume/", 250);
+  await tab.click(
+    `[...document.querySelectorAll("a")].find((a) => a.textContent.includes("cd ~"))`,
+  );
+  await sleep(2500);
+  const here = await tab.evaluate("location.pathname");
+  check("cd ~ went home", here === "/Portfolio/" || here === "/Portfolio", { here });
+});
 
 await run("desktop shows key labels (1291×808)", DESKTOP, async (tab) => {
   await tab.go("#home");

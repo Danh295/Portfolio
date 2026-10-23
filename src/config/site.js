@@ -14,5 +14,8 @@ export const site = {
   },
   linkedin: "https://www.linkedin.com/in/danny-hu-395380225/",
   email: "hudanny295@gmail.com",
-  resume: `${basePath}/Danny_s_Resume.pdf`,
+  // The resume page (a viewer, opened in a new tab) and the PDF file it draws and offers to
+  // download. The file carries no phone number or school email (test/resume.test.mjs).
+  resume: `${basePath}/resume/`,
+  resumePdf: `${basePath}/Danny_s_Resume.pdf`,
 };
