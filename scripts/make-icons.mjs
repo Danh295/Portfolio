@@ -16,14 +16,15 @@ const FG = "#ECEAE5";
 const RAMP = ".,:-~=+*#%@";
 
 // An egg standing slightly tilted, lit from the upper left, orthographic, z-buffered.
-const tilt = -0.32;
+const EGG_H = 1.3; // half-height: taller than wide, narrowing toward the top
+const tilt = -0.22;
 const [ct, st] = [Math.cos(tilt), Math.sin(tilt)];
 const L = [-0.45, 0.55, 0.7];
 const ln = Math.hypot(...L);
 const light = L.map((c) => c / ln);
 const egg = (v, u) => {
-  const r = Math.sqrt(1 - v * v) * (1 - 0.14 * v);
-  return [r * Math.cos(u), v * 1.12, r * Math.sin(u)];
+  const r = Math.sqrt(1 - v * v) * (1 - 0.3 * v);
+  return [r * Math.cos(u), v * EGG_H, r * Math.sin(u)];
 };
 const rot = ([x, y, z]) => [x * ct - y * st, x * st + y * ct, z];
 const sub = (a, b) => a.map((c, i) => c - b[i]);
@@ -33,7 +34,7 @@ const cross = (a, b) => [
   a[0] * b[1] - a[1] * b[0],
 ];
 
-const scale = (N * 0.5 * 0.86) / 1.12;
+const scale = (N * 0.5 * 0.9) / EGG_H;
 const grid = Array.from({ length: N }, () => Array(N).fill(" "));
 const zb = Array.from({ length: N }, () => Array(N).fill(-Infinity));
 const dv = 0.002;
