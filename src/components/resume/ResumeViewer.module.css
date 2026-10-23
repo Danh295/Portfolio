@@ -81,7 +81,8 @@
   margin-inline: auto;
   background: #fff;
   color: #000;
-  border: 1px solid var(--line);
+  border-style: solid; /* its width is PAGE_BORDER in ResumeViewer.jsx */
+  border-color: var(--line);
   box-sizing: content-box;
 }
 

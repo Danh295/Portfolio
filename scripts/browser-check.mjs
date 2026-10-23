@@ -2016,6 +2016,51 @@ await run(
   },
 );
 
+// A phone turned sideways (or a resized window, or a scrollbar appearing) changes the room the
+// page has: while the zoom is the opening fit it follows the room, and once the visitor has
+// zoomed by hand it stays where they put it.
+await run(
+  "resume page re-fits when the screen changes size, until zoomed by hand (390×844, touch)",
+  { width: 390, height: 844, mobile: true },
+  async (tab) => {
+    const resize = (width, height) =>
+      tab.send("Emulation.setDeviceMetricsOverride", {
+        width,
+        height,
+        deviceScaleFactor: 1,
+        mobile: true,
+      });
+    const ROOM = `(() => { const s = document.querySelector("main");
+      return { page: ${RESUME.pageW}, room: s.clientWidth - 32, zoom: ${RESUME.zoom} }; })()`;
+    await tab.go("resume/", 4000);
+    const portrait = await tab.evaluate(ROOM);
+    await resize(700, 390);
+    await sleep(1200);
+    const landscape = await tab.evaluate(ROOM);
+    check(
+      "turned to landscape, the page is re-fitted to the new width",
+      Math.abs(landscape.page - landscape.room) <= 2 && landscape.page > portrait.page,
+      { portrait, landscape },
+    );
+    await resize(390, 844);
+    await sleep(1200);
+    const back = await tab.evaluate(ROOM);
+    check("and back again", Math.abs(back.page - back.room) <= 2, { back });
+    await tab.tap(
+      `[...document.querySelectorAll("button")].find((b) => b.getAttribute("aria-label") === "zoom in")`,
+    );
+    await sleep(700);
+    const byHand = await tab.evaluate(ROOM);
+    await resize(700, 390);
+    await sleep(1200);
+    const after = await tab.evaluate(ROOM);
+    check("after zooming by hand, a resize leaves the zoom alone", after.zoom === byHand.zoom, {
+      byHand,
+      after,
+    });
+  },
+);
+
 // Leaving while the page is still being drawn must not log an error (a render the destroyed
 // document rejects is not a failure).
 await run("resume page can be left mid-render (1291×808)", DESKTOP, async (tab) => {

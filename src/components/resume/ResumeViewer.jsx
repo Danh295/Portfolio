@@ -5,36 +5,50 @@ import Link from "next/link";
 import { site } from "@/config/site";
 import Hint from "@/components/Hint";
 import { useKeysPref } from "@/lib/useKeysPref";
-import { fitZoom, startZoom, stepZoom, zoomLabel } from "@/lib/resumeView";
+import { CSS_PX_PER_PT, fitZoom, startZoom, stepZoom, zoomLabel } from "@/lib/resumeView";
 import { resumeKey } from "@/lib/resumeKeys";
 import { linkBoxes } from "@/lib/resumeLinks";
 import styles from "./ResumeViewer.module.css";
 
 const DOWNLOAD_NAME = "Danny_Hu_Resume.pdf";
-const CSS_PX_PER_PT = 96 / 72;
 // The canvas keeps at least this many pixels across, so printing it (the browser prints what
 // is on the page) isn't soft at a small zoom; and never more than MAX_PIXELS in all: iOS
 // Safari leaves a bigger canvas blank (its limit is 16.7 million).
 const MIN_CANVAS_WIDTH = 1700;
 const MAX_PIXELS = 12_000_000;
-// The stage's side padding (2 × 16px) and the page's border (2 × 1px): the room a page can
-// use is the stage's width less these.
-const STAGE_GUTTER = 34;
+// A zoom step redraws after this pause, so a held + or - draws once at the end; the old
+// drawing is stretched to the new size meanwhile.
+const REDRAW_DELAY_MS = 100;
+// The page's border, in px (the one place it is set: used for the box and for the room).
+const PAGE_BORDER = 1;
+
+/** The width a page can use in the stage: its content width less the pages' two borders. */
+function roomIn(stage) {
+  const css = getComputedStyle(stage);
+  return (
+    stage.clientWidth - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight) - 2 * PAGE_BORDER
+  );
+}
 
 /** One page of the PDF: a box at the zoomed size, links over it, the drawing swapped in. */
-function PdfPage({ index, info, zoom, pdfRef }) {
+function PdfPage({ index, info, zoom }) {
   const boxRef = useRef(null);
   const scale = zoom * CSS_PX_PER_PT;
-  const width = info.size[0] * scale,
-    height = info.size[1] * scale;
+
+  // Until the redraw lands, the old text layer is re-scaled with the page, so selecting and
+  // finding text still line up with the (stretched) drawing.
+  useEffect(() => {
+    boxRef.current?.lastElementChild?.style.setProperty("--total-scale-factor", String(scale));
+  }, [scale]);
 
   useEffect(() => {
+    const { page } = info;
+    const width = info.size[0] * scale,
+      height = info.size[1] * scale;
     let cancelled = false,
       task = null,
       text = null;
-    (async () => {
-      const page = await pdfRef.current.getPage(index + 1);
-      if (cancelled) return;
+    const draw = async () => {
       const ratio = Math.min(
         Math.max(window.devicePixelRatio || 1, MIN_CANVAS_WIDTH / width),
         Math.sqrt(MAX_PIXELS / (width * height)),
@@ -61,30 +75,42 @@ function PdfPage({ index, info, zoom, pdfRef }) {
       await text.render();
       if (cancelled) return;
       boxRef.current?.replaceChildren(canvas, layer);
-    })().catch((e) => {
-      // A superseded render rejects with a "cancelled" exception, and so does one the page was
-      // left in the middle of: both are expected.
-      if (!cancelled && e?.name !== "RenderingCancelledException") console.error(e);
-    });
+    };
+    // The first drawing starts at once; a later one waits out a burst of zoom steps.
+    const timer = setTimeout(
+      () =>
+        draw().catch((e) => {
+          // A superseded render rejects with a "cancelled" exception, and so does one the
+          // page was left in the middle of: both are expected.
+          if (!cancelled && e?.name !== "RenderingCancelledException") console.error(e);
+        }),
+      boxRef.current?.firstChild ? REDRAW_DELAY_MS : 0,
+    );
     return () => {
       cancelled = true;
+      clearTimeout(timer);
       task?.cancel();
       text?.cancel();
     };
-  }, [index, scale, width, height, pdfRef]);
+  }, [info, scale]);
 
   return (
     <div
       className={styles.page}
       data-page={index + 1}
-      style={{ width, height, "--aspect": `${info.size[0]} / ${info.size[1]}` }}
+      style={{
+        width: info.size[0] * scale,
+        height: info.size[1] * scale,
+        borderWidth: PAGE_BORDER,
+        "--aspect": `${info.size[0]} / ${info.size[1]}`,
+      }}
     >
       <div ref={boxRef} className={styles.layers} />
       {(info.rotated ? [] : linkBoxes(info.annotations, info.view, scale)).map((b) => (
         <a
           key={b.href + b.left + b.top}
           href={b.href}
-          target="_blank"
+          target={/^https?:/i.test(b.href) ? "_blank" : undefined}
           rel="noreferrer"
           className={styles.link}
           aria-label={b.href.replace(/^https?:\/\/|^mailto:/, "")}
@@ -99,11 +125,14 @@ function PdfPage({ index, info, zoom, pdfRef }) {
 export default function ResumeViewer() {
   const [keysOn] = useKeysPref();
   const stageRef = useRef(null),
-    pdfRef = useRef(null),
     downloadRef = useRef(null);
   const [pages, setPages] = useState(null);
   const [failed, setFailed] = useState(false);
   const [zoom, setZoom] = useState(1);
+  // What the zoom follows when the room changes (a turned phone, a resized window, a scrollbar
+  // appearing): the opening fit ("start"), a fit asked for ("fit"), or nothing once the
+  // visitor has zoomed by hand.
+  const [follow, setFollow] = useState("start");
   const [current, setCurrent] = useState(1);
 
   // Load the file. pdf.js is imported here, not at the top: it needs the browser, and only
@@ -120,7 +149,7 @@ export default function ResumeViewer() {
       ).toString();
       loading = pdfjs.getDocument({ url: site.resumePdf });
       const doc = await loading.promise;
-      pdfRef.current = doc;
+      if (cancelled) return;
       const infos = [];
       for (let n = 1; n <= doc.numPages; n++) {
         const page = await doc.getPage(n);
@@ -128,6 +157,7 @@ export default function ResumeViewer() {
         // unrotated units, so a rotated page gets no link boxes (see resumeLinks.js).
         const { width, height } = page.getViewport({ scale: 1 });
         infos.push({
+          page,
           size: [width, height],
           rotated: page.rotate % 360 !== 0,
           view: page.view,
@@ -135,7 +165,7 @@ export default function ResumeViewer() {
         });
       }
       if (cancelled) return;
-      setZoom(startZoom(stageRef.current.clientWidth - STAGE_GUTTER, infos[0].size[0]));
+      setZoom(startZoom(roomIn(stageRef.current), infos[0].size[0]));
       setPages(infos);
     })().catch((e) => {
       // Leaving the page destroys the loading task, which rejects what was still waiting on it.
@@ -146,19 +176,63 @@ export default function ResumeViewer() {
     return () => {
       cancelled = true;
       loading?.destroy();
-      pdfRef.current = null;
     };
   }, []);
 
   const widthPt = pages ? pages[0].size[0] : 612;
-  const fit = () => setZoom(fitZoom(stageRef.current.clientWidth - STAGE_GUTTER, widthPt));
+  const fit = () => {
+    setFollow("fit");
+    setZoom(fitZoom(roomIn(stageRef.current), widthPt));
+  };
   const act = {
-    zoomIn: () => setZoom((z) => stepZoom(z, +1)),
-    zoomOut: () => setZoom((z) => stepZoom(z, -1)),
+    zoomIn: () => {
+      setFollow(null);
+      setZoom((z) => stepZoom(z, +1));
+    },
+    zoomOut: () => {
+      setFollow(null);
+      setZoom((z) => stepZoom(z, -1));
+    },
     fit,
     download: () => downloadRef.current?.click(),
     print: () => window.print(),
   };
+
+  // Keep a followed fit in step with the room: this also catches the document's scrollbar
+  // appearing once the pages are in, which narrows the stage after the first measurement.
+  const refit = useEffectEvent(() => {
+    // The observer can fire once more as the page is left, when the stage is already gone.
+    const stage = stageRef.current;
+    if (!follow || !pages || !stage) return;
+    const room = roomIn(stage);
+    setZoom(follow === "fit" ? fitZoom(room, widthPt) : startZoom(room, widthPt));
+  });
+  useEffect(() => {
+    if (!pages) return;
+    const watch = new ResizeObserver(() => refit());
+    watch.observe(stageRef.current);
+    return () => watch.disconnect();
+  }, [pages]);
+
+  // Keyboard mode, as the app has it: any key pauses the hover look, a real mouse move or a
+  // press brings it back (every :hover rule here is written html:not(.kbd), like the app's).
+  useEffect(() => {
+    const root = document.documentElement;
+    const keyed = () => root.classList.add("kbd");
+    const moved = (e) => {
+      if (e.movementX || e.movementY) root.classList.remove("kbd");
+    };
+    const pressed = () => root.classList.remove("kbd");
+    window.addEventListener("keydown", keyed, true);
+    window.addEventListener("pointermove", moved);
+    window.addEventListener("pointerdown", pressed);
+    return () => {
+      window.removeEventListener("keydown", keyed, true);
+      window.removeEventListener("pointermove", moved);
+      window.removeEventListener("pointerdown", pressed);
+      root.classList.remove("kbd");
+    };
+  }, []);
 
   // The window listeners are registered once; the effect events always see the latest state.
   const onKey = useEffectEvent((e) => {
@@ -237,9 +311,7 @@ export default function ResumeViewer() {
       </header>
       <main ref={stageRef} className={styles.stage}>
         {pages ? (
-          pages.map((info, i) => (
-            <PdfPage key={i} index={i} info={info} zoom={zoom} pdfRef={pdfRef} />
-          ))
+          pages.map((info, i) => <PdfPage key={i} index={i} info={info} zoom={zoom} />)
         ) : failed ? (
           <p className={styles.note}>
             couldn&apos;t draw the resume here.{" "}

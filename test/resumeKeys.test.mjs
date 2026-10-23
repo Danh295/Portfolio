@@ -47,3 +47,9 @@ test("a held key repeats zoom but not download or print", () => {
   assert.equal(resumeKey(press("d", { repeat: true })), null);
   assert.equal(resumeKey(press("p", { repeat: true })), null);
 });
+
+// Autofill and some input methods dispatch keydown events with no `key` at all.
+test("a keydown without a key is ignored, not an error", () => {
+  assert.equal(resumeKey(press(undefined)), null);
+  assert.equal(resumeKey(press("Dead")), null);
+});

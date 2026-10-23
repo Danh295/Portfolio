@@ -19,7 +19,7 @@ const ONCE = new Set(["download", "print"]);
  * shortcut, so all of them go quiet while those are off (WCAG 2.1.4).
  */
 export function resumeKey({ key, ctrl, meta, alt, repeat, keysOn }) {
-  if (ctrl || meta || alt || !keysOn) return null;
+  if (ctrl || meta || alt || !keysOn || typeof key !== "string") return null;
   const action = ACTIONS[key.toLowerCase()] ?? null;
   return action && repeat && ONCE.has(action) ? null : action;
 }

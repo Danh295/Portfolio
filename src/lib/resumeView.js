@@ -3,7 +3,8 @@
 
 export const ZOOMS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3];
 
-const CSS_PX_PER_PT = 96 / 72;
+/** CSS pixels in one PDF point (1/72 inch) at 96 pixels per inch. */
+export const CSS_PX_PER_PT = 96 / 72;
 const MIN = ZOOMS[0],
   MAX = ZOOMS[ZOOMS.length - 1];
 
