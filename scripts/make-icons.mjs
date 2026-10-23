@@ -35,7 +35,7 @@ const cross = (a, b) => [
 ];
 
 const scale = (N * 0.5 * 0.9) / EGG_H;
-const grid = Array.from({ length: N }, () => Array(N).fill(" "));
+const lg = Array.from({ length: N }, () => Array(N).fill(-1)); // light per cell, -1 = empty
 const zb = Array.from({ length: N }, () => Array(N).fill(-Infinity));
 const dv = 0.002;
 const du = 0.004;
@@ -54,10 +54,35 @@ for (let v = -0.999; v <= 0.999; v += dv) {
     const y = Math.floor(N / 2 - p[1] * scale);
     if (x < 0 || x >= N || y < 0 || y >= N || p[2] <= zb[y][x]) continue;
     zb[y][x] = p[2];
-    const k = Math.min(RAMP.length - 1, Math.floor((0.1 + 0.95 * lam) * RAMP.length));
-    grid[y][x] = RAMP[k];
+    lg[y][x] = lam;
   }
 }
+
+// Smooth the light over neighbouring filled cells (1-2-1 kernel) so single cells don't jump a
+// band away from their neighbours.
+const blur = lg.map((row, y) =>
+  row.map((l, x) => {
+    if (l < 0) return -1;
+    let sum = 0;
+    let w = 0;
+    for (let j = -1; j <= 1; j++)
+      for (let i = -1; i <= 1; i++) {
+        const v = lg[y + j]?.[x + i] ?? -1;
+        if (v < 0) continue;
+        const k = (2 - Math.abs(i)) * (2 - Math.abs(j));
+        sum += v * k;
+        w += k;
+      }
+    return sum / w;
+  }),
+);
+const grid = blur.map((row) =>
+  row.map((l) => {
+    if (l < 0) return " ";
+    const k = (0.1 + 0.9 * l) * RAMP.length;
+    return RAMP[Math.max(0, Math.min(RAMP.length - 1, Math.floor(k)))];
+  }),
+);
 
 // The widest part of the egg bulges one column out for several rows and the outline steps
 // in sharply on either side of it. Where a row near that band stops one column short of a
