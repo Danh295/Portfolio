@@ -102,6 +102,31 @@ for (let pass = 0; pass < 2; pass++) {
 }
 
 const esc = (c) => (c === "<" ? "&lt;" : c === "&" ? "&amp;" : c);
+// A dim solid body behind the glyphs, shaded by the same light: at 16-32px the thin strokes
+// alone average out to a grey smudge on the dark tile, and the tab icon read as a black square.
+const mix = (t) =>
+  [BG, FG]
+    .map((h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)))
+    .reduce(
+      (a, b) =>
+        "#" +
+        a
+          .map((c, i) =>
+            Math.round(c + (b[i] - c) * t)
+              .toString(16)
+              .padStart(2, "0"),
+          )
+          .join(""),
+    );
+const body = grid
+  .flatMap((row, y) =>
+    row.map((c, x) =>
+      c === " "
+        ? ""
+        : `<rect x="${x * CELL}" y="${y * CELL}" width="${CELL}" height="${CELL}" fill="${mix(0.22 + 0.4 * Math.max(0, blur[y][x]))}"/>`,
+    ),
+  )
+  .join("");
 const rows = grid
   .map(
     (row, i) =>
@@ -115,6 +140,7 @@ const svg =
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${N * CELL} ${N * CELL}">` +
   `<style>@font-face{font-family:E;font-weight:500;src:url(data:font/woff2;base64,${font}) format("woff2")}</style>` +
   `<rect width="100%" height="100%" fill="${BG}"/>` +
+  body +
   `<g fill="${FG}" font-family="E,monospace" font-weight="500" font-size="11">${rows}</g></svg>`;
 
 const chrome = [
