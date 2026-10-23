@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fitZoom, startZoom, stepZoom, zoomLabel } from "@/lib/resumeView";
+import { FOLLOW, fitZoom, startZoom, stepZoom, zoomFor, zoomLabel } from "@/lib/resumeView";
 
 test("zoom steps move to the neighbouring step", () => {
   assert.equal(stepZoom(1, +1), 1.25);
@@ -49,4 +49,17 @@ test("the label is a whole percent", () => {
   assert.equal(zoomLabel(1), "100%");
   assert.equal(zoomLabel(1.25), "125%");
   assert.equal(zoomLabel(0.35294), "35%");
+});
+
+// What the zoom does when the room changes: the opening fit never enlarges the page past its
+// printed size, a fit asked for fills the room, and a zoom set by hand follows nothing.
+test("zoomFor gives the zoom the followed mode wants for this room", () => {
+  assert.equal(zoomFor(FOLLOW.START, 1632, LETTER), 1);
+  assert.equal(zoomFor(FOLLOW.FIT, 1632, LETTER), 2);
+  assert.equal(zoomFor(FOLLOW.START, 408, LETTER), 0.5);
+  assert.equal(zoomFor(FOLLOW.FIT, 408, LETTER), 0.5);
+});
+
+test("a zoom set by hand follows nothing", () => {
+  assert.equal(zoomFor(FOLLOW.NONE, 408, LETTER), null);
 });

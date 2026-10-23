@@ -1864,6 +1864,11 @@ const RESUME = {
   ink: `(() => { const c = document.querySelector("[data-page] canvas"); if (!c) return 0;
     const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0;
     for (let i = 0; i < d.length; i += 4) if (d[i] < 100 && d[i + 3] > 0) n++; return n; })()`,
+  // Dark pixels on each page's canvas, and the page count the toolbar reports ("page 1/N").
+  inks: `[...document.querySelectorAll("[data-page]")].map((p) => { const c = p.querySelector("canvas"); if (!c) return 0;
+    const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i] < 100 && d[i + 3] > 0) n++; return n; })`,
+  pageCount: `Number(document.querySelector("header").innerText.match(/page \\d+\\/(\\d+)/)[1])`,
   zoom: `document.querySelector("output").textContent.trim()`,
   pageW: `Math.round(document.querySelector("[data-page]").getBoundingClientRect().width)`,
   text: `document.querySelector("[data-page]").innerText`,
@@ -1881,9 +1886,14 @@ await run("the resume link leads to the viewer, in a new tab (1291×808)", DESKT
 
 await run("resume page draws the pdf (1291×808)", DESKTOP, async (tab) => {
   await tab.go("resume/", 4000);
-  check("one page is drawn, with ink on it", (await tab.evaluate(RESUME.ink)) > 5000, {
-    ink: await tab.evaluate(RESUME.ink),
-  });
+  // Every page of the file is drawn, and has ink (the file has one page today, but the check
+  // doesn't depend on that).
+  const drawn = await tab.evaluate(`({ inks: ${RESUME.inks}, pages: ${RESUME.pageCount} })`);
+  check(
+    "every page of the PDF is drawn, with ink on it",
+    drawn.pages >= 1 && drawn.inks.length === drawn.pages && drawn.inks.every((n) => n > 5000),
+    drawn,
+  );
   const text = await tab.evaluate(RESUME.text);
   check(
     "its text is selectable (a text layer)",
@@ -2058,6 +2068,243 @@ await run(
       byHand,
       after,
     });
+  },
+);
+
+// Exact touches for the gesture checks (Input.dispatchTouchEvent takes the fingers' positions,
+// so each check chooses where they start; synthesizePinchGesture can't).
+const touchPoints = (xs, y) =>
+  xs.map((x, i) => ({ x, y, id: i + 1, radiusX: 4, radiusY: 4, force: 1 }));
+async function pinchOn(tab, { x = 195, y, from = 30, to = 60, steps = 12 }) {
+  await tab.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: touchPoints([x - from, x + from], y),
+  });
+  for (let i = 1; i <= steps; i++) {
+    const half = from + ((to - from) * i) / steps;
+    await tab.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: touchPoints([x - half, x + half], y),
+    });
+    await sleep(20);
+  }
+  await tab.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await sleep(600);
+}
+async function tapAt(tab, x, y) {
+  await tab.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: touchPoints([x], y),
+  });
+  await sleep(40);
+  await tab.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+}
+const PHONE_STATE = `(() => { const p = document.querySelector("[data-page]").getBoundingClientRect();
+  return { vv: +visualViewport.scale.toFixed(3), label: ${RESUME.zoom}, pageW: Math.round(p.width),
+    headerW: Math.round(document.querySelector("header").getBoundingClientRect().width),
+    fx: +((195 - p.left) / p.width).toFixed(3), fy: +((200 - p.top) / p.height).toFixed(3) }; })()`;
+const pct = (label) => parseInt(label, 10);
+
+// Two fingers on the PDF zoom the PDF, not the whole browser page: the label follows, the
+// toolbar stays the size it was, and the spot between the fingers stays between them.
+await run(
+  "resume page: a pinch on the page zooms the PDF, not the site (390×844, touch)",
+  { width: 390, height: 844, mobile: true },
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    const before = await tab.evaluate(PHONE_STATE);
+    await pinchOn(tab, { y: 200, from: 30, to: 60 }); // twice as far apart
+    const after = await tab.evaluate(PHONE_STATE);
+    check(
+      "the browser's own page zoom stayed at 1 (the toolbar didn't grow)",
+      after.vv === 1 && after.headerW === before.headerW,
+      { before, after },
+    );
+    check("the label follows the pinch", pct(after.label) > pct(before.label) * 1.8, {
+      before,
+      after,
+    });
+    check("and the page grew with it", after.pageW > before.pageW * 1.8, { before, after });
+    check(
+      "the spot between the fingers is still between them",
+      Math.abs(after.fx - before.fx) < 0.03 && Math.abs(after.fy - before.fy) < 0.03,
+      { before, after },
+    );
+  },
+);
+
+// The toolbar is outside the stage: a pinch with both fingers inside it is still the browser's.
+await run(
+  "resume page: a pinch inside the toolbar still zooms the whole page (390×844, touch)",
+  { width: 390, height: 844, mobile: true },
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    const before = await tab.evaluate(PHONE_STATE);
+    await pinchOn(tab, { y: 24, from: 30, to: 90 }); // the browser needs a wider span to start
+    const after = await tab.evaluate(PHONE_STATE);
+    check("the browser zoomed the page (a way to magnify the toolbar remains)", after.vv > 1, {
+      before,
+      after,
+    });
+    check("and the PDF's own zoom didn't move", after.label === before.label, { before, after });
+  },
+);
+
+await run(
+  "resume page: a double-tap flips between fit and 100% (390×844, touch)",
+  { width: 390, height: 844, mobile: true },
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    const fit = await tab.evaluate(RESUME.zoom);
+    await tapAt(tab, 195, 300);
+    await sleep(80);
+    await tapAt(tab, 195, 300);
+    await sleep(700);
+    check("from fit, a double-tap goes to 100%", (await tab.evaluate(RESUME.zoom)) === "100%", {
+      fit,
+      now: await tab.evaluate(RESUME.zoom),
+    });
+    await tapAt(tab, 195, 300);
+    await sleep(80);
+    await tapAt(tab, 195, 300);
+    await sleep(700);
+    check("and the next one back to fit", (await tab.evaluate(RESUME.zoom)) === fit, {
+      fit,
+      now: await tab.evaluate(RESUME.zoom),
+    });
+  },
+);
+
+// A laptop trackpad pinch arrives as Ctrl+wheel: over the page it zooms the PDF and the browser
+// doesn't also zoom (default prevented); the wheel without Ctrl still just scrolls.
+await run(
+  "resume page: Ctrl+wheel over the page zooms the PDF (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    await tab.evaluate(
+      `window.__wheel = []; document.addEventListener("wheel", (e) => __wheel.push(e.defaultPrevented));`,
+    );
+    const wheel = (deltaY, modifiers) =>
+      tab.send("Input.dispatchMouseEvent", {
+        type: "mouseWheel",
+        x: 640,
+        y: 400,
+        deltaX: 0,
+        deltaY,
+        modifiers,
+      });
+    await wheel(-50, 2); // Ctrl
+    await sleep(500);
+    check("Ctrl+wheel up zooms in (e^0.25 = 128%)", (await tab.evaluate(RESUME.zoom)) === "128%", {
+      zoom: await tab.evaluate(RESUME.zoom),
+    });
+    check("and the browser's own zoom is prevented", (await tab.evaluate("__wheel[0]")) === true);
+    await wheel(-50, 0);
+    await sleep(300);
+    check(
+      "without Ctrl the wheel is left alone",
+      (await tab.evaluate(RESUME.zoom)) === "128%" && (await tab.evaluate("__wheel[1]")) === false,
+    );
+  },
+);
+
+// The phone toolbar's controls are text-sized but reach 44px rows (an invisible ::before).
+await run(
+  "resume page: toolbar taps reach 44px on a phone (390×844, touch)",
+  { width: 390, height: 844, mobile: true },
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    const misses =
+      await tab.evaluate(`[...document.querySelectorAll("header button, header a")].flatMap((el) => {
+      const r = el.getBoundingClientRect(), cx = r.left + r.width / 2;
+      return [r.top - 6, r.bottom + 6]
+        .filter((y) => document.elementFromPoint(cx, y)?.closest("button, a") !== el)
+        .map((y) => el.textContent.trim() + " @" + Math.round(y));
+    })`);
+    const sizes = await tab.evaluate(
+      `[...document.querySelectorAll("header button, header a")].map((el) => Math.round(el.getBoundingClientRect().height))`,
+    );
+    check("a tap 6px above or below each control still hits it", misses.length === 0, { misses });
+    check(
+      "while the controls themselves stay text-sized",
+      sizes.every((h) => h <= 32),
+      { sizes },
+    );
+  },
+);
+
+// A key or a touch flashes the control it activates (src/lib/pressFx.js), a mouse click doesn't.
+await run(
+  "resume page: a key and a touch flash their button (390×844, touch)",
+  { width: 390, height: 844, mobile: true },
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    const flashed = (action) =>
+      tab.evaluate(
+        `document.querySelector('[data-action="${action}"]')?.hasAttribute("data-pressed")`,
+      );
+    await tab.keyDown("+");
+    await sleep(40);
+    check("the + key flashes the zoom-in button", await flashed("zoomIn"));
+    await tab.keyUp("+");
+    await sleep(400);
+    await tab.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: touchPoints(
+        [
+          await tab.evaluate(
+            `Math.round(document.querySelector('[data-action="fit"]').getBoundingClientRect().left + 10)`,
+          ),
+        ],
+        await tab.evaluate(
+          `Math.round(document.querySelector('[data-action="fit"]').getBoundingClientRect().top + 8)`,
+        ),
+      ),
+    });
+    await sleep(40);
+    check("a touch flashes the fit button", await flashed("fit"));
+    await tab.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  },
+);
+
+// Print sends the file itself: through a hidden frame where the browser prints PDFs reliably, by
+// opening it where it doesn't (touch, Safari). A print dialog can't be driven, so check the route.
+await run(
+  "resume page: print uses the PDF file, in a frame on a desktop (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    await tab.evaluate(`Object.defineProperty(navigator, "pdfViewerEnabled", { get: () => true }); window.__opened = [];
+    window.open = (u) => __opened.push(u);`);
+    await tab.click(`document.querySelector('[data-action="print"]')`);
+    await sleep(600);
+    const st = await tab.evaluate(
+      `({ frames: [...document.querySelectorAll("iframe")].map((f) => new URL(f.src).pathname), opened: window.__opened })`,
+    );
+    check(
+      "a hidden frame loads the PDF file",
+      st.frames.length === 1 && st.frames[0].endsWith("/Danny_s_Resume.pdf"),
+      st,
+    );
+  },
+);
+await run(
+  "resume page: print opens the PDF file on a phone (390×844, touch)",
+  { width: 390, height: 844, mobile: true },
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    await tab.evaluate(`window.__opened = []; window.open = (u) => __opened.push(u);`);
+    await tab.tap(`document.querySelector('[data-action="print"]')`);
+    await sleep(400);
+    const st = await tab.evaluate(
+      `({ frames: document.querySelectorAll("iframe").length, opened: window.__opened })`,
+    );
+    check(
+      "the file opens for the browser's own viewer, with no frame",
+      st.frames === 0 && st.opened.length === 1 && st.opened[0].endsWith("/Danny_s_Resume.pdf"),
+      st,
+    );
   },
 );
 

@@ -35,6 +35,7 @@
 
 .bar button,
 .bar a {
+  position: relative;
   min-height: 28px;
   padding: 0 6px;
   border: 0;
@@ -58,10 +59,28 @@
   text-align: center;
 }
 
+/* Phone: taps reach a 44px row through an invisible ::before, so the controls stay text-sized
+   (the same pattern as the app's phone bars). The rows sit 16px apart, so the areas touch. */
+@media (max-width: 600px) {
+  .bar {
+    gap: 16px 20px;
+  }
+
+  .bar button::before,
+  .bar a::before {
+    content: "";
+    position: absolute;
+    inset: -8px -6px;
+  }
+}
+
 /* The page stays white paper in both themes (an inverted page looks wrong). */
 /* Centred with auto margins, not align-items: center: when a zoomed page is wider than the
    screen, a centred flex item overflows on both sides and its left half can't be scrolled to. */
 .stage {
+  /* Two fingers on the page zoom the PDF (components/resume/useZoomGestures.js), not the whole
+     browser page: one finger still scrolls, and the toolbar keeps the browser's own pinch. */
+  touch-action: pan-x pan-y;
   display: flex;
   flex-direction: column;
   align-items: flex-start;

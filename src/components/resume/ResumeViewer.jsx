@@ -1,26 +1,21 @@
 "use client";
 
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { site } from "@/config/site";
 import Hint from "@/components/Hint";
 import { useKeysPref } from "@/lib/useKeysPref";
-import { CSS_PX_PER_PT, fitZoom, startZoom, stepZoom, zoomLabel } from "@/lib/resumeView";
-import { resumeKey } from "@/lib/resumeKeys";
-import { linkBoxes } from "@/lib/resumeLinks";
+import { PRESSABLE, pressFx } from "@/lib/pressFx";
+import { isTouch } from "@/lib/egg/screen";
+import { FOLLOW, fitZoom, stepZoom, zoomFor, zoomLabel } from "@/lib/resumeView";
+import { ACTION, resumeKey } from "@/lib/resumeKeys";
+import { anchorDelta } from "@/lib/resumePinch";
+import { printMode } from "@/lib/resumePrint";
+import PdfPage, { PAGE_BORDER } from "./PdfPage";
+import { useZoomGestures } from "./useZoomGestures";
 import styles from "./ResumeViewer.module.css";
 
 const DOWNLOAD_NAME = "Danny_Hu_Resume.pdf";
-// The canvas keeps at least this many pixels across, so printing it (the browser prints what
-// is on the page) isn't soft at a small zoom; and never more than MAX_PIXELS in all: iOS
-// Safari leaves a bigger canvas blank (its limit is 16.7 million).
-const MIN_CANVAS_WIDTH = 1700;
-const MAX_PIXELS = 12_000_000;
-// A zoom step redraws after this pause, so a held + or - draws once at the end; the old
-// drawing is stretched to the new size meanwhile.
-const REDRAW_DELAY_MS = 100;
-// The page's border, in px (the one place it is set: used for the box and for the room).
-const PAGE_BORDER = 1;
 
 /** The width a page can use in the stage: its content width less the pages' two borders. */
 function roomIn(stage) {
@@ -30,109 +25,68 @@ function roomIn(stage) {
   );
 }
 
-/** One page of the PDF: a box at the zoomed size, links over it, the drawing swapped in. */
-function PdfPage({ index, info, zoom }) {
-  const boxRef = useRef(null);
-  const scale = zoom * CSS_PX_PER_PT;
+const openPdfInTab = () => window.open(site.resumePdf, "_blank", "noopener");
 
-  // Until the redraw lands, the old text layer is re-scaled with the page, so selecting and
-  // finding text still line up with the (stretched) drawing.
-  useEffect(() => {
-    boxRef.current?.lastElementChild?.style.setProperty("--total-scale-factor", String(scale));
-  }, [scale]);
+/**
+ * Print the PDF file itself, so the text stays real (Save as PDF keeps it selectable, with its
+ * links): through a hidden frame where that is reliable, otherwise by opening the file so the
+ * browser's own viewer prints it (see resumePrint.js).
+ */
+function printPdf() {
+  const mode = printMode({
+    userAgent: navigator.userAgent,
+    touch: isTouch(),
+    pdfViewerEnabled: navigator.pdfViewerEnabled,
+  });
+  if (mode === "tab") return openPdfInTab();
+  const frame = document.createElement("iframe");
+  const remove = () => frame.remove();
+  frame.setAttribute("aria-hidden", "true");
+  frame.tabIndex = -1;
+  frame.style.cssText =
+    "position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none";
+  frame.onload = () => {
+    try {
+      frame.contentWindow.addEventListener("afterprint", remove);
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+    } catch {
+      remove();
+      openPdfInTab();
+    }
+  };
+  frame.src = site.resumePdf;
+  document.body.append(frame);
+  setTimeout(remove, 120_000); // however the print went, don't keep the frame forever
+}
 
-  useEffect(() => {
-    const { page } = info;
-    const width = info.size[0] * scale,
-      height = info.size[1] * scale;
-    let cancelled = false,
-      task = null,
-      text = null;
-    const draw = async () => {
-      const ratio = Math.min(
-        Math.max(window.devicePixelRatio || 1, MIN_CANVAS_WIDTH / width),
-        Math.sqrt(MAX_PIXELS / (width * height)),
-      );
-      // Draw off screen and swap, so the old drawing stays (stretched to the new size by
-      // CSS) until the new one is ready, and no two renders ever share a canvas.
-      const canvas = document.createElement("canvas");
-      const viewport = page.getViewport({ scale: scale * ratio });
-      // render() draws into the canvas as it is: size it to the viewport first.
-      canvas.width = Math.floor(viewport.width);
-      canvas.height = Math.floor(viewport.height);
-      task = page.render({ canvas, viewport });
-      await task.promise;
-      if (cancelled) return;
-      const layer = document.createElement("div");
-      layer.className = styles.text;
-      layer.style.setProperty("--total-scale-factor", String(scale));
-      const { TextLayer } = await import("pdfjs-dist");
-      text = new TextLayer({
-        textContentSource: page.streamTextContent(),
-        container: layer,
-        viewport: page.getViewport({ scale }),
-      });
-      await text.render();
-      if (cancelled) return;
-      boxRef.current?.replaceChildren(canvas, layer);
-    };
-    // The first drawing starts at once; a later one waits out a burst of zoom steps.
-    const timer = setTimeout(
-      () =>
-        draw().catch((e) => {
-          // A superseded render rejects with a "cancelled" exception, and so does one the
-          // page was left in the middle of: both are expected.
-          if (!cancelled && e?.name !== "RenderingCancelledException") console.error(e);
-        }),
-      boxRef.current?.firstChild ? REDRAW_DELAY_MS : 0,
-    );
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-      task?.cancel();
-      text?.cancel();
-    };
-  }, [info, scale]);
-
+/** A link that offers the PDF file under its clean name. */
+function DownloadLink({ children, ...rest }) {
   return (
-    <div
-      className={styles.page}
-      data-page={index + 1}
-      style={{
-        width: info.size[0] * scale,
-        height: info.size[1] * scale,
-        borderWidth: PAGE_BORDER,
-        "--aspect": `${info.size[0]} / ${info.size[1]}`,
-      }}
-    >
-      <div ref={boxRef} className={styles.layers} />
-      {(info.rotated ? [] : linkBoxes(info.annotations, info.view, scale)).map((b) => (
-        <a
-          key={b.href + b.left + b.top}
-          href={b.href}
-          target={/^https?:/i.test(b.href) ? "_blank" : undefined}
-          rel="noreferrer"
-          className={styles.link}
-          aria-label={b.href.replace(/^https?:\/\/|^mailto:/, "")}
-          style={{ left: b.left, top: b.top, width: b.width, height: b.height }}
-        />
-      ))}
-    </div>
+    <a href={site.resumePdf} download={DOWNLOAD_NAME} {...rest}>
+      {children}
+    </a>
   );
 }
+
+const topLeft = (el) => {
+  const r = el.getBoundingClientRect();
+  return { left: r.left, top: r.top };
+};
 
 /** The resume page: the PDF drawn with pdf.js, with the controls of a basic PDF reader. */
 export default function ResumeViewer() {
   const [keysOn] = useKeysPref();
   const stageRef = useRef(null),
-    downloadRef = useRef(null);
-  const [pages, setPages] = useState(null);
+    downloadRef = useRef(null),
+    zoomRef = useRef(1), // the zoom now, for handlers that outlive a render
+    anchorRef = useRef(null); // where a zoom is pinned, until the layout it causes lands
+  const [pageInfos, setPageInfos] = useState(null);
   const [failed, setFailed] = useState(false);
   const [zoom, setZoom] = useState(1);
   // What the zoom follows when the room changes (a turned phone, a resized window, a scrollbar
-  // appearing): the opening fit ("start"), a fit asked for ("fit"), or nothing once the
-  // visitor has zoomed by hand.
-  const [follow, setFollow] = useState("start");
+  // appearing): the opening fit, a fit asked for, or nothing once the visitor zoomed by hand.
+  const [follow, setFollow] = useState(FOLLOW.START);
   const [current, setCurrent] = useState(1);
 
   // Load the file. pdf.js is imported here, not at the top: it needs the browser, and only
@@ -165,8 +119,8 @@ export default function ResumeViewer() {
         });
       }
       if (cancelled) return;
-      setZoom(startZoom(roomIn(stageRef.current), infos[0].size[0]));
-      setPages(infos);
+      setZoom(zoomFor(FOLLOW.START, roomIn(stageRef.current), infos[0].size[0]));
+      setPageInfos(infos);
     })().catch((e) => {
       // Leaving the page destroys the loading task, which rejects what was still waiting on it.
       if (cancelled) return;
@@ -179,23 +133,64 @@ export default function ResumeViewer() {
     };
   }, []);
 
-  const widthPt = pages ? pages[0].size[0] : 612;
-  const fit = () => {
-    setFollow("fit");
-    setZoom(fitZoom(roomIn(stageRef.current), widthPt));
+  const widthPt = pageInfos ? pageInfos[0].size[0] : 612;
+  const fitToWidth = () => fitZoom(roomIn(stageRef.current), widthPt);
+
+  // A zoom that must keep a point of the page under `focal` (screen px): the point under it now,
+  // or the one `pin` names ({ zoom, offset } from the page's corner, as when a pinch began). The
+  // page is pinned here, and the scroll that puts it back is applied once the new layout lands.
+  const zoomAt = (zoomTo, focal, atFit, pin) => {
+    const page = stageRef.current?.querySelector("[data-page]");
+    setFollow(atFit ? FOLLOW.FIT : FOLLOW.NONE);
+    if (!page || zoomTo === zoomRef.current) return;
+    const corner = topLeft(page);
+    const from = pin ?? {
+      zoom: zoomRef.current,
+      offset: { x: focal.x - corner.left, y: focal.y - corner.top },
+    };
+    anchorRef.current = {
+      zoomFrom: from.zoom,
+      focal,
+      // Where the page's corner would be if that point were under `focal` at `from.zoom`.
+      pageBefore: { left: focal.x - from.offset.x, top: focal.y - from.offset.y },
+    };
+    setZoom(zoomTo);
   };
-  const act = {
-    zoomIn: () => {
-      setFollow(null);
+  useLayoutEffect(() => {
+    zoomRef.current = zoom;
+    const anchor = anchorRef.current;
+    anchorRef.current = null;
+    const stage = stageRef.current;
+    const page = stage?.querySelector("[data-page]");
+    if (!anchor || !page) return;
+    const { dx, dy } = anchorDelta({
+      zoomFrom: anchor.zoomFrom,
+      zoomTo: zoom,
+      focal: anchor.focal,
+      pageBefore: anchor.pageBefore,
+      pageAfter: topLeft(page),
+    });
+    stage.scrollLeft += dx;
+    window.scrollBy(0, dy);
+  }, [zoom]);
+
+  const stageHandlers = useZoomGestures(stageRef, () => zoomRef.current, fitToWidth, zoomAt);
+
+  const actions = {
+    [ACTION.ZOOM_IN]: () => {
+      setFollow(FOLLOW.NONE);
       setZoom((z) => stepZoom(z, +1));
     },
-    zoomOut: () => {
-      setFollow(null);
+    [ACTION.ZOOM_OUT]: () => {
+      setFollow(FOLLOW.NONE);
       setZoom((z) => stepZoom(z, -1));
     },
-    fit,
-    download: () => downloadRef.current?.click(),
-    print: () => window.print(),
+    [ACTION.FIT]: () => {
+      setFollow(FOLLOW.FIT);
+      setZoom(fitToWidth());
+    },
+    [ACTION.DOWNLOAD]: () => downloadRef.current?.click(),
+    [ACTION.PRINT]: printPdf,
   };
 
   // Keep a followed fit in step with the room: this also catches the document's scrollbar
@@ -203,16 +198,16 @@ export default function ResumeViewer() {
   const refit = useEffectEvent(() => {
     // The observer can fire once more as the page is left, when the stage is already gone.
     const stage = stageRef.current;
-    if (!follow || !pages || !stage) return;
-    const room = roomIn(stage);
-    setZoom(follow === "fit" ? fitZoom(room, widthPt) : startZoom(room, widthPt));
+    if (!pageInfos || !stage) return;
+    const next = zoomFor(follow, roomIn(stage), widthPt);
+    if (next !== null) setZoom(next);
   });
   useEffect(() => {
-    if (!pages) return;
+    if (!pageInfos) return;
     const watch = new ResizeObserver(() => refit());
     watch.observe(stageRef.current);
     return () => watch.disconnect();
-  }, [pages]);
+  }, [pageInfos]);
 
   // Keyboard mode, as the app has it: any key pauses the hover look, a real mouse move or a
   // press brings it back (every :hover rule here is written html:not(.kbd), like the app's).
@@ -247,7 +242,9 @@ export default function ResumeViewer() {
     });
     if (!action) return;
     e.preventDefault();
-    act[action]();
+    // A key flashes its button, as the app's shortcuts do (a mouse click doesn't).
+    pressFx(document.querySelector(`[data-action="${action}"]`));
+    actions[action]();
   });
   useEffect(() => {
     const listener = (e) => onKey(e);
@@ -256,68 +253,83 @@ export default function ResumeViewer() {
   }, []);
 
   // Which page is in view: the one whose box is nearest the middle of the screen.
-  const syncCurrent = useEffectEvent(() => {
+  const updateCurrentPage = useEffectEvent(() => {
     const mid = window.innerHeight / 2;
     let best = 1,
-      gap = Infinity;
+      nearest = Infinity;
     for (const el of stageRef.current?.querySelectorAll("[data-page]") ?? []) {
       const r = el.getBoundingClientRect();
       const d = Math.abs((r.top + r.bottom) / 2 - mid);
-      if (d < gap) [best, gap] = [Number(el.dataset.page), d];
+      if (d < nearest) [best, nearest] = [Number(el.dataset.page), d];
     }
     setCurrent(best);
   });
   useEffect(() => {
-    const listener = () => syncCurrent();
+    const listener = () => updateCurrentPage();
     window.addEventListener("scroll", listener, { passive: true });
     return () => window.removeEventListener("scroll", listener);
   }, []);
   // Zooming moves the pages without a scroll event: look again once the layout has settled.
   useEffect(() => {
-    const id = requestAnimationFrame(() => syncCurrent());
+    const id = requestAnimationFrame(() => updateCurrentPage());
     return () => cancelAnimationFrame(id);
-  }, [zoom, pages]);
+  }, [zoom, pageInfos]);
 
   return (
     <div className={styles.viewer}>
-      <header className={styles.bar}>
+      {/* A touch flashes the control it lands on, like a key does (a mouse click doesn't). */}
+      <header
+        className={styles.bar}
+        onPointerDown={(e) => {
+          if (e.pointerType === "touch") pressFx(e.target.closest?.(PRESSABLE));
+        }}
+      >
         <h1 className={styles.name}>~/resume/danny_hu.pdf</h1>
         <span className={styles.group} role="group" aria-label="zoom">
-          <button type="button" onClick={act.zoomOut} aria-label="zoom out">
+          <button
+            type="button"
+            data-action={ACTION.ZOOM_OUT}
+            onClick={actions[ACTION.ZOOM_OUT]}
+            aria-label="zoom out"
+          >
             <Hint>[-] </Hint>−
           </button>
           <output className={styles.zoom} aria-live="polite">
             {zoomLabel(zoom)}
           </output>
-          <button type="button" onClick={act.zoomIn} aria-label="zoom in">
+          <button
+            type="button"
+            data-action={ACTION.ZOOM_IN}
+            onClick={actions[ACTION.ZOOM_IN]}
+            aria-label="zoom in"
+          >
             <Hint>[+] </Hint>+
           </button>
-          <button type="button" onClick={act.fit}>
+          <button type="button" data-action={ACTION.FIT} onClick={actions[ACTION.FIT]}>
             <Hint>[0] </Hint>fit
           </button>
         </span>
         <span className={styles.dim}>
-          page {current}/{pages ? pages.length : 1}
+          page {current}/{pageInfos ? pageInfos.length : 1}
         </span>
         <span className={styles.group}>
-          <a ref={downloadRef} href={site.resumePdf} download={DOWNLOAD_NAME}>
+          <DownloadLink ref={downloadRef} data-action={ACTION.DOWNLOAD}>
             <Hint>[d] </Hint>download
-          </a>
-          <button type="button" onClick={act.print}>
+          </DownloadLink>
+          <button type="button" data-action={ACTION.PRINT} onClick={actions[ACTION.PRINT]}>
             <Hint>[p] </Hint>print
           </button>
           <Link href="/">cd ~</Link>
         </span>
       </header>
-      <main ref={stageRef} className={styles.stage}>
-        {pages ? (
-          pages.map((info, i) => <PdfPage key={i} index={i} info={info} zoom={zoom} />)
+      <main ref={stageRef} className={styles.stage} {...stageHandlers}>
+        {pageInfos ? (
+          pageInfos.map((pageInfo, i) => (
+            <PdfPage key={i} index={i} pageInfo={pageInfo} zoom={zoom} />
+          ))
         ) : failed ? (
           <p className={styles.note}>
-            couldn&apos;t draw the resume here.{" "}
-            <a href={site.resumePdf} download={DOWNLOAD_NAME}>
-              download the pdf
-            </a>{" "}
+            couldn&apos;t draw the resume here. <DownloadLink>download the pdf</DownloadLink>{" "}
             instead.
           </p>
         ) : (
