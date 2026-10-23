@@ -35,14 +35,8 @@ const cross = (a, b) => [
 ];
 
 const scale = (N * 0.5 * 0.9) / EGG_H;
-// Each cell is sampled SS×SS times: its glyph comes from the mean light over the samples
-// that hit the egg, and a cell with under MIN_COVER of its area covered stays empty, so the
-// outline follows the egg's edge instead of stepping out wherever one sample grazed a cell.
-const SS = 4;
-const MIN_COVER = 0.4;
-const M = N * SS;
-const zb = new Float32Array(M * M).fill(-Infinity);
-const lb = new Float32Array(M * M);
+const grid = Array.from({ length: N }, () => Array(N).fill(" "));
+const zb = Array.from({ length: N }, () => Array(N).fill(-Infinity));
 const dv = 0.002;
 const du = 0.004;
 for (let v = -0.999; v <= 0.999; v += dv) {
@@ -53,32 +47,17 @@ for (let v = -0.999; v <= 0.999; v += dv) {
     const dir = n[2] < 0 ? -1 : 1; // face the viewer
     const key = Math.max(0, (dir * (n[0] * light[0] + n[1] * light[1] + n[2] * light[2])) / nl);
     // Weak bounce light from the lower right so the shadow side keeps a gradient.
-    const bounce = Math.max(0, (dir * (n[0] * 0.6 - n[1] * 0.3 + n[2] * 0.5)) / nl);
+    const bounce = Math.max(0, (dir * (n[0] * 0.8 - n[1] * 0.3)) / nl);
+    const lam = Math.min(1, key + 0.35 * bounce * (1 - key));
     if (p[2] <= 0) continue; // far side hidden
-    const x = Math.floor(M / 2 + p[0] * scale * SS);
-    const y = Math.floor(M / 2 - p[1] * scale * SS);
-    if (x < 0 || x >= M || y < 0 || y >= M || p[2] <= zb[y * M + x]) continue;
-    zb[y * M + x] = p[2];
-    lb[y * M + x] = Math.min(1, key + 0.35 * bounce * (1 - key));
+    const x = Math.floor(N / 2 + p[0] * scale);
+    const y = Math.floor(N / 2 - p[1] * scale);
+    if (x < 0 || x >= N || y < 0 || y >= N || p[2] <= zb[y][x]) continue;
+    zb[y][x] = p[2];
+    const k = Math.min(RAMP.length - 1, Math.floor((0.1 + 0.95 * lam) * RAMP.length));
+    grid[y][x] = RAMP[k];
   }
 }
-const grid = Array.from({ length: N }, (_, cy) =>
-  Array.from({ length: N }, (_, cx) => {
-    let hits = 0;
-    let sum = 0;
-    for (let j = 0; j < SS; j++)
-      for (let i = 0; i < SS; i++) {
-        const k = (cy * SS + j) * M + cx * SS + i;
-        if (zb[k] > -Infinity) {
-          hits++;
-          sum += lb[k];
-        }
-      }
-    if (hits < MIN_COVER * SS * SS) return " ";
-    const k = Math.min(RAMP.length - 1, Math.floor((0.1 + 0.95 * (sum / hits)) * RAMP.length));
-    return RAMP[k];
-  }),
-);
 
 const esc = (c) => (c === "<" ? "&lt;" : c === "&" ? "&amp;" : c);
 const rows = grid
