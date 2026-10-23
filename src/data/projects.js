@@ -20,11 +20,13 @@ export const projects = [
     timeline: "jan 2026 – apr 2026",
     year: "2026",
     purpose:
-      "a parking ticket scanning workflow that extracts structured violation details from uploaded PDFs and images using OCR and document preprocessing",
+      "a local-only web app that digitizes handwritten parking tickets from scans or phone photos, at 92.3% per-field accuracy across 15 fields",
     bullets: [
-      "built an upload-to-extraction workflow for parking penalty notices, with a frontend interface for submission, review, and multi-ticket navigation",
-      "worked on OCR-focused preprocessing and extraction logic for noisy document inputs, including layout cleanup and ticket field parsing",
-      "structured an end-to-end pipeline spanning document ingestion, image processing, OCR, and normalized output for downstream use",
+      "designed a 10-stage OpenCV pipeline in a FastAPI service: it deskews each page with Hough lines, snaps the form's printed lines to named field zones (with a percentage fallback when the lines are faint), then crops and enhances every field for its ink, such as colour-channel extraction for the red issue stamp",
+      "read the checkbox fields (by-law, infraction, how the notice was served) by contour analysis of how much ink fills each box, and left a field blank rather than guessing when nothing was checked",
+      "ran PaddleOCR PP-OCRv5 on each crop and dropped low-confidence reads; plates get a second model, TrOCR-base-handwritten fine-tuned with PEFT/LoRA on real plate crops and merged with PaddleOCR's reading by character-level alignment to fix O/0, B/8 and I/1 mix-ups, with the adapter merged into the base weights at startup so inference adds no latency",
+      "built the Next.js, React and TypeScript frontend: NextAuth login, in-browser camera capture on a phone, batch upload, a one-ticket-per-screen carousel with every field editable, and a 15-column CSV export formatted for Oracle SQL*Loader",
+      "kept every ticket on the server (no cloud APIs, both services in Docker, security headers on every route, CI running lint, tests and build), and scored accuracy per field by exact match against a 39-page labeled ground truth",
     ],
     tags: ["Next.js", "React", "TypeScript", "FastAPI", "PaddleOCR", "OpenCV", "PyMuPDF", "Pillow"],
     links: [],
