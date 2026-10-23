@@ -1816,12 +1816,40 @@ for (const size of [
           name: Math.max(...rows.map((r) => over(r.firstElementChild))),
         };
       })()`);
+      // A phone has no hover, so each row prints what it was used in underneath (always shown:
+      // nothing toggles, so no layout moves under a jump).
+      const used = await tab.evaluate(`(() => {
+        const lines = [...document.querySelectorAll("#skills [data-used]")];
+        return {
+          lines: lines.length,
+          shown: lines.filter((l) => l.getClientRects().length > 0 && /^used in: ./.test(l.innerText)).length,
+          hidden: lines.filter((l) => l.getAttribute("aria-hidden") !== "true").length,
+        };
+      })()`);
+      check(
+        "every row shows its used-in line, and screen readers don't hear it twice",
+        used.lines > 20 && used.shown === used.lines && used.hidden === 0,
+        used,
+      );
       check("the skill rows are there", st.rows > 20, st);
       check("no row runs past its box, no name past its column", st.row <= 0 && st.name <= 0, st);
       check("the page doesn't scroll sideways", st.page <= 0, st);
     },
   );
 }
+
+// With a mouse the used-in line is the row's tooltip, not text on the page.
+await run(
+  "skills rows keep their used-in line as a tooltip on desktop (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#skills");
+    const shown = await tab.evaluate(
+      `[...document.querySelectorAll("#skills [data-used]")].filter((l) => l.getClientRects().length > 0).length`,
+    );
+    check("no used-in line takes space under a row", shown === 0, { shown });
+  },
+);
 
 await run("desktop shows key labels (1291×808)", DESKTOP, async (tab) => {
   await tab.go("#home");

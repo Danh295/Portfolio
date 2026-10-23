@@ -40,6 +40,10 @@ export default function Skills({ skills, total, active }) {
                   {s.count}
                 </span>
                 <span className="sr-only">{s.tip}</span>
+                {/* Touch has no hover: the tooltip's text goes under the row (Skills.module.css). */}
+                <span data-used="" className={styles.used} aria-hidden="true">
+                  {s.tip}
+                </span>
               </div>
             ))}
           </div>

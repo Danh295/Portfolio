@@ -49,6 +49,25 @@
   color: var(--mid);
 }
 
+/* Where a tooltip can't be hovered (the same query as globals.css's touch rules) the row's
+   "used in" text sits under it. Always shown, never toggled, so nothing changes height. */
+.used {
+  display: none;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .used {
+    display: block;
+    grid-column: 1 / -1;
+    max-width: 100%;
+    padding-bottom: 6px;
+    color: var(--mid);
+    font-size: 12px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+}
+
 @media (max-width: 480px) {
   .skills {
     padding: 28px 12px 20px;
