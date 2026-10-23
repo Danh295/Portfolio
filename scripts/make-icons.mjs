@@ -59,13 +59,21 @@ for (let v = -0.999; v <= 0.999; v += dv) {
   }
 }
 
-// The widest part of the egg bulges one column out for a few rows and the outline steps in
-// sharply on either side of it. Where a row just inside that band stops short of the next
-// row's edge, one dim "-" is added so the edge eases in and out instead.
-const edge = (row) => row.findLastIndex((c) => c !== " ");
-for (let y = N / 2 - 1; y <= N / 2 + 4; y++) {
-  const e = edge(grid[y]);
-  if (e + 1 === edge(grid[y + 1]) || e + 1 === edge(grid[y - 1])) grid[y][e + 1] = "-";
+// The widest part of the egg bulges one column out for several rows and the outline steps
+// in sharply on either side of it. Where a row near that band stops one column short of a
+// neighbouring row's edge, a dim glyph is added so the edge eases in and out; it is run twice
+// so the right edge, where the step is sharpest, gets a second row of them.
+const first = (row) => row.findIndex((c) => c !== " ");
+const last = (row) => row.findLastIndex((c) => c !== " ");
+for (let pass = 0; pass < 2; pass++) {
+  const adds = [];
+  for (let y = N / 2 - 2; y <= N / 2 + 5; y++) {
+    const [l, r] = [first(grid[y]), last(grid[y])];
+    const near = (f, d) => [y - 1, y + 1].some((j) => f(grid[j]) === d);
+    if (pass === 0 && near(first, l - 1)) adds.push([y, l - 1, "+"]);
+    if (near(last, r + 1)) adds.push([y, r + 1, "-"]);
+  }
+  for (const [y, x, c] of adds) grid[y][x] = c;
 }
 
 const esc = (c) => (c === "<" ? "&lt;" : c === "&" ? "&amp;" : c);
