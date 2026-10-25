@@ -15,7 +15,7 @@ const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
  * trackpad) Ctrl+wheel and Safari's trackpad pinch. They replace the browser's page zoom over the
  * stage, which the stage turns off with `touch-action: pan-x pan-y`; one finger still scrolls.
  *
- * `getZoom()` is the zoom now, `getFit()` the zoom that fits the width, and
+ * `getZoom()` is the zoom asked for (events that arrive before the screen catches up build on it), `getFit()` the zoom that fits the width, and
  * `zoomAt(zoomTo, focal, atFit, pin)` applies a zoom keeping a point of the page under `focal`
  * (screen px): by default the point that is under it now; for a pinch, `pin` names the point
  * that was under the fingers when they landed ({ zoom, offset } from the page's corner), so the
@@ -114,18 +114,26 @@ export function useZoomGestures(stageRef, getZoom, getFit, zoomAt) {
   const onWheel = useEffectEvent((e) => {
     if (!e.ctrlKey) return;
     e.preventDefault();
-    zoomAt(wheelZoom(getZoom(), e.deltaY), { x: e.clientX, y: e.clientY }, false);
+    zoomAt(wheelZoom(getZoom(), e.deltaY, e.deltaMode), { x: e.clientX, y: e.clientY }, false);
   });
   const gesture = useRef(null); // the zoom a Safari trackpad pinch started from
   const onGesture = useEffectEvent((e) => {
+    if (e.type === "gestureend") {
+      gesture.current = null;
+      return;
+    }
     // A pinch of fingers on a touch screen is ours already, through the pointer events.
     if (touches.current.size >= 2) return;
     e.preventDefault();
     if (e.type === "gesturestart") gesture.current = getZoom();
-    else if (e.type === "gesturechange" && gesture.current !== null)
+    else if (gesture.current !== null)
       zoomAt(pinchZoom(gesture.current, 1, e.scale), { x: e.clientX, y: e.clientY }, false);
-    else gesture.current = null;
   });
+  // Leaving the page: no frame may fire into it.
+  useEffect(() => {
+    const f = frame.current;
+    return () => cancelAnimationFrame(f.id);
+  }, []);
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;

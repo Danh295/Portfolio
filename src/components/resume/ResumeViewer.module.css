@@ -100,7 +100,7 @@
   margin-inline: auto;
   background: #fff;
   color: #000;
-  border-style: solid; /* its width is PAGE_BORDER in ResumeViewer.jsx */
+  border-style: solid; /* its width is PAGE_BORDER in PdfPage.jsx */
   border-color: var(--line);
   box-sizing: content-box;
 }

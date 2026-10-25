@@ -40,9 +40,17 @@ export function doubleTap(zoom, fit) {
 // so an event's effect is capped at ±50 (a notch is about ±28%).
 const WHEEL_CAP = 50,
   WHEEL_RATE = 0.005;
+// WheelEvent.deltaMode: Firefox reports a mouse wheel in lines (about 3 per notch), not pixels.
+const LINE_PX = 32,
+  PAGE_PX = 800;
 
-/** The zoom after a Ctrl+wheel (or trackpad pinch) event: wheel up (negative) zooms in. */
-export function wheelZoom(zoom, deltaY) {
-  const d = Math.min(WHEEL_CAP, Math.max(-WHEEL_CAP, -deltaY));
+/**
+ * The zoom after a Ctrl+wheel (or trackpad pinch) event: wheel up (negative) zooms in.
+ * `deltaMode` is the event's own (0 pixels, 1 lines, 2 pages), so a notch zooms the same in
+ * every browser.
+ */
+export function wheelZoom(zoom, deltaY, deltaMode = 0) {
+  const px = deltaY * (deltaMode === 1 ? LINE_PX : deltaMode === 2 ? PAGE_PX : 1);
+  const d = Math.min(WHEEL_CAP, Math.max(-WHEEL_CAP, -px));
   return clampZoom(zoom * Math.exp(d * WHEEL_RATE));
 }

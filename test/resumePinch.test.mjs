@@ -123,3 +123,15 @@ test("the wheel stays inside the zoom range", () => {
   assert.equal(wheelZoom(3, -50), 3);
   assert.equal(wheelZoom(0.25, 50), 0.25);
 });
+
+// Firefox reports a mouse wheel in lines (deltaMode 1, about 3 per notch), not pixels (about 100):
+// the same notch must zoom the same everywhere. A line counts as 32px, a page as 800px.
+test("a line-mode wheel zooms like the pixel-mode one", () => {
+  near(wheelZoom(1, -3, 1), 1.284); // a notch of 3 lines is 96px, capped like Chrome's 100px
+  near(wheelZoom(1, -1, 1), 1.1735); // one line is 32px: e^0.16
+  near(wheelZoom(1, 1, 2), 0.7788); // a page is capped like any big delta
+});
+
+test("a pixel-mode wheel is unchanged by the unit argument", () => {
+  near(wheelZoom(1, -50, 0), wheelZoom(1, -50));
+});

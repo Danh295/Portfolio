@@ -79,7 +79,8 @@ export default function ResumeViewer() {
   const [keysOn] = useKeysPref();
   const stageRef = useRef(null),
     downloadRef = useRef(null),
-    zoomRef = useRef(1), // the zoom now, for handlers that outlive a render
+    zoomRef = useRef(1), // the zoom on screen
+    targetRef = useRef(1), // the zoom asked for: events before the screen catches up build on it
     anchorRef = useRef(null); // where a zoom is pinned, until the layout it causes lands
   const [pageInfos, setPageInfos] = useState(null);
   const [failed, setFailed] = useState(false);
@@ -119,7 +120,7 @@ export default function ResumeViewer() {
         });
       }
       if (cancelled) return;
-      setZoom(zoomFor(FOLLOW.START, roomIn(stageRef.current), infos[0].size[0]));
+      setZoomFree(zoomFor(FOLLOW.START, roomIn(stageRef.current), infos[0].size[0]));
       setPageInfos(infos);
     })().catch((e) => {
       // Leaving the page destroys the loading task, which rejects what was still waiting on it.
@@ -136,13 +137,21 @@ export default function ResumeViewer() {
   const widthPt = pageInfos ? pageInfos[0].size[0] : 612;
   const fitToWidth = () => fitZoom(roomIn(stageRef.current), widthPt);
 
+  // A zoom with no point to keep: any pin a gesture left waiting must not be applied to it.
+  function setZoomFree(next) {
+    anchorRef.current = null;
+    targetRef.current = next;
+    setZoom(next);
+  }
+
   // A zoom that must keep a point of the page under `focal` (screen px): the point under it now,
   // or the one `pin` names ({ zoom, offset } from the page's corner, as when a pinch began). The
   // page is pinned here, and the scroll that puts it back is applied once the new layout lands.
   const zoomAt = (zoomTo, focal, atFit, pin) => {
     const page = stageRef.current?.querySelector("[data-page]");
+    // An event that changes nothing (a wheel at the limit, deltaY 0) must not end a followed fit.
+    if (!page || zoomTo === targetRef.current) return;
     setFollow(atFit ? FOLLOW.FIT : FOLLOW.NONE);
-    if (!page || zoomTo === zoomRef.current) return;
     const corner = topLeft(page);
     const from = pin ?? {
       zoom: zoomRef.current,
@@ -154,10 +163,12 @@ export default function ResumeViewer() {
       // Where the page's corner would be if that point were under `focal` at `from.zoom`.
       pageBefore: { left: focal.x - from.offset.x, top: focal.y - from.offset.y },
     };
+    targetRef.current = zoomTo;
     setZoom(zoomTo);
   };
   useLayoutEffect(() => {
     zoomRef.current = zoom;
+    targetRef.current = zoom;
     const anchor = anchorRef.current;
     anchorRef.current = null;
     const stage = stageRef.current;
@@ -174,20 +185,20 @@ export default function ResumeViewer() {
     window.scrollBy(0, dy);
   }, [zoom]);
 
-  const stageHandlers = useZoomGestures(stageRef, () => zoomRef.current, fitToWidth, zoomAt);
+  const stageHandlers = useZoomGestures(stageRef, () => targetRef.current, fitToWidth, zoomAt);
 
   const actions = {
     [ACTION.ZOOM_IN]: () => {
       setFollow(FOLLOW.NONE);
-      setZoom((z) => stepZoom(z, +1));
+      setZoomFree(stepZoom(targetRef.current, +1));
     },
     [ACTION.ZOOM_OUT]: () => {
       setFollow(FOLLOW.NONE);
-      setZoom((z) => stepZoom(z, -1));
+      setZoomFree(stepZoom(targetRef.current, -1));
     },
     [ACTION.FIT]: () => {
       setFollow(FOLLOW.FIT);
-      setZoom(fitToWidth());
+      setZoomFree(fitToWidth());
     },
     [ACTION.DOWNLOAD]: () => downloadRef.current?.click(),
     [ACTION.PRINT]: printPdf,
@@ -200,7 +211,7 @@ export default function ResumeViewer() {
     const stage = stageRef.current;
     if (!pageInfos || !stage) return;
     const next = zoomFor(follow, roomIn(stage), widthPt);
-    if (next !== null) setZoom(next);
+    if (next !== null) setZoomFree(next);
   });
   useEffect(() => {
     if (!pageInfos) return;

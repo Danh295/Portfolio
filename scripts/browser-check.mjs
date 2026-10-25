@@ -1859,15 +1859,15 @@ await run(
 // canvas, a selectable text layer, the file's links laid over it) and the controls of a
 // basic reader. `d` and `p` aren't sent here (a download and a print dialog); the key
 // decisions are pinned by test/resumeKeys.test.mjs.
+// An expression that gives the dark-pixel count of each page's canvas, as an array.
+const INKS = `[...document.querySelectorAll("[data-page]")].map((p) => { const c = p.querySelector("canvas"); if (!c) return 0;
+  const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0;
+  for (let i = 0; i < d.length; i += 4) if (d[i] < 100 && d[i + 3] > 0) n++; return n; })`;
 const RESUME = {
-  // Dark pixels on the page's canvas: it is drawn, not blank.
-  ink: `(() => { const c = document.querySelector("[data-page] canvas"); if (!c) return 0;
-    const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0;
-    for (let i = 0; i < d.length; i += 4) if (d[i] < 100 && d[i + 3] > 0) n++; return n; })()`,
+  // Dark pixels on the first page's canvas: it is drawn, not blank.
+  ink: `(() => (${INKS})[0] ?? 0)()`,
   // Dark pixels on each page's canvas, and the page count the toolbar reports ("page 1/N").
-  inks: `[...document.querySelectorAll("[data-page]")].map((p) => { const c = p.querySelector("canvas"); if (!c) return 0;
-    const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0;
-    for (let i = 0; i < d.length; i += 4) if (d[i] < 100 && d[i + 3] > 0) n++; return n; })`,
+  inks: INKS,
   pageCount: `Number(document.querySelector("header").innerText.match(/page \\d+\\/(\\d+)/)[1])`,
   zoom: `document.querySelector("output").textContent.trim()`,
   pageW: `Math.round(document.querySelector("[data-page]").getBoundingClientRect().width)`,
@@ -2075,7 +2075,15 @@ await run(
 // so each check chooses where they start; synthesizePinchGesture can't).
 const touchPoints = (xs, y) =>
   xs.map((x, i) => ({ x, y, id: i + 1, radiusX: 4, radiusY: 4, force: 1 }));
-async function pinchOn(tab, { x = 195, y, from = 30, to = 60, steps = 12 }) {
+async function pinchOn(tab, { x = 195, y, from = 30, to = 60, steps = 12, stagger = 0 }) {
+  if (stagger) {
+    // The second finger lands a moment after the first, as a real pinch does.
+    await tab.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: touchPoints([x - from], y),
+    });
+    await sleep(stagger);
+  }
   await tab.send("Input.dispatchTouchEvent", {
     type: "touchStart",
     touchPoints: touchPoints([x - from, x + from], y),
@@ -2128,6 +2136,25 @@ await run(
     check(
       "the spot between the fingers is still between them",
       Math.abs(after.fx - before.fx) < 0.03 && Math.abs(after.fy - before.fy) < 0.03,
+      { before, after },
+    );
+  },
+);
+
+// Fingers never land at the same instant: a pinch whose second finger comes 60ms after the first
+// (before anything has moved) must work too. (A pinch can't start in the middle of a one-finger
+// scroll: the browser has taken that finger and cancelled its pointer. Left on purpose.)
+await run(
+  "resume page: a pinch whose second finger lands a moment later still zooms the PDF (390×844, touch)",
+  { width: 390, height: 844, mobile: true },
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    const before = await tab.evaluate(PHONE_STATE);
+    await pinchOn(tab, { y: 300, from: 30, to: 60, stagger: 60 });
+    const after = await tab.evaluate(PHONE_STATE);
+    check(
+      "the PDF zoomed and the browser's own zoom didn't",
+      pct(after.label) > pct(before.label) * 1.8 && after.vv === 1,
       { before, after },
     );
   },
@@ -2208,6 +2235,51 @@ await run(
     );
   },
 );
+
+// A wheel or pinch event that doesn't change the zoom must not end the opening fit: after it, a
+// narrower window still re-fits the page (deltaY 0 asks for no zoom at all).
+await run(
+  "resume page: an event that changes nothing keeps the fit following (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    const before = await tab.evaluate(RESUME.zoom);
+    await tab.send("Input.dispatchMouseEvent", {
+      type: "mouseWheel",
+      x: 640,
+      y: 400,
+      deltaX: 0,
+      deltaY: 0,
+      modifiers: 2,
+    });
+    await sleep(300);
+    await tab.send("Emulation.setDeviceMetricsOverride", {
+      width: 600,
+      height: 808,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
+    await sleep(1200);
+    const after = await tab.evaluate(RESUME.zoom);
+    check("the page still re-fits when the window narrows", before === "100%" && pct(after) < 80, {
+      before,
+      after,
+    });
+  },
+);
+
+// Wheel events can arrive several to a frame: each must build on the one before, not on the zoom
+// the screen last showed. Three notches fired in one task: 1.284 × 1.284 × 1.284 = 2.117.
+await run("resume page: wheel events within one frame add up (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("resume/", 4000);
+  await tab.evaluate(`(() => { const stage = document.querySelector("main");
+    for (let i = 0; i < 3; i++)
+      stage.dispatchEvent(new WheelEvent("wheel", { ctrlKey: true, deltaY: -50, clientX: 640, clientY: 400, bubbles: true, cancelable: true })); })()`);
+  await sleep(600);
+  check("three notches in one task give 212%", (await tab.evaluate(RESUME.zoom)) === "212%", {
+    zoom: await tab.evaluate(RESUME.zoom),
+  });
+});
 
 // The phone toolbar's controls are text-sized but reach 44px rows (an invisible ::before).
 await run(
