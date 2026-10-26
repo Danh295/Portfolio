@@ -1,7 +1,9 @@
 // Regenerates the favicon set from a small ASCII egg: src/app/{icon.svg,icon.png,apple-icon.png,
 // favicon.ico}. Run by hand (`node scripts/make-icons.mjs`) when the egg should change.
-// The egg sits on a solid ink tile: the old light-on-transparent glyphs vanished on the white
-// page Google shows its result icons on.
+// The egg is drawn in ink on a transparent ground, once per tab colour: dark ink for light
+// tabs (and Google's white results page), light ink for dark tabs. icon.svg switches by itself
+// with prefers-color-scheme; the PNG/ICO pairs are linked with a media query in layout.js.
+// apple-icon.png keeps a solid tile, since iOS fills transparency with black.
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -10,8 +12,9 @@ import sharp from "sharp";
 
 const N = 24; // grid is N×N cells, each 8×8 in a 192×192 box
 const CELL = 8;
-const BG = "#121211";
-const FG = "#ECEAE5";
+const BG = "#121211"; // the apple-icon tile
+const DARK_INK = "#161615"; // egg on a light tab
+const LIGHT_INK = "#ECEAE5"; // egg on a dark tab
 // Lit side densest: on a dark tile, more ink reads as brighter.
 const RAMP = ".,:-~=+*#%@";
 
@@ -103,27 +106,13 @@ for (let pass = 0; pass < 2; pass++) {
 
 const esc = (c) => (c === "<" ? "&lt;" : c === "&" ? "&amp;" : c);
 // A dim solid body behind the glyphs, shaded by the same light: at 16-32px the thin strokes
-// alone average out to a grey smudge on the dark tile, and the tab icon read as a black square.
-const mix = (t) =>
-  [BG, FG]
-    .map((h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)))
-    .reduce(
-      (a, b) =>
-        "#" +
-        a
-          .map((c, i) =>
-            Math.round(c + (b[i] - c) * t)
-              .toString(16)
-              .padStart(2, "0"),
-          )
-          .join(""),
-    );
+// alone average out to a smudge, and the tab icon read as a plain square.
 const body = grid
   .flatMap((row, y) =>
     row.map((c, x) =>
       c === " "
         ? ""
-        : `<rect x="${x * CELL}" y="${y * CELL}" width="${CELL}" height="${CELL}" fill="${mix(0.22 + 0.4 * Math.max(0, blur[y][x]))}"/>`,
+        : `<rect x="${x * CELL}" y="${y * CELL}" width="${CELL}" height="${CELL}" fill-opacity="${(0.22 + 0.4 * Math.max(0, blur[y][x])).toFixed(2)}"/>`,
     ),
   )
   .join("");
@@ -136,55 +125,71 @@ const rows = grid
 // The font travels inside the SVG, and the PNGs are drawn by Chrome from that same SVG, so
 // the vector icon and every raster size show one identical egg on any device.
 const font = readFileSync("src/app/fonts/plex/IBMPlexMono-Medium.woff2").toString("base64");
-const svg =
+// `style` sets the egg's colour (`color`); `tile` puts a solid ground under it.
+const makeSvg = (style, tile) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${N * CELL} ${N * CELL}">` +
-  `<style>@font-face{font-family:E;font-weight:500;src:url(data:font/woff2;base64,${font}) format("woff2")}</style>` +
-  `<rect width="100%" height="100%" fill="${BG}"/>` +
-  body +
-  `<g fill="${FG}" font-family="E,monospace" font-weight="500" font-size="11">${rows}</g></svg>`;
+  `<style>@font-face{font-family:E;font-weight:500;src:url(data:font/woff2;base64,${font}) format("woff2")}${style}</style>` +
+  (tile ? `<rect width="100%" height="100%" fill="${BG}"/>` : "") +
+  `<g fill="currentColor">${body}<g font-family="E,monospace" font-weight="500" font-size="11">${rows}</g></g></svg>`;
+const inkStyle = (ink) => `svg{color:${ink}}`;
+const svgAdaptive = makeSvg(
+  `${inkStyle(DARK_INK)}@media (prefers-color-scheme:dark){${inkStyle(LIGHT_INK)}}`,
+);
 
 const chrome = [
   process.env.CHROME,
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
 ].find(Boolean);
 const dir = mkdtempSync(join(tmpdir(), "icons-"));
-const html = join(dir, "e.html");
-const shot = join(dir, "e.png");
-writeFileSync(
-  html,
-  `<!doctype html><style>html,body{margin:0;background:${BG}}img{display:block;width:192px;height:192px}</style><img src="data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}">`,
-);
-execFileSync(chrome, [
-  "--headless=new",
-  "--hide-scrollbars",
-  "--force-device-scale-factor=2",
-  "--window-size=192,192",
-  `--screenshot=${shot}`,
-  `file://${html}`,
-]);
-const master = readFileSync(shot);
-const png = (size) =>
+// A 384px master of an SVG, drawn by Chrome on a transparent page.
+const render = (svg, name) => {
+  const html = join(dir, `${name}.html`);
+  const shot = join(dir, `${name}.png`);
+  writeFileSync(
+    html,
+    `<!doctype html><style>html,body{margin:0;background:transparent}img{display:block;width:192px;height:192px}</style><img src="data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}">`,
+  );
+  execFileSync(chrome, [
+    "--headless=new",
+    "--hide-scrollbars",
+    "--default-background-color=00000000",
+    "--force-device-scale-factor=2",
+    "--window-size=192,192",
+    `--screenshot=${shot}`,
+    `file://${html}`,
+  ]);
+  return readFileSync(shot);
+};
+const png = (master, size) =>
   sharp(master).resize(size, size, { kernel: "lanczos3" }).ensureAlpha().png().toBuffer();
 
-writeFileSync("src/app/icon.svg", svg);
-writeFileSync("src/app/icon.png", await png(192));
-writeFileSync("src/app/apple-icon.png", await png(180));
+// An .ico of PNG entries.
+const ico = async (master, sizes) => {
+  const imgs = await Promise.all(sizes.map((n) => png(master, n)));
+  const head = Buffer.alloc(6 + 16 * sizes.length);
+  head.writeUInt16LE(1, 2);
+  head.writeUInt16LE(sizes.length, 4);
+  let off = head.length;
+  imgs.forEach((img, i) => {
+    const e = 6 + 16 * i;
+    head[e] = head[e + 1] = sizes[i];
+    head.writeUInt16LE(1, e + 4);
+    head.writeUInt16LE(32, e + 6);
+    head.writeUInt32LE(img.length, e + 8);
+    head.writeUInt32LE(off, e + 12);
+    off += img.length;
+  });
+  return Buffer.concat([head, ...imgs]);
+};
 
-// favicon.ico: 16, 32 and 48px PNG entries.
-const sizes = [16, 32, 48];
-const imgs = await Promise.all(sizes.map(png));
-const head = Buffer.alloc(6 + 16 * sizes.length);
-head.writeUInt16LE(1, 2);
-head.writeUInt16LE(sizes.length, 4);
-let off = head.length;
-imgs.forEach((img, i) => {
-  const e = 6 + 16 * i;
-  head[e] = head[e + 1] = sizes[i];
-  head.writeUInt16LE(1, e + 4);
-  head.writeUInt16LE(32, e + 6);
-  head.writeUInt32LE(img.length, e + 8);
-  head.writeUInt32LE(off, e + 12);
-  off += img.length;
-});
-writeFileSync("src/app/favicon.ico", Buffer.concat([head, ...imgs]));
+const onLight = render(makeSvg(inkStyle(DARK_INK)), "light");
+const onDark = render(makeSvg(inkStyle(LIGHT_INK)), "dark");
+const tile = render(makeSvg(inkStyle(LIGHT_INK), true), "tile");
+
+writeFileSync("src/app/icon.svg", svgAdaptive);
+writeFileSync("src/app/icon.png", await png(onLight, 192));
+writeFileSync("src/app/favicon.ico", await ico(onLight, [16, 32, 48]));
+writeFileSync("public/icon-dark.png", await png(onDark, 192));
+writeFileSync("public/favicon-dark.ico", await ico(onDark, [16, 32, 48]));
+writeFileSync("src/app/apple-icon.png", await png(tile, 180));
 for (const row of grid) console.log(row.join(""));

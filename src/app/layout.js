@@ -82,11 +82,24 @@ export const metadata = {
   // Listed by hand: Next's generated links left favicon.ico off the home page, so
   // browsers that skip SVG icons asked for /favicon.ico at the domain root (outside
   // /Portfolio) and got a 404. Setting `icons` replaces the generated links, so every
-  // file in src/app is listed here.
+  // icon file is listed here.
   icons: {
     icon: [
       { url: `${site.basePath}/favicon.ico`, sizes: "48x48" },
       { url: `${site.basePath}/icon.png`, sizes: "192x192", type: "image/png" },
+      // Light egg for dark tabs (public/): the unmarked ones above are the dark egg, which is
+      // what a browser without media-aware icons, or Google's white results page, picks.
+      {
+        url: `${site.basePath}/favicon-dark.ico`,
+        sizes: "48x48",
+        media: "(prefers-color-scheme: dark)",
+      },
+      {
+        url: `${site.basePath}/icon-dark.png`,
+        sizes: "192x192",
+        type: "image/png",
+        media: "(prefers-color-scheme: dark)",
+      },
       { url: `${site.basePath}/icon.svg`, type: "image/svg+xml" },
     ],
     apple: `${site.basePath}/apple-icon.png`,
