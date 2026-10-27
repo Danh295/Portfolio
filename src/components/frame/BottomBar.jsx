@@ -27,7 +27,7 @@ export default function BottomBar({ spark, barRef, inert }) {
         <a
           href={site.resume}
           target="_blank"
-          rel="noreferrer"
+          rel="opener" /* ours: the resume page closes itself back to this tab (App.jsx openTab) */
           data-key="r"
           data-tip="view or download the pdf"
         >

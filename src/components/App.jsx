@@ -47,6 +47,16 @@ const SCROLL_KEYS = new Set(["PageUp", "PageDown", "Home", "End", " "]);
 // What the g / l / r shortcuts open.
 const LINKS = { github: site.github.profile, linkedin: site.linkedin, resume: site.resume };
 
+// A new tab. One for an address of ours (the resume page) keeps its opener, so it can close
+// itself and land back on this tab (a browser implies noopener for a plain target=_blank);
+// another site never gets a handle on this page.
+const openTab = (href) =>
+  window.open(
+    href,
+    "_blank",
+    new URL(href, window.location.href).origin === window.location.origin ? undefined : "noopener",
+  );
+
 /** `initialView`: the project slug a /projects/<slug>/ page starts on (pre-rendered). */
 export default function App({ initialView = null }) {
   const reduce = useReducedMotion();
@@ -292,7 +302,7 @@ export default function App({ initialView = null }) {
     }
     if (fx.href) {
       if (fx.href.startsWith("mailto:")) window.location.assign(fx.href);
-      else window.open(fx.href, "_blank", "noopener");
+      else openTab(fx.href);
     }
     // A section the embedded shell went to (cd / cat …, or `./egg` → the hero with the
     // egg selected): scroll there, leaving an open project page first.
@@ -498,7 +508,7 @@ export default function App({ initialView = null }) {
         window.location.assign("mailto:" + site.email);
         break;
       case "openLink":
-        window.open(LINKS[d.link], "_blank", "noopener");
+        openTab(LINKS[d.link]);
         break;
     }
     // A shortcut with a visible button (header, bottom bar, hero, project page, dialog

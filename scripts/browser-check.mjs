@@ -16,6 +16,7 @@ import { spawn, execFileSync } from "node:child_process";
 import { createServer } from "node:http";
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { inflateSync } from "node:zlib";
 import { extname, join } from "node:path";
 
 const OUT = new URL("../out/", import.meta.url).pathname;
@@ -48,6 +49,8 @@ const KEY = {
   "+": ["Equal", 187],
   "-": ["Minus", 189],
   0: ["Digit0", 48],
+  g: ["KeyG", 71],
+  r: ["KeyR", 82],
 };
 // Page-side expressions: the nav button whose label includes `label`; the hero's heading
 // as typed so far, and in full (its aria-label, src/data/home.js `heading`).
@@ -1863,12 +1866,24 @@ await run(
 const INKS = `[...document.querySelectorAll("[data-page]")].map((p) => { const c = p.querySelector("canvas"); if (!c) return 0;
   const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0;
   for (let i = 0; i < d.length; i += 4) if (d[i] < 100 && d[i + 3] > 0) n++; return n; })`;
+// The served PDF's page count, read from the file itself (not from the viewer under test): a page
+// object is `/Type /Page` (not `/Pages`), in plain text or inside an inflated object stream.
+const PDF_PAGES = (() => {
+  const raw = readFileSync(join(OUT, "Danny_s_Resume.pdf")).toString("latin1");
+  let text = raw;
+  for (const m of raw.matchAll(/stream\r?\n([\s\S]*?)\r?\nendstream/g)) {
+    try {
+      text += inflateSync(Buffer.from(m[1], "latin1")).toString("latin1");
+    } catch {
+      // not a Flate stream: nothing to read
+    }
+  }
+  return (text.match(/\/Type\s*\/Page(?![s\w])/g) ?? []).length;
+})();
 const RESUME = {
   // Dark pixels on the first page's canvas: it is drawn, not blank.
   ink: `(() => (${INKS})[0] ?? 0)()`,
-  // Dark pixels on each page's canvas, and the page count the toolbar reports ("page 1/N").
   inks: INKS,
-  pageCount: `Number(document.querySelector("header").innerText.match(/page \\d+\\/(\\d+)/)[1])`,
   zoom: `document.querySelector("output").textContent.trim()`,
   pageW: `Math.round(document.querySelector("[data-page]").getBoundingClientRect().width)`,
   text: `document.querySelector("[data-page]").innerText`,
@@ -1878,8 +1893,8 @@ await run("the resume link leads to the viewer, in a new tab (1291×808)", DESKT
   const a = await tab.evaluate(`(() => { const a = document.querySelector('footer a[data-key="r"]');
     return { href: new URL(a.href).pathname, target: a.target, rel: a.rel }; })()`);
   check(
-    "resume ↗ is the viewer page, opened in a new tab",
-    a.href === "/Portfolio/resume/" && a.target === "_blank" && a.rel.includes("noreferrer"),
+    "resume ↗ is the viewer page, opened in a new tab that keeps its opener",
+    a.href === "/Portfolio/resume/" && a.target === "_blank" && a.rel.includes("opener"),
     a,
   );
 });
@@ -1888,11 +1903,11 @@ await run("resume page draws the pdf (1291×808)", DESKTOP, async (tab) => {
   await tab.go("resume/", 4000);
   // Every page of the file is drawn, and has ink (the file has one page today, but the check
   // doesn't depend on that).
-  const drawn = await tab.evaluate(`({ inks: ${RESUME.inks}, pages: ${RESUME.pageCount} })`);
+  const inks = await tab.evaluate(RESUME.inks);
   check(
     "every page of the PDF is drawn, with ink on it",
-    drawn.pages >= 1 && drawn.inks.length === drawn.pages && drawn.inks.every((n) => n > 5000),
-    drawn,
+    PDF_PAGES >= 1 && inks.length === PDF_PAGES && inks.every((n) => n > 5000),
+    { PDF_PAGES, inks },
   );
   const text = await tab.evaluate(RESUME.text);
   check(
@@ -1987,7 +2002,7 @@ for (const size of [
         stage: document.querySelector("main").scrollWidth - document.querySelector("main").clientWidth,
         bar: document.querySelector("header").scrollWidth - document.querySelector("header").clientWidth,
         pageW: ${RESUME.pageW}, zoom: ${RESUME.zoom},
-        labels: [...document.querySelectorAll("[data-hint]")].filter((e) => e.getClientRects().length).length,
+        labels: [...document.querySelectorAll("[data-hint],[data-keyhint]")].filter((e) => e.getClientRects().length).length,
       }))()`);
       check(
         "the page opens fitted to the width, nothing sideways",
@@ -2023,6 +2038,142 @@ await run(
         over: m.scrollWidth - m.clientWidth }; })()`);
     check("the page is wider than the screen", st.over > 0, st);
     check("and its left edge is on screen when scrolled to the start", st.left >= 0, st);
+  },
+);
+
+// The toolbar: leave on the left, the file's name in the middle, the tools on the right.
+const TOOLBAR = `(() => {
+  const r = (el) => el.getBoundingClientRect();
+  const bar = document.querySelector("header");
+  const q = (a) => bar.querySelector('[data-action="' + a + '"]');
+  const text = (el) => el.innerText.trim().replace(/\\s+/g, " ");
+  const name = bar.querySelector("h1"), leave = q("leave"), tools = q("zoomOut").closest("div");
+  return {
+    leave: text(leave), leaveRight: Math.round(r(leave).right),
+    nameLeft: Math.round(r(name).left), nameRight: Math.round(r(name).right),
+    nameOff: Math.round(Math.abs((r(name).left + r(name).right) / 2 - innerWidth / 2)),
+    nameTop: Math.round(r(name).top), toolsLeft: Math.round(r(tools).left), toolsTop: Math.round(r(tools).top),
+    zoomOut: text(q("zoomOut")), zoomIn: text(q("zoomIn")),
+    borders: ["download", "print", "zoomIn", "fit"].map((a) => getComputedStyle(q(a)).borderTopWidth),
+    pageText: /page \\d+ ?\\/ ?\\d+/.test(bar.innerText),
+  };
+})()`;
+await run(
+  "resume page: leave on the left, the name in the middle, the tools on the right (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    const t = await tab.evaluate(TOOLBAR);
+    check(
+      "cd ~ is on the left, with its [esc] hint",
+      t.leave === "[esc] cd ~" && t.leaveRight < t.nameLeft,
+      t,
+    );
+    check(
+      "the file name is in the middle of the screen",
+      t.nameOff <= 2 && t.nameRight < t.toolsLeft,
+      t,
+    );
+    check("the zoom buttons are just [-] and [+]", t.zoomOut === "[-]" && t.zoomIn === "[+]", t);
+    check(
+      "download and print are bordered buttons, the zoom controls plain text",
+      t.borders[0] === "1px" &&
+        t.borders[1] === "1px" &&
+        t.borders[2] === "0px" &&
+        t.borders[3] === "0px",
+      t,
+    );
+    check("and there is no page 1/1", !t.pageText, t);
+  },
+);
+await run(
+  "resume page: on a phone the name is centred above the tools, with no [esc] hint (390×844, touch)",
+  { width: 390, height: 844, mobile: true },
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    const t = await tab.evaluate(TOOLBAR);
+    check(
+      "the name is centred on the first row, the tools on the next",
+      t.nameOff <= 2 && t.toolsTop > t.nameTop,
+      t,
+    );
+    check(
+      "cd ~ is there without a key hint, and the buttons are bordered",
+      t.leave === "cd ~" && t.borders[0] === "1px" && t.borders[1] === "1px",
+      t,
+    );
+  },
+);
+
+// Esc leaves. A tab the app opened (it has an opener) closes itself, which lands back on the app's
+// tab; where the browser won't close it, or the visitor came straight here, it goes home in place.
+await run(
+  "resume page: Esc and cd ~ go home, or close a tab the app opened (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    const stub = (opener) =>
+      tab.evaluate(`(() => { window.__closed = 0; window.close = () => { window.__closed++; };
+      ${opener ? 'Object.defineProperty(window, "opener", { value: {}, configurable: true });' : ""} })()`);
+    const home = (p) => p === "/Portfolio/" || p === "/Portfolio";
+    await tab.go("resume/", 4000);
+    await stub(false);
+    await tab.key("Escape");
+    await sleep(1200);
+    const direct = await tab.evaluate(`({ path: location.pathname, closed: window.__closed })`);
+    check(
+      "straight here, Esc goes home without closing anything",
+      home(direct.path) && direct.closed === 0,
+      direct,
+    );
+
+    await tab.go("resume/", 4000);
+    await stub(true);
+    await tab.key("Escape");
+    const soon = await tab.evaluate(`({ path: location.pathname, closed: window.__closed })`);
+    check(
+      "opened by the app, Esc closes the tab first",
+      soon.closed === 1 && soon.path.endsWith("/resume/"),
+      soon,
+    );
+    await sleep(900);
+    check("and where that is refused it goes home", home(await tab.evaluate("location.pathname")));
+
+    await tab.go("resume/", 4000);
+    await stub(true);
+    await tab.click(`document.querySelector('[data-action="leave"]')`);
+    const clicked = await tab.evaluate(`({ closed: window.__closed, path: location.pathname })`);
+    check(
+      "clicking cd ~ does the same",
+      clicked.closed === 1 && clicked.path.endsWith("/resume/"),
+      clicked,
+    );
+  },
+);
+
+// The app's own tab for the resume keeps its opener, which is what lets that tab close itself;
+// other sites' tabs never do.
+await run(
+  "the resume opens with its opener kept, other sites without (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#home");
+    await tab.evaluate(
+      `window.__open = []; window.open = (...a) => { __open.push(a); return null; };`,
+    );
+    await tab.key("r");
+    await tab.key("g");
+    const opened = await tab.evaluate("window.__open");
+    check(
+      "r opens the resume page in a new tab with no noopener",
+      opened[0] &&
+        opened[0][0].endsWith("/Portfolio/resume/") &&
+        opened[0][1] === "_blank" &&
+        opened[0][2] == null,
+      { opened },
+    );
+    check("g (GitHub) still opens with noopener", opened[1] && opened[1][2] === "noopener", {
+      opened,
+    });
   },
 );
 
@@ -2300,7 +2451,7 @@ await run(
     check("a tap 6px above or below each control still hits it", misses.length === 0, { misses });
     check(
       "while the controls themselves stay text-sized",
-      sizes.every((h) => h <= 32),
+      sizes.every((h) => h <= 36),
       { sizes },
     );
   },

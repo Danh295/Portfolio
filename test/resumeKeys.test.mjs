@@ -53,3 +53,16 @@ test("a keydown without a key is ignored, not an error", () => {
   assert.equal(resumeKey(press(undefined)), null);
   assert.equal(resumeKey(press("Dead")), null);
 });
+
+// Esc leaves the page (closes the tab it opened in, or goes home). Like the app's Esc it is not a
+// one-character shortcut, so it keeps working when those are off (WCAG 2.1.4 is about those).
+test("Esc leaves the page, even with shortcuts off", () => {
+  assert.equal(resumeKey(press("Escape")), "leave");
+  assert.equal(resumeKey(press("Escape", { keysOn: false })), "leave");
+});
+
+test("Esc with a modifier is the browser's, and a held Esc acts once", () => {
+  for (const mod of ["ctrl", "meta", "alt"])
+    assert.equal(resumeKey(press("Escape", { [mod]: true })), null, mod);
+  assert.equal(resumeKey(press("Escape", { repeat: true })), null);
+});

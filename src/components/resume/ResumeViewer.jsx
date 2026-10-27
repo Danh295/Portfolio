@@ -2,8 +2,9 @@
 
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { site } from "@/config/site";
-import Hint from "@/components/Hint";
+import Hint, { KeyLabel } from "@/components/Hint";
 import { useKeysPref } from "@/lib/useKeysPref";
 import { PRESSABLE, pressFx } from "@/lib/pressFx";
 import { isTouch } from "@/lib/egg/screen";
@@ -77,6 +78,7 @@ const topLeft = (el) => {
 /** The resume page: the PDF drawn with pdf.js, with the controls of a basic PDF reader. */
 export default function ResumeViewer() {
   const [keysOn] = useKeysPref();
+  const router = useRouter();
   const stageRef = useRef(null),
     downloadRef = useRef(null),
     zoomRef = useRef(1), // the zoom on screen
@@ -88,7 +90,6 @@ export default function ResumeViewer() {
   // What the zoom follows when the room changes (a turned phone, a resized window, a scrollbar
   // appearing): the opening fit, a fit asked for, or nothing once the visitor zoomed by hand.
   const [follow, setFollow] = useState(FOLLOW.START);
-  const [current, setCurrent] = useState(1);
 
   // Load the file. pdf.js is imported here, not at the top: it needs the browser, and only
   // this page pays for it.
@@ -187,6 +188,16 @@ export default function ResumeViewer() {
 
   const stageHandlers = useZoomGestures(stageRef, () => targetRef.current, fitToWidth, zoomAt);
 
+  // Leave: a tab the app opened kept its opener (App.jsx openTab), so closing it lands back on
+  // the app's own tab. Where the browser won't close it, or the visitor came straight here and
+  // has no such tab, go home in place.
+  const leave = () => {
+    if (window.opener) {
+      window.close();
+      setTimeout(() => router.push("/"), 250);
+    } else router.push("/");
+  };
+
   const actions = {
     [ACTION.ZOOM_IN]: () => {
       setFollow(FOLLOW.NONE);
@@ -202,6 +213,7 @@ export default function ResumeViewer() {
     },
     [ACTION.DOWNLOAD]: () => downloadRef.current?.click(),
     [ACTION.PRINT]: printPdf,
+    [ACTION.LEAVE]: leave,
   };
 
   // Keep a followed fit in step with the room: this also catches the document's scrollbar
@@ -263,29 +275,6 @@ export default function ResumeViewer() {
     return () => window.removeEventListener("keydown", listener);
   }, []);
 
-  // Which page is in view: the one whose box is nearest the middle of the screen.
-  const updateCurrentPage = useEffectEvent(() => {
-    const mid = window.innerHeight / 2;
-    let best = 1,
-      nearest = Infinity;
-    for (const el of stageRef.current?.querySelectorAll("[data-page]") ?? []) {
-      const r = el.getBoundingClientRect();
-      const d = Math.abs((r.top + r.bottom) / 2 - mid);
-      if (d < nearest) [best, nearest] = [Number(el.dataset.page), d];
-    }
-    setCurrent(best);
-  });
-  useEffect(() => {
-    const listener = () => updateCurrentPage();
-    window.addEventListener("scroll", listener, { passive: true });
-    return () => window.removeEventListener("scroll", listener);
-  }, []);
-  // Zooming moves the pages without a scroll event: look again once the layout has settled.
-  useEffect(() => {
-    const id = requestAnimationFrame(() => updateCurrentPage());
-    return () => cancelAnimationFrame(id);
-  }, [zoom, pageInfos]);
-
   return (
     <div className={styles.viewer}>
       {/* A touch flashes the control it lands on, like a key does (a mouse click doesn't). */}
@@ -295,43 +284,59 @@ export default function ResumeViewer() {
           if (e.pointerType === "touch") pressFx(e.target.closest?.(PRESSABLE));
         }}
       >
+        {/* A tab the app opened closes itself (leave above); otherwise this is a plain link home. */}
+        <Link
+          href="/"
+          className={styles.leave}
+          data-action={ACTION.LEAVE}
+          onClick={(e) => {
+            if (!window.opener) return;
+            e.preventDefault();
+            leave();
+          }}
+        >
+          <KeyLabel className={styles.hint}>[esc] </KeyLabel>cd ~
+        </Link>
         <h1 className={styles.name}>~/resume/danny_hu.pdf</h1>
-        <span className={styles.group} role="group" aria-label="zoom">
-          <button
-            type="button"
-            data-action={ACTION.ZOOM_OUT}
-            onClick={actions[ACTION.ZOOM_OUT]}
-            aria-label="zoom out"
-          >
-            <Hint>[-] </Hint>−
-          </button>
-          <output className={styles.zoom} aria-live="polite">
-            {zoomLabel(zoom)}
-          </output>
-          <button
-            type="button"
-            data-action={ACTION.ZOOM_IN}
-            onClick={actions[ACTION.ZOOM_IN]}
-            aria-label="zoom in"
-          >
-            <Hint>[+] </Hint>+
-          </button>
-          <button type="button" data-action={ACTION.FIT} onClick={actions[ACTION.FIT]}>
-            <Hint>[0] </Hint>fit
-          </button>
-        </span>
-        <span className={styles.dim}>
-          page {current}/{pageInfos ? pageInfos.length : 1}
-        </span>
-        <span className={styles.group}>
-          <DownloadLink ref={downloadRef} data-action={ACTION.DOWNLOAD}>
-            <Hint>[d] </Hint>download
-          </DownloadLink>
-          <button type="button" data-action={ACTION.PRINT} onClick={actions[ACTION.PRINT]}>
-            <Hint>[p] </Hint>print
-          </button>
-          <Link href="/">cd ~</Link>
-        </span>
+        <div className={styles.tools}>
+          <span className={styles.zoomGroup} role="group" aria-label="zoom">
+            <button
+              type="button"
+              data-action={ACTION.ZOOM_OUT}
+              onClick={actions[ACTION.ZOOM_OUT]}
+              aria-label="zoom out"
+            >
+              [-]
+            </button>
+            <output className={styles.zoom} aria-live="polite">
+              {zoomLabel(zoom)}
+            </output>
+            <button
+              type="button"
+              data-action={ACTION.ZOOM_IN}
+              onClick={actions[ACTION.ZOOM_IN]}
+              aria-label="zoom in"
+            >
+              [+]
+            </button>
+            <button type="button" data-action={ACTION.FIT} onClick={actions[ACTION.FIT]}>
+              <Hint>[0] </Hint>fit
+            </button>
+          </span>
+          <span className={styles.actions}>
+            <DownloadLink ref={downloadRef} className={styles.btn} data-action={ACTION.DOWNLOAD}>
+              <Hint className={styles.hint}>[d] </Hint>download
+            </DownloadLink>
+            <button
+              type="button"
+              className={styles.btn}
+              data-action={ACTION.PRINT}
+              onClick={actions[ACTION.PRINT]}
+            >
+              <Hint className={styles.hint}>[p] </Hint>print
+            </button>
+          </span>
+        </div>
       </header>
       <main ref={stageRef} className={styles.stage} {...stageHandlers}>
         {pageInfos ? (
