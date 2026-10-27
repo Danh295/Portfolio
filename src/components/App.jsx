@@ -65,6 +65,8 @@ export default function App({ initialView = null }) {
   const [keysOn, setKeysOn, toggleKeys] = useKeysPref();
   const [mode, setMode] = useState("gui");
   const [filter, setFilter] = useState("all");
+  // The skill whose "used in" panel shows ({ name, up }), or null (src/components/skills).
+  const [skillOpen, setSkillOpen] = useState(null);
   const [view, setView] = useState(initialView);
   const [sel, setSel] = useState(-1);
   const [expSel, setExpSel] = useState(-1);
@@ -239,6 +241,17 @@ export default function App({ initialView = null }) {
     else scrollSec(n);
   };
 
+  // A project picked in a skill's panel: its row in the list, selected but not opened. A
+  // folder filter that hides it goes back to all first.
+  const jumpToProject = (slug) => {
+    const hidden = !list.some((p) => p.slug === slug);
+    if (hidden) setFilter("all");
+    const row = (hidden ? projects : list).findIndex((p) => p.slug === slug);
+    goSec(1, row);
+    // The button that was clicked is gone with the panel: focus goes to the row it chose.
+    requestAnimationFrame(() => focusQuiet(document.querySelector('[data-row="' + row + '"]')));
+  };
+
   // Select a hero stop ("head" | "more" | "rules" | "egg"), making the hero the active
   // section. It doesn't scroll (goSec and goHome do).
   const selectHero = (stop) => {
@@ -364,6 +377,7 @@ export default function App({ initialView = null }) {
       aboutOpen,
       menuOpen,
       termOpen,
+      skillOpen: !!skillOpen,
       keysOn,
       view,
       viewIdx: projects.findIndex((p) => p.slug === view),
@@ -414,6 +428,14 @@ export default function App({ initialView = null }) {
       case "toggleShell":
         setTermOpen((o) => !o);
         break;
+      case "closeSkill": {
+        // Focus inside the panel would vanish with it: hand it to the skill's row, quietly
+        // (a focus ring there would only open the panel again).
+        const row = document.activeElement?.closest?.("[data-skill]");
+        setSkillOpen(null);
+        focusQuiet(row);
+        break;
+      }
       case "toggleKeys":
         toggleKeys();
         break;
@@ -870,7 +892,14 @@ export default function App({ initialView = null }) {
   );
   const tail = (
     <div className={styles.tail}>
-      <Skills skills={skills} total={skillTotal} active={activeSec === 3} />
+      <Skills
+        skills={skills}
+        total={skillTotal}
+        active={activeSec === 3}
+        open={skillOpen}
+        onOpen={setSkillOpen}
+        onProject={jumpToProject}
+      />
       <div className={styles.foot}>
         <span suppressHydrationWarning>© {YEAR} danny hu · ontario, canada</span>
         <KeyLabel>

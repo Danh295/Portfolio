@@ -1847,7 +1847,7 @@ for (const size of [
 
 // With a mouse the used-in line is the row's tooltip, not text on the page.
 await run(
-  "skills rows keep their used-in line as a tooltip on desktop (1291×808)",
+  "skills rows keep their used-in line off the page until hovered on desktop (1291×808)",
   DESKTOP,
   async (tab) => {
     await tab.go("#skills");
@@ -1855,6 +1855,157 @@ await run(
       `[...document.querySelectorAll("#skills [data-used]")].filter((l) => l.getClientRects().length > 0).length`,
     );
     check("no used-in line takes space under a row", shown === 0, { shown });
+    check(
+      "no panel is rendered until a row is hovered or focused",
+      (await tab.evaluate(`document.querySelectorAll("#skills [data-skill-panel]").length`)) === 0,
+    );
+  },
+);
+
+// A skill's "used in" panel: the projects it was used in as buttons (a job merged with its
+// project among them), then the jobs and courses in one muted line. Clicking a project goes to
+// its row in the list, selected but not opened, whatever folder filter was on.
+const SKILL = (name) => `document.querySelector('#skills [data-skill="${name}"]')`;
+const PANEL = `document.querySelector("#skills [data-skill-panel]")`;
+// The panel's project buttons whose name isn't ppeo scan (the only professional-folder project).
+const NOT_PPEO = `[...document.querySelectorAll("#skills [data-skill-panel] button")].filter((b) => !b.innerText.includes("ppeo scan"))`;
+// A project button's name: without the tree prefix, the " at org" and the "(via …)".
+const projName = `(b) => b.innerText.replace(/^.*█\\s*/, "").replace(/\\s+at\\s.*$/, "").replace(/\\s*\\(.*$/, "").trim()`;
+// Where the page is after a jump to a project row: no project page, the row selected inside the band.
+const LANDED = (title) => `(() => {
+  const cs = getComputedStyle(document.documentElement),
+    nav = parseFloat(cs.getPropertyValue("--nav-h")) || 56, bar = parseFloat(cs.getPropertyValue("--bar-h")) || 40,
+    row = document.querySelector('[data-row][aria-current="true"]'), r = row && row.getBoundingClientRect();
+  return { path: location.pathname, detail: !!document.querySelector("[data-detail-title]"),
+    all: document.querySelector('[aria-label="project folders"] button[aria-pressed="true"]')?.innerText.includes("projects/"),
+    row: row ? row.innerText : null, named: !!row && row.innerText.includes(${JSON.stringify(title)}),
+    inBand: !!r && r.top >= nav - 1 && r.bottom <= innerHeight - bar + 1,
+    focused: document.activeElement === row, panel: !!document.querySelector("#skills [data-skill-panel]") };
+})()`;
+
+await run("skills panel jumps to a project (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  // Filter the list to the professional folder, so the project picked below is hidden by it.
+  await tab.click(
+    `[...document.querySelectorAll('[aria-label="project folders"] button')].find((b) => b.innerText.includes("professional"))`,
+  );
+  await sleep(300);
+  await tab.evaluate(`document.getElementById("skills").scrollIntoView({ block: "center" })`);
+  await sleep(500);
+  const height = await tab.evaluate(`document.documentElement.scrollHeight`);
+  const at = await tab.evaluate(
+    `(() => { const r = ${SKILL("Python")}.getBoundingClientRect(); return { x: r.x + 30, y: r.y + r.height / 2 }; })()`,
+  );
+  await tab.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...at });
+  await sleep(250);
+  const panel = await tab.evaluate(`(() => {
+    const p = ${PANEL}; if (!p) return null;
+    const r = p.getBoundingClientRect(), last = p.lastElementChild;
+    return { projects: p.querySelectorAll("button").length, first: p.children[0].tagName,
+      mutedLast: last.tagName === "DIV", rest: last.innerText, bottom: Math.round(r.bottom), h: document.documentElement.scrollHeight,
+      sr: document.querySelectorAll("#skills [data-skill-panel]").length };
+  })()`);
+  check("hovering a skill opens one panel", panel && panel.sr === 1, panel);
+  check(
+    "it lists projects as buttons, then a muted jobs and courses line",
+    panel && panel.projects > 0 && panel.mutedLast && /[▓▒]/.test(panel.rest),
+    panel,
+  );
+  check("opening it changes no height", panel && panel.h === height, { panel, height });
+  const title = await tab.evaluate(`(${projName})(${NOT_PPEO}[0])`);
+  await tab.click(`${NOT_PPEO}[0]`);
+  await sleep(1500);
+  const after = await tab.evaluate(LANDED(title));
+  check("a project outside the filter is listed under its name", title.length > 0, { title });
+  check(
+    "the click opened no project page",
+    !/\/projects\//.test(after.path) && !after.detail,
+    after,
+  );
+  check("the folder filter went back to all", after.all === true, after);
+  check("its row is the selected one", after.named, after);
+  check("the row is on screen between the bars", after.inBand, after);
+  check("the panel closed and focus is on the row", !after.panel && after.focused, after);
+});
+
+await run("skills panel by keyboard (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#skills");
+  await tab.key("Tab"); // keyboard modality, so a script focus counts as :focus-visible
+  await tab.evaluate(`${SKILL("Python")}.focus()`);
+  await sleep(250);
+  check("a focused row opens its panel", await tab.evaluate(`!!${PANEL}`));
+  await tab.key("Tab");
+  check(
+    "Tab goes on into the panel's first project",
+    await tab.evaluate(`document.activeElement.matches("[data-skill-panel] button")`),
+  );
+  await tab.key("Escape");
+  const esc = await tab.evaluate(
+    `({ panel: !!${PANEL}, row: document.activeElement === ${SKILL("Python")} })`,
+  );
+  check("Esc closes the panel and keeps focus on its row", !esc.panel && esc.row, esc);
+  await tab.evaluate(`${SKILL("Python")}.blur(); ${SKILL("Python")}.focus()`);
+  await sleep(250);
+  await tab.key("Tab");
+  const title = await tab.evaluate(`(${projName})(document.activeElement)`);
+  // A real Enter carries text "\r": without it Chrome doesn't turn the press into a click.
+  const enter = { key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 };
+  await tab.send("Input.dispatchKeyEvent", { type: "keyDown", text: "\r", ...enter });
+  await tab.send("Input.dispatchKeyEvent", { type: "keyUp", ...enter });
+  await sleep(1500);
+  const after = await tab.evaluate(LANDED(title));
+  check(
+    "Enter on a project selects its row, opening nothing",
+    after.named && !after.detail && !/\/projects\//.test(after.path),
+    after,
+  );
+});
+
+await run(
+  "skills panel tap jumps to a project (390×844, touch)",
+  { width: 390, height: 844, mobile: true },
+  async (tab) => {
+    await tab.go("#skills");
+    const y0 = await tab.evaluate(`scrollY`);
+    await tab.tap(SKILL("Python"));
+    await sleep(300);
+    const open = await tab.evaluate(`(() => {
+    const p = ${PANEL}; if (!p) return null;
+    const r = p.getBoundingClientRect(), cs = getComputedStyle(document.documentElement);
+    return { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right), vw: innerWidth,
+      nav: parseFloat(cs.getPropertyValue("--nav-h")), bar: parseFloat(cs.getPropertyValue("--bar-h")), y: scrollY, buttons: p.querySelectorAll("button").length };
+  })()`);
+    check(
+      "tapping a skill opens its panel without moving the page",
+      open && open.buttons > 0 && open.y === y0,
+      { open, y0 },
+    );
+    check(
+      "the panel sits between the bars and inside the width",
+      open &&
+        open.top >= open.nav &&
+        open.bottom <= 844 - open.bar &&
+        open.left >= 0 &&
+        open.right <= open.vw,
+      open,
+    );
+    await tab.tap(`document.querySelector("#skills [class*=label]")`);
+    await sleep(200);
+    check("a tap elsewhere puts it away", !(await tab.evaluate(`!!${PANEL}`)));
+    await tab.tap(SKILL("Python"));
+    await sleep(300);
+    const title = await tab.evaluate(
+      `(${projName})(document.querySelector("#skills [data-skill-panel] button"))`,
+    );
+    await tab.tap(`document.querySelector("#skills [data-skill-panel] button")`);
+    await sleep(1500);
+    const after = await tab.evaluate(LANDED(title));
+    check(
+      "tapping a project selects its row, opening nothing",
+      after.named && !after.detail && !/\/projects\//.test(after.path),
+      after,
+    );
+    check("the row is on screen between the bars", after.inBand, after);
   },
 );
 

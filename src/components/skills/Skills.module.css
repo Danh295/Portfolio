@@ -30,6 +30,7 @@
   justify-content: start;
   padding: 3px 6px;
   margin: 0 -6px;
+  position: relative;
 }
 
 :global(html:not(.kbd)) .row:hover {
@@ -42,6 +43,79 @@
 
 .bar {
   letter-spacing: 0;
+}
+
+/* The row's panel: a small `tree` of the projects it was used in (buttons that jump to them),
+   then the jobs and courses in one muted line. It floats over what's below, flush with the
+   row so the pointer can cross into it, and only exists while open: no row changes height. */
+.panel {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 6;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(100%, 46ch);
+  padding: 7px 10px 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.row[data-up] .panel {
+  top: auto;
+  bottom: 100%;
+}
+
+.head {
+  display: block;
+  color: var(--mid);
+  font-size: 12px;
+}
+
+.proj {
+  display: block;
+  width: calc(100% + 8px);
+  margin: 0 -4px;
+  padding: 0 4px;
+  background: none;
+  border: 0;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.dim {
+  color: var(--mid);
+}
+
+:global(html:not(.kbd)) .proj:hover,
+.proj:focus-visible {
+  background: var(--fg);
+  color: var(--bg);
+  outline: none;
+}
+
+:global(html:not(.kbd)) .proj:hover .dim,
+.proj:focus-visible .dim {
+  color: inherit;
+}
+
+.rest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+  margin-top: 6px;
+  color: var(--mid);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.rest > span {
+  overflow-wrap: anywhere;
 }
 
 /* project·job·course counts */

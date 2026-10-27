@@ -113,3 +113,28 @@ test("the tip lists projects, then jobs, then courses", () => {
   });
   assert.equal(x.tip, "used in: a b, acme, CS 136");
 });
+
+test("uses groups a skill's items for its panel: projects (a merged job among them), jobs, courses", () => {
+  const [x] = one([{ name: "Python", via: ["Oracle Database"] }], {
+    projects: [project("scan", ["Python"]), project("solo", ["Python"]), project("no", ["Go"])],
+    jobs: [job("city", ["Python"], { project: "scan" }), job("ieso", ["Oracle Database"])],
+    courses: [course("CS 136", ["Python"])],
+  });
+  assert.deepEqual(x.uses, {
+    projects: [
+      { name: "solo", slug: "solo", via: [] },
+      { name: "scan", slug: "scan", org: "city", via: [] },
+    ],
+    jobs: [{ name: "ieso", via: ["Oracle Database"] }],
+    courses: [{ name: "CS 136", via: [] }],
+  });
+});
+
+test("a skill used only in a course has no projects to jump to", () => {
+  const [x] = one([{ name: "Racket" }], {
+    projects: [project("a", ["Go"])],
+    courses: [course("CS 135", ["Racket"])],
+  });
+  assert.deepEqual(x.uses.projects, []);
+  assert.equal(x.uses.courses.length, 1);
+});

@@ -170,14 +170,16 @@ function table(f, tabbed) {
   return { prevent: true, ...entry.act(f), flashKey: key };
 }
 
-// Esc closes the topmost thing: a popup (the phone's menu, keys, more…), the rules card, the shell, the project page, an
-// open role, else it clears the selection.
+// Esc closes the topmost thing: a popup (the phone's menu, keys, more…), the rules card, the
+// shell, a skill's panel (it only floats over the page), the project page, an open role, else it
+// clears the selection.
 function escape(f) {
   if (f.menuOpen) return { do: "closeMenu" };
   if (f.help) return { do: "closeHelp" };
   if (f.aboutOpen) return { do: "closeAbout" };
   if (f.rulesOpen && !f.view) return { do: "closeRules" };
   if (f.termOpen) return { do: "closeShell" };
+  if (f.skillOpen) return { do: "closeSkill" };
   if (f.view) return { do: "goBack" };
   if (f.expOpen >= 0) return { do: "collapseExp" };
   return { do: "clearSelection" };

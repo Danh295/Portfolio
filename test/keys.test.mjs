@@ -23,6 +23,7 @@ const BASE = {
   aboutOpen: false,
   menuOpen: false,
   termOpen: false,
+  skillOpen: false,
   keysOn: true,
   view: null,
   viewIdx: -1,
@@ -224,6 +225,9 @@ test("on a project page: ←/→ step projects (wrapping), ↑/↓ do nothing, E
 
 test("Esc closes the topmost thing first", () => {
   const esc = (over) => route({ key: "Escape", ...over }).do;
+  assert.equal(esc({ skillOpen: true, menuOpen: true }), "closeMenu", "a popup is above the panel");
+  assert.equal(esc({ skillOpen: true, termOpen: true }), "closeShell");
+  assert.equal(esc({ skillOpen: true, view: "recall", viewIdx: 0 }), "closeSkill");
   assert.equal(esc({ menuOpen: true, help: true, termOpen: true }), "closeMenu");
   assert.equal(esc({ help: true, aboutOpen: true, termOpen: true }), "closeHelp");
   assert.equal(esc({ aboutOpen: true, termOpen: true }), "closeAbout");

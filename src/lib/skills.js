@@ -20,12 +20,14 @@ export function buildItems({ projects = [], jobs = [], courses = [] }) {
   return [
     ...projects
       .filter((p) => !merged.has(p.slug))
-      .map((p) => ({ kind: "project", name: p.title, tags: p.tags })),
+      .map((p) => ({ kind: "project", name: p.title, slug: p.slug, tags: p.tags })),
     ...tagged.map((j) => {
       const p = j.project && bySlug.get(j.project);
       return {
         kind: "job",
         name: p ? j.company + " / " + p.title : j.company,
+        // A merged item is also its project: a skill's panel lists it with the projects.
+        ...(p && { slug: p.slug, title: p.title, org: j.company }),
         tags: p ? [...j.tags, ...p.tags] : j.tags,
       };
     }),
@@ -68,7 +70,8 @@ function split(counts, cells) {
 /**
  * Group skills with a bar showing each one's share of all items, shaded by where it was
  * used: █ project, ▓ job, ▒ course. `all: true` is a skill every item uses (Git).
- * Returns [{ label, items: [{ name, used, counts, count, bar, tip }] }].
+ * Returns [{ label, items: [{ name, used, counts, count, bar, tip, uses }] }]; `uses` is
+ * { projects, jobs, courses } of { name, slug?, org?, via } for the skill's panel.
  */
 export function buildSkills(stack, sources) {
   const items = buildItems(sources);
@@ -87,15 +90,31 @@ export function buildSkills(stack, sources) {
       const each = used ? split(counts, cells) : {};
       const bar =
         KINDS.map((k) => GLYPH[k].repeat(each[k] ?? 0)).join("") + EMPTY.repeat(BAR_CELLS - cells);
+      // The tags that made `it` count for this skill by way of `via` (Oracle Database for SQL).
+      const seenVia = (it) => (via ?? []).filter((v) => it.tags.some((t) => lc(t) === lc(v)));
+      const ordered = KINDS.flatMap((k) => hit.filter((it) => it.kind === k));
       const tip =
         "used in: " +
-        KINDS.flatMap((k) => hit.filter((it) => it.kind === k))
+        ordered
           .map((it) => {
-            const seen = (via ?? []).filter((v) => it.tags.some((t) => lc(t) === lc(v)));
+            const seen = seenVia(it);
             return it.name + (seen.length ? " (" + seen.join(", ") + ")" : "");
           })
           .join(", ");
-      return { name, used, counts, count: KINDS.map((k) => counts[k]).join("·"), bar, tip };
+      // The same items for the skill's panel: projects (a job merged with its project among
+      // them, clickable by slug), then the jobs and courses that remain.
+      const entry = (it) => ({
+        name: it.title ?? it.name,
+        ...(it.slug && { slug: it.slug }),
+        ...(it.org && { org: it.org }),
+        via: seenVia(it),
+      });
+      const uses = {
+        projects: ordered.filter((it) => it.slug).map(entry),
+        jobs: ordered.filter((it) => it.kind === "job" && !it.slug).map(entry),
+        courses: ordered.filter((it) => it.kind === "course").map(entry),
+      };
+      return { name, used, counts, count: KINDS.map((k) => counts[k]).join("·"), bar, tip, uses };
     }),
   }));
 }
