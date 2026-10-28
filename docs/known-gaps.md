@@ -1,0 +1,11 @@
+# Known gaps
+
+Read before "fixing" something that looks wrong in the egg, the shells, the resume page or its print: these are left on purpose. Moved from CLAUDE.md unchanged.
+
+Open work is tracked in `TODO.MD` (local); the code-level gaps:
+
+- Left on purpose: the hero's egg header and footer keep fixed pixel heights (so the pot never jumps between game stages); they scale with page zoom but can clip under text-only zoom.
+- Left on purpose: `keyFacts` reads the egg's rect on every keydown (one cheap layout read; reading it lazily would put the DOM inside the pure router's facts), and `Popup.jsx`'s module-level focus bookkeeping resets when that file is hot-reloaded with a popup open (dev only: focus then falls to the page on close).
+- Left on purpose: an iPad with a hardware keyboard counts as touch, so terminal `./egg` there shows no key-hint lines (the buttons are the cue) and a shortcut tab doesn't focus the prompt (tap it to type); the blur on starting `./egg` is kept for a real on-screen keyboard only (`data-kb`).
+- Left on purpose: on the resume page a pinch can't start in the middle of a one-finger scroll. `touch-action: pan-x pan-y` lets the browser take that finger and cancel its pointer, and the second finger then never reaches the page (measured on a mobile-emulated Brave: `pointercancel` after 3 moves, the label unchanged). Fingers landing a moment apart before anything moves work (pinned by the check); lifting and pinching again works. `touch-action: none` would fix it but would mean scrolling by hand, without the browser's momentum.
+- Left on purpose: the resume page prints two ways. The print button prints the PDF file (a hidden frame, or the file in a tab; see `printMode`), while Cmd+P stays the browser's and prints the page's canvases through `@media print`, which is why the canvas keeps its 1700px minimum width. Not verified in a real print preview: whether the PDF plugin is ready at the frame's `load` (a blank print would not raise, so the tab fallback would not run), whether `afterprint` fires inside the plugin (a 120s timer removes the frame), and Safari's gesture events. Check a print preview in Chrome and a pinch in Safari when they change.

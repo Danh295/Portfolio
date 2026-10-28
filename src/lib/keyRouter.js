@@ -1,6 +1,6 @@
 // Every keydown the app handles, decided in one place (no DOM): App reads the facts of
 // the key and the page (`facts`, see test/keys.test.mjs), routeKey decides, App applies
-// the decision. The order of the checks below is the keyboard model (CLAUDE.md).
+// the decision. The order of the checks below is the keyboard model (docs/keyboard.md).
 //
 // A decision is null (leave the key alone) or { prevent?, do?, ...args, blur?,
 // flashKey?, flashSelected? }:

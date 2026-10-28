@@ -181,6 +181,7 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
   const sid = att.sessionId;
   const send = (method, params) => cdp(method, params, sid);
   const errors = [];
+  let at = null; // the page go() last loaded, without its hash
   const onEvent = (msg) => {
     if (msg.sessionId !== sid) return;
     if (msg.method === "Runtime.exceptionThrown")
@@ -234,7 +235,21 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
     height,
     send,
     evaluate,
+    // Loads `path` fresh. The same page with another hash would be a hash-only navigation,
+    // which keeps the page (its state, its scroll, a running intro): leave it first, so go()
+    // always means a new load. `hash` is the in-page navigation, when that is the point.
     go: async (path, wait = 2500) => {
+      const url = SITE + path,
+        base = url.split("#")[0];
+      if (at === base) {
+        await send("Page.navigate", { url: "about:blank" });
+        await sleep(200);
+      }
+      at = base;
+      await send("Page.navigate", { url });
+      await sleep(wait);
+    },
+    hash: async (path, wait = 1000) => {
       await send("Page.navigate", { url: SITE + path });
       await sleep(wait);
     },
@@ -281,14 +296,6 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
       await send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [p] });
       await send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
       return true;
-    },
-    // A fresh load of `path` (go() to another hash of the same page keeps the page, and a plain
-    // reload starts at the top of home).
-    fresh: async (path, wait = 2500) => {
-      await send("Page.navigate", { url: "about:blank" });
-      await sleep(200);
-      await send("Page.navigate", { url: SITE + path });
-      await sleep(wait);
     },
     typeIn: (n) => evaluate(`document.querySelector('[data-sec="${n}"]').dataset.fx || "started"`),
     top: (n) =>
@@ -346,6 +353,14 @@ async function run(title, view, body) {
   if (process.env.ONLY && !title.includes(process.env.ONLY)) return;
   console.log(`\n${title}`);
   const tab = await openTab(view);
+  // One browser profile serves every case and storage is per origin: start each with none, so
+  // a preference a case sets (shortcuts off, the egg counter) can't leak into the next. (Only
+  // the tab's own session can do this: the browser-level call answers "Internal error".)
+  const cleared = await tab.send("Storage.clearDataForOrigin", {
+    origin: new URL(SITE).origin,
+    storageTypes: "local_storage,session_storage",
+  });
+  check("storage cleared before the case", !cleared.error, cleared.error);
   try {
     await body(tab);
   } catch (e) {
@@ -2101,7 +2116,7 @@ await run(
       { tabs, st },
     );
 
-    await tab.fresh("#skills");
+    await tab.go("#skills");
     await tab.key("j");
     await tab.key("Escape");
     const hidden = await tab.evaluate(SKILL_STATE);
@@ -2126,7 +2141,7 @@ await run(
   async (tab) => {
     await tab.go("#skills");
     await tab.evaluate(`localStorage.setItem("danny-keys", "off")`);
-    await tab.fresh("#skills");
+    await tab.go("#skills");
     await tab.key("j");
     check("j does nothing", (await tab.evaluate(SKILL_STATE)).current === null);
     await tab.key("ArrowRight");
@@ -2144,8 +2159,6 @@ await run(
     check("j doesn't", (await at()) === 1);
     await tab.key("Escape");
     check("Esc comes back to the skill", (await tab.evaluate(SKILL_STATE)).focused === "0");
-    // The preference is per origin and the browser is shared by every case: put it back.
-    await tab.evaluate(`localStorage.removeItem("danny-keys")`);
   },
 );
 
