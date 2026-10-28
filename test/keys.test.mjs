@@ -24,6 +24,8 @@ const BASE = {
   menuOpen: false,
   termOpen: false,
   skillOpen: false,
+  skillSel: -1,
+  inSkillPanel: false,
   keysOn: true,
   view: null,
   viewIdx: -1,
@@ -318,6 +320,7 @@ test("the flashed stops are rendered with the attributes the router names", () =
     [{ heroSel: "egg" }, "egg/Hero.jsx"],
     [{ activeSec: 1, sel: 0 }, "work/ProjectList.jsx"],
     [{ activeSec: 2, expSel: 0 }, "experience/Experience.jsx"],
+    [{ activeSec: 3, skillSel: 0 }, "skills/Skills.jsx"],
   ];
   for (const [over, file] of stops) {
     const sel = route({ key: " ", ...over }).flashSelected;
@@ -350,4 +353,51 @@ test("a popup open: modifier combos", () => {
   assert.equal(pop({ key: "PageDown", ctrl: true }), null, "Ctrl+PageDown switches tabs");
   assert.equal(pop({ key: "t", meta: true }), null);
   assert.equal(route({ aboutOpen: true, key: "ArrowLeft", alt: true }), null);
+});
+
+// Skills are j/k stops like projects and roles; Enter or Space on one goes into its panel, where
+// j/k and the arrows walk its project buttons (the keyboard form of hovering it).
+test("j/k step through the skills; Enter or Space on one enters its panel", () => {
+  const at = (over) => route({ activeSec: 3, ...over });
+  assert.equal(at({ key: "j" }).do, "selectSkill");
+  assert.equal(at({ key: "j" }).skillSel, 0);
+  assert.equal(at({ key: "k", skillSel: 4 }).skillSel, 3);
+  assert.equal(at({ key: "ArrowRight", skillSel: 1 }).skillSel, 2, "→ moves like j");
+  for (const key of ["Enter", " "]) {
+    assert.deepEqual(at({ key, skillSel: 2 }), {
+      prevent: true,
+      flashSelected: '[data-skillrow="2"]',
+      do: "enterSkillPanel",
+      ...(key === "Enter" ? { flashKey: key } : {}),
+    });
+  }
+  assert.deepEqual(
+    at({ key: "Enter" }),
+    { prevent: true, flashKey: "Enter" },
+    "the header: nothing",
+  );
+});
+
+test("in a skill's panel j/k and the arrows walk its buttons; Tab and Enter are left alone", () => {
+  const inp = (over) =>
+    route({ activeSec: 3, skillSel: 2, inSkillPanel: true, onButton: true, ...over });
+  for (const [key, dir] of [
+    ["j", 1],
+    ["ArrowDown", 1],
+    ["ArrowRight", 1],
+    ["k", -1],
+    ["ArrowUp", -1],
+    ["ArrowLeft", -1],
+  ])
+    assert.deepEqual(inp({ key }), { prevent: true, do: "panelStep", dir }, key);
+  assert.deepEqual(inp({ key: "Home" }), { prevent: true, do: "panelStep", to: "first" });
+  assert.deepEqual(inp({ key: "End" }), { prevent: true, do: "panelStep", to: "last" });
+  assert.equal(inp({ key: "Tab" }), null, "Tab is not trapped");
+  assert.equal(inp({ key: "Enter" }), null, "Enter presses the focused project");
+  assert.equal(inp({ key: " " }), null, "so does Space");
+  assert.equal(inp({ key: "Escape", skillOpen: true }).do, "closeSkill");
+  // Shortcuts off: the single letters are the browser's again, the arrows still work.
+  assert.equal(inp({ key: "j", keysOn: false }), null);
+  assert.equal(inp({ key: "ArrowDown", keysOn: false }).dir, 1);
+  assert.equal(inp({ key: "j", repeat: true }).dir, 1, "moving keys repeat");
 });

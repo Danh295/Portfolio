@@ -8,3 +8,5 @@ public/
 design_handoff_portfolio_v4/
 TODO.MD
 learn/
+.claude/
+skills-lock.json

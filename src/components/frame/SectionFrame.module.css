@@ -15,6 +15,7 @@
 }
 
 .label {
+  outline: none; /* focused by script only (the j/k selection), never Tab */
   left: 16px;
   margin: 0;
   padding: 0 4px;

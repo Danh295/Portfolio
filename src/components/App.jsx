@@ -37,7 +37,7 @@ import { useOnChange } from "@/lib/useOnChange";
 import { BARS_MEASURED } from "@/lib/bars";
 import { useProjectHistory } from "@/lib/useProjectHistory";
 import { routeKey } from "@/lib/keyRouter";
-import { selectionLabel } from "@/lib/selection";
+import { selectionLabel, SKILL_NAMES } from "@/lib/selection";
 import styles from "./App.module.css";
 
 // Read once per page load, not per render (a render must not read the clock).
@@ -70,6 +70,7 @@ export default function App({ initialView = null }) {
   const [view, setView] = useState(initialView);
   const [sel, setSel] = useState(-1);
   const [expSel, setExpSel] = useState(-1);
+  const [skillSel, setSkillSel] = useState(-1); // the j/k stop in ~/skills (-1 = its header)
   const [expOpen, setExpOpen] = useState(-1);
   const [activeSec, setActiveSec] = useState(0);
   const [termOpen, setTermOpen] = useState(false);
@@ -109,6 +110,7 @@ export default function App({ initialView = null }) {
     vimReg = useRef(null),
     keyHandler = useRef(null),
     fxRef = useRef(null),
+    focusHandler = useRef(null),
     navRef = useRef(null),
     barRef = useRef(null),
     scrollSpy = useRef(null),
@@ -237,8 +239,104 @@ export default function App({ initialView = null }) {
     setHeroSel(n === 0 && stop ? stop : "head");
     if (n === 1) setSel(stop ?? -1);
     if (n === 2) setExpSel(stop ?? -1);
+    setSkillOpen(null);
+    if (n === 3) setSkillSel(stop ?? -1);
     if (view) leaveProject(n);
-    else scrollSec(n);
+    else {
+      focusStop(n, stop ?? -1);
+      scrollSec(n);
+    }
+  };
+
+  // Focus follows the j/k selection (one point of focus, so Tab goes on from where the
+  // selection is): the selected row of ~/projects, ~/experience or ~/skills takes real
+  // focus, or the section's heading for a header stop. Quiet: no scroll, no focus ring. The
+  // hero's stops stay a highlight read out by the live region.
+  const focusStop = (sec, stop) => {
+    if (sec < 1) return;
+    const row =
+      stop < 0
+        ? null
+        : document.querySelector(
+            [
+              '[data-row="' + stop + '"]',
+              '[data-exprow="' + stop + '"] > button',
+              '[data-skillrow="' + stop + '"]',
+            ][sec - 1],
+          );
+    focusQuiet(row ?? document.querySelector('[data-sec="' + sec + '"] h2'));
+  };
+
+  // Into the selected skill's projects: the panel shows already, unless Esc put it away.
+  const enterSkillPanel = () => {
+    const row = document.querySelector('[data-skillrow="' + skillSel + '"]');
+    const go = () =>
+      row?.querySelector("[data-skill-panel] button")?.focus({ preventScroll: true });
+    if (row?.querySelector("[data-skill-panel]")) return go();
+    setSkillOpen({ name: SKILL_NAMES[skillSel] });
+    requestAnimationFrame(go);
+  };
+
+  // A step between the panel's project buttons: `d.dir` (wrapping) or `d.to` "first" | "last".
+  const stepPanel = (d) => {
+    const at = document.activeElement,
+      btns = [...(at?.closest("[data-skill-panel]")?.querySelectorAll("button") ?? [])];
+    if (!btns.length) return;
+    const i = d.to ? (d.to === "first" ? 0 : btns.length - 1) : btns.indexOf(at) + d.dir;
+    btns[(i + btns.length) % btns.length].focus({ preventScroll: true });
+  };
+
+  // Esc with nothing left to close: the selection goes, and focus goes with it (to its
+  // section's heading, when it sat on a row) so the two never split.
+  const clearSelection = () => {
+    const sec = document.activeElement
+      ?.closest("[data-row], [data-exprow], [data-skillrow]")
+      ?.closest("[data-sec]")?.dataset.sec;
+    setSel(-1);
+    setExpSel(-1);
+    setSkillSel(-1);
+    setSkillOpen(null);
+    setHeroSel("head");
+    if (sec) focusStop(+sec, -1);
+  };
+
+  // Selection follows focus, the other way: a row (or a section's heading) that takes focus,
+  // by Tab or a click, becomes the j/k selection, so the two never drift apart. A skill's
+  // panel opens only for a focus Tab made (tabFocus): focusQuiet (our own moves, and Esc's
+  // return to the row) must not bring back a panel just put away.
+  const followFocus = (t) => {
+    if (!(t instanceof Element)) return;
+    const skill = t.closest("[data-skillrow]"),
+      row = t.closest("[data-row]"),
+      role = t.closest("[data-exprow]"),
+      head = t.matches("[data-sec] > h2") ? t.parentElement : null;
+    if (skill) {
+      const i = +skill.dataset.skillrow;
+      setActiveSec(3);
+      setSkillSel(i);
+      if (t === skill && t === tabFocus.current) setSkillOpen({ name: SKILL_NAMES[i] });
+    } else if (row) {
+      setActiveSec(1);
+      setSel(+row.dataset.row);
+    } else if (role) {
+      setActiveSec(2);
+      setExpSel(+role.dataset.exprow);
+    } else if (head && +head.dataset.sec >= 1) {
+      const n = +head.dataset.sec;
+      setActiveSec(n);
+      if (n === 1) setSel(-1);
+      if (n === 2) setExpSel(-1);
+      if (n === 3) setSkillSel(-1);
+    }
+  };
+
+  // The j/k stop `i` in ~/skills (-1 = the header): selected, focused, and its panel showing
+  // (the keyboard form of hovering it). Focus first: the row it leaves closes its own panel.
+  const selectSkill = (i) => {
+    setActiveSec(3);
+    setSkillSel(i);
+    focusStop(3, i);
+    setSkillOpen(i >= 0 ? { name: SKILL_NAMES[i] } : null);
   };
 
   // A project picked in a skill's panel: its row in the list, selected but not opened. A
@@ -378,6 +476,8 @@ export default function App({ initialView = null }) {
       menuOpen,
       termOpen,
       skillOpen: !!skillOpen,
+      skillSel,
+      inSkillPanel: !!focused?.closest("[data-skill-panel]"),
       keysOn,
       view,
       viewIdx: projects.findIndex((p) => p.slug === view),
@@ -490,9 +590,7 @@ export default function App({ initialView = null }) {
         setExpOpen(-1);
         break;
       case "clearSelection":
-        setSel(-1);
-        setExpSel(-1);
-        setHeroSel("head");
+        clearSelection();
         break;
       case "toggleHelp":
         setMenuOpen(false);
@@ -518,9 +616,20 @@ export default function App({ initialView = null }) {
         break;
       case "selectRow":
         setSel(d.sel);
+        focusStop(1, d.sel);
         break;
       case "selectExp":
         setExpSel(d.expSel);
+        focusStop(2, d.expSel);
+        break;
+      case "selectSkill":
+        selectSkill(d.skillSel);
+        break;
+      case "enterSkillPanel":
+        enterSkillPanel();
+        break;
+      case "panelStep":
+        stepPanel(d);
         break;
       case "setFilter":
         setFilter(projectFolders[d.idx]);
@@ -572,6 +681,7 @@ export default function App({ initialView = null }) {
   useEffect(() => {
     keyHandler.current = handleKey;
     fxRef.current = applyFx;
+    focusHandler.current = followFocus;
     scrollSpy.current = onScroll;
   });
 
@@ -620,6 +730,7 @@ export default function App({ initialView = null }) {
     };
     const onFocusIn = (e) => {
       tabFocus.current = tabbing ? e.target : null;
+      focusHandler.current?.(e.target);
     };
     window.addEventListener("keydown", onAnyKey, true);
     window.addEventListener("pointerdown", onPointer, true);
@@ -793,6 +904,7 @@ export default function App({ initialView = null }) {
 
   useOnChange(sel, () => sel >= 0 && ensureVisible('[data-row="' + sel + '"]'));
   useOnChange(expSel, () => expSel >= 0 && ensureVisible('[data-exprow="' + expSel + '"]'));
+  useOnChange(skillSel, () => skillSel >= 0 && ensureVisible('[data-skillrow="' + skillSel + '"]'));
 
   useOnChange(vim, (prev) => {
     if (prev && !vim) {
@@ -813,7 +925,12 @@ export default function App({ initialView = null }) {
   // hidden from screen readers) until it closes.
   const popup = help || aboutOpen || menuOpen;
   // The j/k selection is shown by colour only, so it's also read out (a polite live region).
-  const selName = selectionLabel({ mode, view, activeSec, heroSel, sel, expSel, list });
+  // The rows of the other sections take focus and carry their own names, so only the hero's
+  // stops are read out here.
+  const selName =
+    activeSec === 0
+      ? selectionLabel({ mode, view, activeSec, heroSel, sel, expSel, skillSel, list })
+      : "";
 
   // The gui's big pieces are built up front, not inside the mode/view conditionals
   // below: React Compiler caches each element on its own inputs, so a keystroke in the
@@ -897,6 +1014,7 @@ export default function App({ initialView = null }) {
         total={skillTotal}
         active={activeSec === 3}
         open={skillOpen}
+        skillSel={skillSel}
         onOpen={setSkillOpen}
         onProject={jumpToProject}
       />

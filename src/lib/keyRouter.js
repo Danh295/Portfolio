@@ -110,6 +110,11 @@ function gui(f) {
   if (f.typing) return key === "Escape" ? { do: "closeShell", blur: true } : null;
   if (mod) return null;
   if (f.help && key === "s") return { prevent: true, do: "toggleKeys", flashKey: "s" };
+  // Focus is on a project in a skill's panel: the keys walk its buttons.
+  if (f.inSkillPanel && !onPopup(f)) {
+    const d = skillPanel(f);
+    if (d) return d;
+  }
   // The embedded shell is open but its input lost focus (e.g. after selecting output to
   // copy): typing goes back to its prompt instead of firing shortcuts.
   if (
@@ -148,6 +153,20 @@ function popup(f) {
   if (dir === undefined || (f.key === " " && f.onButton)) return null;
   if (!dir) return { prevent: true };
   return { prevent: true, do: "scrollPopup", dir: f.key === " " && f.shift ? -2 : dir };
+}
+
+// A skill's panel (src/components/skills): j/k and the arrows move between its project
+// buttons (j/k only with shortcuts on), Home/End go to the ends. Enter/Space press the
+// focused button and Tab leaves (the panel never traps it): both fall through. Esc is
+// `escape`'s.
+const PANEL_STEP = { j: 1, ArrowDown: 1, ArrowRight: 1, k: -1, ArrowUp: -1, ArrowLeft: -1 };
+function skillPanel(f) {
+  const { key } = f;
+  if (key === "Home" || key === "End")
+    return { prevent: true, do: "panelStep", to: key === "Home" ? "first" : "last" };
+  const dir = PANEL_STEP[key];
+  if (!dir || (!f.keysOn && key.length === 1)) return null;
+  return { prevent: true, do: "panelStep", dir };
 }
 
 // After the guards: the egg key, Space, then the shortcut table.
@@ -206,6 +225,8 @@ function selection(f) {
   }
   if (f.activeSec === 1 && f.sel >= 0 && f.sel < f.listLength)
     return { el: `[data-row="${f.sel}"]`, act: { do: "openProject", row: f.sel } };
+  if (f.activeSec === 3 && f.skillSel >= 0)
+    return { el: `[data-skillrow="${f.skillSel}"]`, act: { do: "enterSkillPanel" } };
   if (f.activeSec === 2 && f.expSel >= 0) {
     const i = f.expOpen === f.expSel ? -1 : f.expSel;
     return { el: `[data-exprow="${f.expSel}"] > button`, act: { do: "setExpOpen", i } };
@@ -227,6 +248,7 @@ function step(f, dir) {
   if (r.goSec) return { do: "goSec", n: r.goSec[0], stop: r.goSec[1] };
   if (r.heroSel) return { do: "selectHero", heroSel: r.heroSel };
   if (r.sel != null) return { do: "selectRow", sel: r.sel };
+  if (r.skillSel != null) return { do: "selectSkill", skillSel: r.skillSel };
   return { do: "selectExp", expSel: r.expSel };
 }
 

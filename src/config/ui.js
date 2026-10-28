@@ -18,14 +18,20 @@ export const shortcuts = [
   {
     label: "j / k  ← / →",
     keys: ["j", "k", "ArrowLeft", "ArrowRight"],
-    desc: "move: section header → its items → next section",
+    desc: "move: section header → its items (projects, roles, skills) → next section",
     offLabel: "← / →",
   },
   {
     label: "enter / space",
     keys: ["Enter", " "],
-    desc: "press the selected item (egg, more…, project, role)",
+    desc: "press the selected item (egg, more…, project, role); on a skill, go into its projects",
     always: true,
+  },
+  {
+    label: "j / k  ↑ / ↓",
+    keys: ["j", "k", "ArrowUp", "ArrowDown"],
+    desc: "inside a skill's projects: move between them (esc comes back to the skill)",
+    offLabel: "↑ / ↓",
   },
   { label: "f", keys: ["f"], desc: "cycle project folder" },
   {

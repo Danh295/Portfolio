@@ -46,6 +46,9 @@ export default function Experience({ expSel, expOpen, active, onToggle }) {
               </span>
               <span className={styles.summary}>{e.summary}</span>
               <span className={styles.caret}>{open ? "−" : "+"}</span>
+              <span className="sr-only">
+                {", role " + (i + 1) + " of " + experienceEntries.length}
+              </span>
             </button>
             {open && (
               <div className={styles.details}>

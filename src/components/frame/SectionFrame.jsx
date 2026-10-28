@@ -81,6 +81,7 @@ export default function SectionFrame({
         ref={labelRef}
         id={id ? id + "-label" : undefined}
         aria-label={title}
+        tabIndex={-1}
         className={styles.label}
       >
         <span aria-hidden="true">┤</span>{" "}

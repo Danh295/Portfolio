@@ -39,12 +39,16 @@ const KEY = {
   Enter: ["Enter", 13],
   Escape: ["Escape", 27],
   Tab: ["Tab", 9],
+  ArrowUp: ["ArrowUp", 38],
+  ArrowDown: ["ArrowDown", 40],
+  ArrowRight: ["ArrowRight", 39],
   " ": ["Space", 32],
   "`": ["Backquote", 192],
   "?": ["Slash", 191],
   2: ["Digit2", 50],
   3: ["Digit3", 51],
   j: ["KeyJ", 74],
+  k: ["KeyK", 75],
   t: ["KeyT", 84],
   "+": ["Equal", 187],
   "-": ["Minus", 189],
@@ -110,8 +114,11 @@ const SITE = `http://127.0.0.1:${server.address().port}${BASE}`;
 
 const findChrome = () => {
   if (process.env.CHROME) return process.env.CHROME;
-  const mac = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-  if (existsSync(mac)) return mac;
+  for (const mac of [
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
+  ])
+    if (existsSync(mac)) return mac;
   for (const name of ["google-chrome", "chromium", "chromium-browser"]) {
     try {
       return execFileSync("which", [name]).toString().trim();
@@ -129,6 +136,10 @@ const chrome = spawn(
   ["--headless=new", "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run"],
   { stdio: "ignore" },
 );
+// A run cut off (Ctrl-C, a kill) must not leave its headless browser behind: orphans pile up
+// and make every later run slow and flaky.
+process.on("exit", () => chrome.kill());
+for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"]) process.on(sig, () => process.exit(130));
 let browserWs = null;
 for (let i = 0; i < 100 && !browserWs; i++) {
   await sleep(100);
@@ -206,7 +217,15 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
       key,
       code,
       windowsVirtualKeyCode: keyCode,
-      text: type === "keyDown" && key.length === 1 ? key : undefined,
+      // Enter carries "\r": without it Chrome doesn't turn the press into a click on a button.
+      text:
+        type === "keyDown"
+          ? key.length === 1
+            ? key
+            : key === "Enter"
+              ? "\r"
+              : undefined
+          : undefined,
     });
   };
   const tab = {
@@ -262,6 +281,14 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
       await send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [p] });
       await send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
       return true;
+    },
+    // A fresh load of `path` (go() to another hash of the same page keeps the page, and a plain
+    // reload starts at the top of home).
+    fresh: async (path, wait = 2500) => {
+      await send("Page.navigate", { url: "about:blank" });
+      await sleep(200);
+      await send("Page.navigate", { url: SITE + path });
+      await sleep(wait);
     },
     typeIn: (n) => evaluate(`document.querySelector('[data-sec="${n}"]').dataset.fx || "started"`),
     top: (n) =>
@@ -1814,7 +1841,7 @@ for (const size of [
     async (tab) => {
       await tab.go("#skills");
       const st = await tab.evaluate(`(() => {
-        const rows = [...document.querySelectorAll("#skills [tabindex='0']")];
+        const rows = [...document.querySelectorAll("#skills [data-skillrow]")];
         const over = (e) => e.scrollWidth - e.clientWidth;
         return {
           rows: rows.length,
@@ -1944,14 +1971,12 @@ await run("skills panel by keyboard (1291×808)", DESKTOP, async (tab) => {
     `({ panel: !!${PANEL}, row: document.activeElement === ${SKILL("Python")} })`,
   );
   check("Esc closes the panel and keeps focus on its row", !esc.panel && esc.row, esc);
-  await tab.evaluate(`${SKILL("Python")}.blur(); ${SKILL("Python")}.focus()`);
+  await tab.key("Tab"); // Tab made the next focus, like a user coming back to the row
+  await tab.evaluate(`${SKILL("Python")}.focus()`);
   await sleep(250);
   await tab.key("Tab");
   const title = await tab.evaluate(`(${projName})(document.activeElement)`);
-  // A real Enter carries text "\r": without it Chrome doesn't turn the press into a click.
-  const enter = { key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 };
-  await tab.send("Input.dispatchKeyEvent", { type: "keyDown", text: "\r", ...enter });
-  await tab.send("Input.dispatchKeyEvent", { type: "keyUp", ...enter });
+  await tab.key("Enter");
   await sleep(1500);
   const after = await tab.evaluate(LANDED(title));
   check(
@@ -1960,6 +1985,169 @@ await run("skills panel by keyboard (1291×808)", DESKTOP, async (tab) => {
     after,
   );
 });
+
+// Tab follows the j/k selection: the selected row has real focus, so the next Tab goes on from
+// it, and a row that takes focus by Tab becomes the selection.
+await run("focus follows the j/k selection and the other way (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#projects");
+  await tab.key("j");
+  const at = () =>
+    tab.evaluate(`(() => { const a = document.activeElement, cur = document.querySelector('[data-row][aria-current="true"]');
+      return { focused: a.dataset.row ?? null, current: cur ? cur.dataset.row : null }; })()`);
+  const first = await at();
+  check(
+    "j puts focus on the selected project row",
+    first.focused === "0" && first.current === "0",
+    first,
+  );
+  await tab.key("Tab");
+  const next = await at();
+  check(
+    "Tab goes on to the next row, which becomes the selection",
+    next.focused === "1" && next.current === "1",
+    next,
+  );
+  await tab.key("j");
+  const down = await at();
+  check("and j carries on from there", down.focused === "2" && down.current === "2", down);
+});
+
+// The skill selection and where focus is, for the skill cases.
+const SKILL_STATE = `(() => { const a = document.activeElement, cur = document.querySelector('[data-skillrow][aria-current="true"]');
+  return { focused: a.dataset?.skillrow ?? null, current: cur ? cur.dataset.skillrow : null,
+    heading: a.matches("[data-sec] > h2"), inPanel: !!a.closest("[data-skill-panel]"),
+    panel: document.querySelector("[data-skill-panel]")?.parentElement.dataset.skill ?? null,
+    stops: document.querySelectorAll('[data-skillrow][tabindex="0"]').length }; })()`;
+
+await run("skills are j/k stops with a panel you can walk (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#skills");
+  const row = () => tab.evaluate(SKILL_STATE);
+  for (let i = 0; i < 3; i++) await tab.key("j");
+  const third = await row();
+  check(
+    "j walks into the skills: the row is selected and focused",
+    third.focused === "2" && third.current === "2",
+    third,
+  );
+  check(
+    "its panel shows with it, and the list is one Tab stop",
+    third.panel === "Python" && third.stops === 1,
+    third,
+  );
+  await tab.key("Enter");
+  const inPanel = () =>
+    tab.evaluate(`(() => { const a = document.activeElement, btns = [...document.querySelectorAll("[data-skill-panel] button")];
+      return { in: a.matches("[data-skill-panel] button"), at: btns.indexOf(a), n: btns.length }; })()`);
+  const entered = await inPanel();
+  check(
+    "Enter goes into the panel's first project",
+    entered.in && entered.at === 0 && entered.n > 1,
+    entered,
+  );
+  await tab.key("j");
+  check("j moves to the next project", (await inPanel()).at === 1);
+  await tab.key("ArrowUp");
+  check("↑ moves back", (await inPanel()).at === 0);
+  await tab.key("k");
+  check("k wraps to the last", (await inPanel()).at === entered.n - 1);
+  await tab.key("Escape");
+  const out = await row();
+  check(
+    "Esc comes back to the skill and puts the panel away",
+    out.focused === "2" && out.current === "2" && out.panel === null,
+    out,
+  );
+  await tab.key("Enter");
+  check("Enter goes back in", (await inPanel()).in);
+  const title = await tab.evaluate(`(${projName})(document.activeElement)`);
+  await tab.key("Enter");
+  await sleep(1500);
+  const after = await tab.evaluate(LANDED(title));
+  check(
+    "Enter on a project selects its row, opening nothing",
+    after.named && !after.detail && !/\/projects\//.test(after.path),
+    after,
+  );
+  await tab.key("j");
+  check(
+    "and j carries on in the projects",
+    (await tab.evaluate(`document.activeElement.dataset.row`)) !== null,
+  );
+});
+
+await run(
+  "skills: Tab onto a row selects it, Tab leaves its panel, a second Esc clears (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#skills");
+    await tab.evaluate(`document.querySelector("#skills h2").focus()`);
+    await tab.key("Tab");
+    const first = await tab.evaluate(SKILL_STATE);
+    check(
+      "Tab from the heading lands on the first skill, selected, its panel showing",
+      first.focused === "0" && first.current === "0" && first.panel === "JavaScript",
+      first,
+    );
+    let tabs = 0,
+      st = first;
+    while (tabs < 40 && (st.focused !== null || st.inPanel)) {
+      await tab.key("Tab");
+      tabs++;
+      st = await tab.evaluate(SKILL_STATE);
+    }
+    check(
+      "Tab walks through the panel and out of it, with no trap",
+      tabs < 40 && st.panel === null && !st.inPanel,
+      { tabs, st },
+    );
+
+    await tab.fresh("#skills");
+    await tab.key("j");
+    await tab.key("Escape");
+    const hidden = await tab.evaluate(SKILL_STATE);
+    check(
+      "Esc hides the panel and keeps the skill selected and focused",
+      hidden.panel === null && hidden.focused === "0" && hidden.current === "0",
+      hidden,
+    );
+    await tab.key("Escape");
+    const cleared = await tab.evaluate(SKILL_STATE);
+    check(
+      "a second Esc clears the selection and focus goes to the heading with it",
+      cleared.current === null && cleared.focused === null && cleared.heading,
+      cleared,
+    );
+  },
+);
+
+await run(
+  "skills with shortcuts off: arrows and Enter work, j/k don't (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#skills");
+    await tab.evaluate(`localStorage.setItem("danny-keys", "off")`);
+    await tab.fresh("#skills");
+    await tab.key("j");
+    check("j does nothing", (await tab.evaluate(SKILL_STATE)).current === null);
+    await tab.key("ArrowRight");
+    const sel = await tab.evaluate(SKILL_STATE);
+    check("→ still selects the first skill", sel.focused === "0" && sel.current === "0", sel);
+    await tab.key("Enter");
+    const at = () =>
+      tab.evaluate(
+        `[...document.querySelectorAll("[data-skill-panel] button")].indexOf(document.activeElement)`,
+      );
+    check("Enter goes into its panel", (await at()) === 0);
+    await tab.key("ArrowDown");
+    check("↓ moves to the next project", (await at()) === 1);
+    await tab.key("j");
+    check("j doesn't", (await at()) === 1);
+    await tab.key("Escape");
+    check("Esc comes back to the skill", (await tab.evaluate(SKILL_STATE)).focused === "0");
+    // The preference is per origin and the browser is shared by every case: put it back.
+    await tab.evaluate(`localStorage.removeItem("danny-keys")`);
+  },
+);
 
 await run(
   "skills panel tap jumps to a project (390×844, touch)",

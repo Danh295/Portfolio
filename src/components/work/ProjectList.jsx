@@ -82,6 +82,7 @@ export default function ProjectList({ list, filter, sel, active, listRef, onFilt
               <span className={styles.org}>{p.org}</span>
               <span className={styles.small}>{p.year}</span>
               <span className={styles.arrow}>{on ? "↲" : "→"}</span>
+              <span className="sr-only">{", project " + (i + 1) + " of " + list.length}</span>
             </button>
           );
         })}

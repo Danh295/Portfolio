@@ -1,7 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseHash, parsePath } from "@/lib/urls";
-import { stepSelection, heroStops, EXP_LAST, selectionLabel } from "@/lib/selection";
+import {
+  stepSelection,
+  heroStops,
+  EXP_LAST,
+  SKILL_NAMES,
+  SKILL_LAST,
+  selectionLabel,
+} from "@/lib/selection";
+import { skills } from "@/lib/shell";
 import { projects } from "@/data/projects";
 import { experienceEntries } from "@/data/experience";
 
@@ -23,6 +31,7 @@ const base = {
   heroSel: "head",
   sel: -1,
   expSel: -1,
+  skillSel: -1,
   rulesSeen: false,
   listLength: projects.length,
 };
@@ -40,6 +49,7 @@ const walk = (dir, from, n) => {
         heroSel: sec === 0 && stop ? stop : "head",
         sel: sec === 1 ? (stop ?? -1) : s.sel,
         expSel: sec === 2 ? (stop ?? -1) : s.expSel,
+        skillSel: sec === 3 ? (stop ?? -1) : s.skillSel,
       };
     } else s = { ...s, ...r };
     seen.push(
@@ -51,7 +61,7 @@ const walk = (dir, from, n) => {
             ? s.sel
             : s.activeSec === 2
               ? s.expSel
-              : "-"),
+              : s.skillSel),
     );
   }
   return seen;
@@ -62,14 +72,23 @@ test("j walks every stop top to bottom, then stops", () => {
   assert.deepEqual(seen.slice(0, 3), ["0:more", "0:egg", "1:-1"]);
   assert.ok(seen.includes("1:" + (projects.length - 1)));
   assert.ok(seen.includes("2:" + EXP_LAST), "every role is a stop, none folded away");
-  assert.equal(seen.at(-1), "3:-");
-  assert.equal(stepSelection(1, { ...base, activeSec: 3 }), null);
+  assert.ok(seen.includes("3:-1"), "the skills header is a stop");
+  assert.ok(seen.includes("3:0") && seen.includes("3:" + SKILL_LAST), "so is every skill");
+  assert.equal(seen.at(-1), "3:" + SKILL_LAST);
+  assert.equal(stepSelection(1, { ...base, activeSec: 3, skillSel: SKILL_LAST }), null);
 });
 
 test("k from the bottom retraces j exactly", () => {
   const down = ["0:head", ...walk(1, {}, 100)];
-  const up = walk(-1, { activeSec: 3 }, 100);
-  assert.deepEqual(["3:-", ...up], [...down].reverse());
+  const up = walk(-1, { activeSec: 3, skillSel: SKILL_LAST }, 100);
+  assert.deepEqual(["3:" + SKILL_LAST, ...up], [...down].reverse());
+});
+
+// The j/k stops are indices into the list the Skills component renders (buildSkills' output):
+// they only line up while both keep coreTechStack's order and drop nothing.
+test("the skill stops are the rendered skills, in order", () => {
+  const rendered = skills.flatMap((g) => g.items.map((it) => it.name));
+  assert.deepEqual(rendered, SKILL_NAMES);
 });
 
 test("rules chip joins the hero stops once seen", () => {
@@ -78,6 +97,8 @@ test("rules chip joins the hero stops once seen", () => {
     heroSel: "rules",
   });
   assert.deepEqual(stepSelection(-1, { ...base, activeSec: 3 }), { goSec: [2, EXP_LAST] });
+  assert.deepEqual(stepSelection(1, { ...base, activeSec: 3 }), { skillSel: 0 });
+  assert.deepEqual(stepSelection(-1, { ...base, activeSec: 3, skillSel: 0 }), { skillSel: -1 });
 });
 
 test("the selection is read out by name; headers read nothing", () => {
@@ -95,7 +116,12 @@ test("the selection is read out by name; headers read nothing", () => {
   assert.equal(at({ activeSec: 2 }), "", "the experience header");
   const e = experienceEntries[EXP_LAST];
   assert.equal(at({ activeSec: 2, expSel: EXP_LAST }), e.title + " at " + e.company);
-  assert.equal(at({ activeSec: 3 }), "");
+  assert.equal(at({ activeSec: 3 }), "", "the skills header");
+  assert.equal(
+    at({ activeSec: 3, skillSel: 2 }),
+    SKILL_NAMES[2] + ", skill 3 of " + SKILL_NAMES.length,
+  );
+  assert.equal(at({ activeSec: 3, skillSel: SKILL_NAMES.length }), "", "a skill past the list");
   assert.equal(at({ mode: "term", heroSel: "egg" }), "", "terminal mode");
   assert.equal(at({ view: projects[0].slug, activeSec: 1, sel: 0 }), "", "a project page");
 });

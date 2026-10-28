@@ -9,16 +9,36 @@ import styles from "./Skills.module.css";
 const names = (items) =>
   items.map((it) => it.name + (it.via.length ? " (" + it.via.join(", ") + ")" : "")).join(", ");
 
-// The panel's height before it exists (it only renders while open): a header line, a line per
-// project, and the muted line (two lines when it wraps), so it can open upward near the bar.
-const panelHeight = (u) =>
-  34 + 22 * u.projects.length + (u.jobs.length || u.courses.length ? 40 : 0);
+// Puts the panel where it fits: under its row, or above when the bars would cover it and
+// there's more room there. Measured from the real panel, on mount and again once a jump's
+// scroll has settled (the row moves with the page, the bars don't). Returns the cleanup.
+function fit(panel) {
+  const row = panel.parentElement,
+    css = getComputedStyle(document.documentElement),
+    bar = parseFloat(css.getPropertyValue("--bar-h")) || 44,
+    nav = parseFloat(css.getPropertyValue("--nav-h")) || 58;
+  const place = () => {
+    const r = row.getBoundingClientRect(),
+      below = window.innerHeight - bar - 8 - r.bottom,
+      above = r.top - nav - 8;
+    row.toggleAttribute("data-up", panel.offsetHeight > below && above > below);
+  };
+  place();
+  const t = setTimeout(place, 450);
+  window.addEventListener("scrollend", place);
+  return () => {
+    clearTimeout(t);
+    window.removeEventListener("scrollend", place);
+    row.removeAttribute("data-up");
+  };
+}
 
 /**
- * `open` is { name, up } for the skill whose panel shows (App holds it so Esc can close it
- * through the key router), `onOpen` sets it, `onProject(slug)` jumps to a project's row.
+ * `open` is { name } for the skill whose panel shows and `skillSel` the j/k-selected skill
+ * (-1 = the header); App holds both so the key router can drive them. `onOpen` sets `open`,
+ * `onProject(slug)` jumps to a project's row. The selected row is the list's one Tab stop.
  */
-export default function Skills({ skills, total, active, open, onOpen, onProject }) {
+export default function Skills({ skills, total, active, open, skillSel, onOpen, onProject }) {
   // A touch pointer taps the row open; a mouse opens it by hovering, so its click mustn't toggle.
   const touched = useRef(false);
   const isOpen = open !== null;
@@ -33,19 +53,13 @@ export default function Skills({ skills, total, active, open, onOpen, onProject 
     return () => document.removeEventListener("pointerdown", away);
   }, [isOpen, onOpen]);
 
-  // Opens `s`'s panel on `row`, below it unless the bars would cover it and there's room above.
-  const show = (s, row) => {
-    if (open?.name === s.name) return;
-    const rect = row.getBoundingClientRect(),
-      css = getComputedStyle(document.documentElement),
-      bar = parseFloat(css.getPropertyValue("--bar-h")) || 44,
-      nav = parseFloat(css.getPropertyValue("--nav-h")) || 58,
-      h = panelHeight(s.uses);
-    // Below unless the bars would cover it; when neither side has room, the roomier one.
-    const below = window.innerHeight - bar - 8 - rect.bottom,
-      above = rect.top - nav - 8;
-    onOpen({ name: s.name, up: below < h && above > below });
+  const show = (s) => {
+    if (open?.name !== s.name) onOpen({ name: s.name });
   };
+
+  // Each group's first index in the flat list the j/k selection walks, and the list's length.
+  const starts = skills.map((_, gi) => skills.slice(0, gi).reduce((n, g) => n + g.items.length, 0));
+  const count = skills.reduce((n, g) => n + g.items.length, 0);
 
   return (
     <SectionFrame
@@ -63,11 +77,13 @@ export default function Skills({ skills, total, active, open, onOpen, onProject 
       className={styles.skills}
     >
       <div className={styles.grid}>
-        {skills.map((g) => (
+        {skills.map((g, gi) => (
           <div key={g.label} className={styles.group}>
             <span className={styles.label}>{g.label}/</span>
-            {g.items.map((s) => {
-              const here = open?.name === s.name;
+            {g.items.map((s, ii) => {
+              const i = starts[gi] + ii,
+                on = skillSel === i && active,
+                here = open?.name === s.name;
               const { projects, jobs, courses } = s.uses;
               return (
                 // Focusable so keyboard users get the panel too (Tab opens it, Tab again
@@ -76,11 +92,12 @@ export default function Skills({ skills, total, active, open, onOpen, onProject 
                   key={s.name}
                   data-skill={s.name}
                   data-open={here ? "" : undefined}
-                  data-up={here && open.up ? "" : undefined}
+                  data-skillrow={i}
+                  aria-current={on ? "true" : undefined}
                   role="group"
-                  aria-label={s.name}
-                  tabIndex={0}
-                  className={styles.row}
+                  aria-label={s.name + ", skill " + (i + 1) + " of " + count}
+                  tabIndex={skillSel === i || (skillSel < 0 && i === 0) ? 0 : -1}
+                  className={on ? styles.rowOn : styles.row}
                   onPointerDown={(e) => {
                     touched.current = e.pointerType === "touch";
                   }}
@@ -90,7 +107,7 @@ export default function Skills({ skills, total, active, open, onOpen, onProject 
                       e.pointerType !== "touch" &&
                       !document.documentElement.classList.contains("kbd")
                     )
-                      show(s, e.currentTarget);
+                      show(s);
                   }}
                   onPointerLeave={(e) => {
                     if (e.pointerType !== "touch" && here) onOpen(null);
@@ -103,10 +120,7 @@ export default function Skills({ skills, total, active, open, onOpen, onProject 
                     )
                       return;
                     if (here) onOpen(null);
-                    else show(s, e.currentTarget);
-                  }}
-                  onFocus={(e) => {
-                    if (e.target.matches(":focus-visible")) show(s, e.currentTarget);
+                    else show(s);
                   }}
                   onBlur={(e) => {
                     if (here && !e.currentTarget.contains(e.relatedTarget)) onOpen(null);
@@ -125,7 +139,7 @@ export default function Skills({ skills, total, active, open, onOpen, onProject 
                     {s.tip}
                   </span>
                   {here && (
-                    <div data-skill-panel="" className={styles.panel}>
+                    <div data-skill-panel="" ref={fit} className={styles.panel}>
                       <span className={styles.head} aria-hidden="true">
                         {"used in " + s.used}
                       </span>
