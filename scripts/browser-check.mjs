@@ -2269,7 +2269,10 @@ await run("resume page draws the pdf (1291×808)", DESKTOP, async (tab) => {
       text: text.slice(0, 80),
     },
   );
-  check("the text carries no phone number or school email", !/0199|example|jdoe0000/.test(text));
+  check(
+    "the text carries no email address or phone number",
+    !/[\w.+-]+@[\w-]+\.[a-z]{2,}|\b\d{3}-\d{4}\b|\(\d{3}\)/i.test(text),
+  );
   check("it opens at its printed size", (await tab.evaluate(RESUME.zoom)) === "100%", {
     zoom: await tab.evaluate(RESUME.zoom),
   });
