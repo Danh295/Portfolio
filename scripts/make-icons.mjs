@@ -4,6 +4,10 @@
 // tabs (and Google's white results page), light ink for dark tabs. icon.svg switches by itself
 // with prefers-color-scheme; the PNG/ICO pairs are linked with a media query in layout.js.
 // apple-icon.png keeps a solid tile, since iOS fills transparency with black.
+// public/icon-search.{png,ico} is the icon Google Search shows (linked from the host root page,
+// danh295.github.io/: Google reads one icon per host, from its home page): the egg in paper glyphs
+// inside a square tile of # glyphs, transparent outside the tile and between the strokes, so it
+// reads as mid-grey on both Google themes (docs/research/favicon.md).
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -182,6 +186,27 @@ const ico = async (master, sizes) => {
   return Buffer.concat([head, ...imgs]);
 };
 
+// The search icon: the egg 3 cells inside a T×T tile of "#", the egg's cells left out of it.
+const PAPER = LIGHT_INK;
+const O = 3;
+const T = N + 2 * O;
+const tileRows = Array.from({ length: T }, (_, y) =>
+  Array.from({ length: T }, (_, x) => {
+    const [ex, ey] = [x - O, y - O];
+    return ex >= 0 && ex < N && ey >= 0 && ey < N && grid[ey][ex] !== " " ? " " : "#";
+  }).join(""),
+)
+  .map(
+    (row, i) =>
+      `<text x="0" y="${i * CELL + 7}" textLength="${T * CELL}" lengthAdjust="spacingAndGlyphs" xml:space="preserve">${row}</text>`,
+  )
+  .join("");
+const svgSearch =
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${T * CELL} ${T * CELL}">` +
+  `<style>@font-face{font-family:E;font-weight:500;src:url(data:font/woff2;base64,${font}) format("woff2")}</style>` +
+  `<g font-family="E,monospace" font-weight="500" font-size="11"><g fill="${DARK_INK}">${tileRows}</g>` +
+  `<g fill="${PAPER}" transform="translate(${O * CELL},${O * CELL})">${body}${rows}</g></g></svg>`;
+
 const onLight = render(makeSvg(inkStyle(DARK_INK)), "light");
 const onDark = render(makeSvg(inkStyle(LIGHT_INK)), "dark");
 const tile = render(makeSvg(inkStyle(LIGHT_INK), true), "tile");
@@ -192,4 +217,7 @@ writeFileSync("src/app/favicon.ico", await ico(onLight, [16, 32, 48]));
 writeFileSync("public/icon-dark.png", await png(onDark, 192));
 writeFileSync("public/favicon-dark.ico", await ico(onDark, [16, 32, 48]));
 writeFileSync("src/app/apple-icon.png", await png(tile, 180));
+const search = render(svgSearch, "search");
+writeFileSync("public/icon-search.png", await png(search, 192));
+writeFileSync("public/icon-search.ico", await ico(search, [16, 32, 48]));
 for (const row of grid) console.log(row.join(""));
