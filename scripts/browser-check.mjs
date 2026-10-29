@@ -381,6 +381,8 @@ async function run(title, view, body) {
   check("storage cleared before the case", !cleared.error, cleared.error);
   // A stalled DevTools call never settles, and the whole run then waits on it for good (one sat
   // 45 minutes on a case that passes alone): past the limit the case fails and the run goes on.
+  // It covers the case body only (not openTab or the storage clear), and an abandoned body keeps
+  // running on a tab that is then closed, so late output from it can land under the next case.
   let timer;
   const limit = new Promise((_, reject) => {
     timer = setTimeout(

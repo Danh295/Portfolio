@@ -1,6 +1,6 @@
 # Deploys
 
-Read before changing `.github/workflows/pages.yml`, `.github/dependabot.yml`, the Pages settings, the `main` ruleset or the Dependabot alerts. Moved from CLAUDE.md unchanged, then split into bullets.
+Read before changing `.github/workflows/pages.yml`, `.github/dependabot.yml`, the Pages settings, the `main` ruleset or the Dependabot alerts. Moved from CLAUDE.md and split into bullets, with two updates: `check:head` joined the workflow, and the dev-only `zod` alert (a lint-plugin dependency) was dismissed by GitHub on its own (alert 4, `auto_dismissed`), so there is nothing to dismiss by hand.
 
 - `.github/workflows/pages.yml` runs `lint`, `format:check`, `test`, the GitHub sync, `next build` and `check:head` and deploys `out/` with GitHub's Pages artifact actions on every push to `main`, daily at 09:17 UTC (refreshing the GitHub snapshot; the previous snapshot is restored from the actions cache first, so an API failure keeps the last good data) and on `gh workflow run pages.yml`.
 - Settings → Pages → Source must be **GitHub Actions**.
