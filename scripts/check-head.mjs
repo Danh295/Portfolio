@@ -86,11 +86,13 @@ for (const url of INDEXABLE) {
     ["twitter:image", "name"],
   ]) {
     const src = meta(key, attr)[0]?.content ?? "";
-    const rel = src.startsWith(ORIGIN) ? src.slice(ORIGIN.length) : null;
+    // The query is the card's version (site.ogImage): the file is the path before it.
+    const rel = src.startsWith(ORIGIN) ? src.slice(ORIGIN.length).split("?")[0] : null;
     const png =
       rel && !rel.includes("Portfolio/") && existsSync(join(OUT, rel))
         ? readFileSync(join(OUT, rel))
         : null;
+    // A PNG's IHDR: width and height are the big-endian words at bytes 16 and 20.
     const size = png && png.length > 24 ? [png.readUInt32BE(16), png.readUInt32BE(20)] : null;
     check(
       `${file}: ${key} is an absolute 1200×630 image in the build`,

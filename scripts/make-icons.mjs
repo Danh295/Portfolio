@@ -1,5 +1,5 @@
-// Regenerates the favicon set from a small ASCII egg: src/app/{icon.svg,icon.png,apple-icon.png,
-// favicon.ico}. Run by hand (`node scripts/make-icons.mjs`) when the egg should change.
+// Regenerates the favicon set (src/app/{icon.svg,icon.png,apple-icon.png,favicon.ico}) and the
+// link-preview card (public/og-card.png) from a small ASCII egg. Run by hand (`node scripts/make-icons.mjs`) when the egg should change.
 // The egg is drawn in ink on a transparent ground, once per tab colour: dark ink for light
 // tabs (and Google's white results page), light ink for dark tabs. icon.svg switches by itself
 // with prefers-color-scheme; the PNG/ICO pairs are linked with a media query in layout.js.
