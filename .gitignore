@@ -50,3 +50,7 @@ GEMINI.md
 /design_handoff_portfolio_v4/
 /TODO.MD
 /learn/
+
+# Local tooling
+/.claude/
+/skills-lock.json

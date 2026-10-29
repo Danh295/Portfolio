@@ -20,10 +20,13 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -38,24 +41,27 @@ jobs:
 
       # The previous GitHub snapshot, so a failed API call keeps the last good data
       # instead of shipping a day without it.
-      - uses: actions/cache/restore@v6
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: src/data/github.generated.json
           key: github-snapshot-${{ github.run_id }}
           restore-keys: github-snapshot-
 
-      # prebuild runs the GitHub sync; the token raises the API limit and enables the
-      # contribution calendar.
-      - run: npm run build
+      # Only the sync gets the token (it raises the API limit and enables the
+      # contribution calendar). `npm run build` would rerun the sync through prebuild
+      # without it and keep the previous snapshot, so build with next directly.
+      - run: npm run sync
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/cache/save@v6
+      - run: npx next build
+
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: src/data/github.generated.json
           key: github-snapshot-${{ github.run_id }}
 
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: out
 
@@ -63,6 +69,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       pages: write
       id-token: write
@@ -71,4 +78,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

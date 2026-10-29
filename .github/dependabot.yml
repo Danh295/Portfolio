@@ -1,0 +1,8 @@
+# Weekly update PRs for the SHA-pinned actions in .github/workflows/. No npm entry on
+# purpose: the lockfile is only written with CI's npm (see CLAUDE.md).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

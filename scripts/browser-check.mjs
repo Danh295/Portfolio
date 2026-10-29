@@ -1205,7 +1205,7 @@ const openTerm = async (tab) => {
   // The boot intro (a deep link doesn't skip it after a reload) takes every key while it plays,
   // and terminal mode types a couple of commands itself at load: keys wait for both.
   await tab.evaluate(
-    `(async () => { for (let t = 0; t < 12000; t += 250) { const intro = document.documentElement.classList.contains("boot-intro") || document.querySelector('[class*="Intro-module"]'); if (!intro && /try: tree projects/.test(${TERM_TEXT})) return; await new Promise((r) => setTimeout(r, 250)); } })()`,
+    `(async () => { for (let t = 0; t < 12000; t += 250) { const intro = document.documentElement.classList.contains("boot-intro") || document.documentElement.dataset.loading; if (!intro && /try: tree projects/.test(${TERM_TEXT})) return; await new Promise((r) => setTimeout(r, 250)); } })()`,
   );
   await sleep(600);
 };
@@ -1227,6 +1227,16 @@ const aligned = (st) =>
   st.bottom !== null &&
   Math.abs(st.top) <= 1 &&
   Math.abs(st.bottom - st.slack) <= 2;
+await run("terminal: Enter right after typing runs the command", DESKTOP, async (tab) => {
+  await openTerm(tab);
+  await tab.evaluate(`document.querySelector('${TERM} input').focus()`);
+  // No wait between the text and the Enter: the Enter must act on what was just typed, not on
+  // the prompt as of the last render.
+  await tab.send("Input.insertText", { text: "./egg" });
+  await tab.key("Enter");
+  await sleep(1500); // the egg mounts at once; the rest is slack for a loaded machine
+  check("the egg starts", await tab.evaluate(`!!${T_POT}`));
+});
 await run(
   "phone terminal egg keeps the keyboard away (390×844, touch)",
   { ...PHONE, mobile: true },

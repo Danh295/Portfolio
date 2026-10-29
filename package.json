@@ -18,7 +18,7 @@
     "check:browser": "node scripts/browser-check.mjs"
   },
   "dependencies": {
-    "next": "^16.3.8",
+    "next": "^16.4.1",
     "pdfjs-dist": "6.4.299",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
@@ -26,7 +26,7 @@
   "devDependencies": {
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^10.11.0",
-    "eslint-config-next": "^16.3.8",
+    "eslint-config-next": "^16.4.1",
     "espree": "^11.2.0",
     "prettier": "^3.9.9"
   },
