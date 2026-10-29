@@ -36,7 +36,14 @@ const SITE_NAME = "danny hu";
 const sitemap = readFileSync(join(OUT, "sitemap.xml"), "utf8");
 const INDEXABLE = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 const fileOf = (url) => url.replace(/^https:\/\/[^/]+\/Portfolio\//, "") + "index.html";
-check("the sitemap lists pages", INDEXABLE.length >= 3, INDEXABLE);
+check(
+  "the sitemap lists home, the resume and the projects",
+  INDEXABLE.length >= 3 &&
+    [".../Portfolio/", "/resume/"].every((u) =>
+      INDEXABLE.some((l) => l.endsWith(u.replace("...", ""))),
+    ),
+  INDEXABLE,
+);
 
 for (const url of INDEXABLE) {
   const file = fileOf(url),
@@ -68,7 +75,14 @@ for (const url of INDEXABLE) {
 }
 
 // Pages that must stay out of the index: the old section URLs (they redirect home) and the 404.
-const NOINDEX = ["projects/index.html", "experience/index.html", "skills/index.html", "404.html"];
+const NOINDEX = [
+  "projects/index.html",
+  "experience/index.html",
+  "skills/index.html",
+  "404.html",
+  "404/index.html",
+  "_not-found/index.html",
+];
 check(
   "the noindex page set is not empty",
   NOINDEX.every((f) => existsSync(join(OUT, f))),
@@ -79,6 +93,14 @@ for (const file of NOINDEX) {
   const tags = head(file);
   const canonical = tags.filter((t) => t.tag === "link" && t.rel === "canonical");
   check(`${file}: no canonical (it isn't home)`, canonical.length === 0, canonical);
+  const og = tags.filter(
+    (t) => t.tag === "meta" && /^(og|twitter):/.test(t.property ?? t.name ?? ""),
+  );
+  check(
+    `${file}: no link-preview tags (it isn't home)`,
+    og.length === 0,
+    og.map((t) => t.property ?? t.name),
+  );
   const robots = tags.filter((t) => t.tag === "meta" && t.name === "robots");
   check(
     `${file}: one robots meta, and it says noindex`,
