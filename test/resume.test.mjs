@@ -33,7 +33,12 @@ const CONTACT = [
   ["a mailto: link", /mailto:/i],
   // A North American number, also as pdfTeX writes it: the area code's parentheses as \050 and
   // \051, then the rest with a hyphen (hyphen only: page coordinates are numbers too).
-  ["a phone number", /\b\d{3}-\d{4}\b|\(\d{3}\)|\\050\d{3}\\051/],
+  // The parentheses of a bare `(555)` are PDF string syntax, so only the \050 form counts.
+  ["a phone number", /\b\d{3}-\d{4}\b|\\050\d{3}\\051/],
+  // Not in a run of numbers: font width arrays and coordinates are spaced digits too.
+  ["a dotted or spaced phone number", /(?<![\d.]\s?)\d{3}[.\s]\d{3}[.\s]\d{4}(?!\s?[\d.])/],
+  ["a +1 phone number", /\+1[\s.-]?\d{3}/],
+  ["ten digits in a row", /(?<!\d)\d{10}(?!\d)/],
 ];
 const leaks = (buf) => {
   const text = pdfText(buf);
@@ -56,6 +61,23 @@ test("the check sees contact details in plain objects and in page text", () => {
   assert.deepEqual(leaks(Buffer.from(info, "latin1")), ["a phone number"]);
   const page = "BT [(\\050555\\051)-333(010-0199)]TJ ET";
   assert.deepEqual(leaks(Buffer.from(page, "latin1")), ["a phone number"]);
+});
+
+test("the check passes a string of area-code-like digits and flags other phone formats", () => {
+  // `(135)` closing a kerned word is a PDF string, not a phone number.
+  assert.deepEqual(leaks(Buffer.from("BT [(CS)-333(135)]TJ ET", "latin1")), []);
+  const dotted = Buffer.from("BT [(555.010.0199)]TJ ET", "latin1");
+  assert.deepEqual(leaks(dotted), ["a dotted or spaced phone number"]);
+  const spaced = Buffer.from("BT [(555 010 0199)]TJ ET", "latin1");
+  assert.deepEqual(leaks(spaced), ["a dotted or spaced phone number"]);
+  const plus = Buffer.from("BT [(+1 555)]TJ ET", "latin1");
+  assert.deepEqual(leaks(plus), ["a +1 phone number"]);
+  const bare = Buffer.from("BT [(5550100199)]TJ ET", "latin1");
+  assert.deepEqual(leaks(bare), ["ten digits in a row"]);
+  // digits spaced in a list of numbers are widths, not a phone number
+  assert.deepEqual(leaks(Buffer.from("[500 500 1000 777.8 1000 1000]", "latin1")), []);
+  // eleven digits is some other number, not ten in a row
+  assert.deepEqual(leaks(Buffer.from("BT [(55501001990)]TJ ET", "latin1")), []);
 });
 
 test("the resume page and the PDF file are two addresses", () => {
