@@ -3,7 +3,7 @@
 // reduced motion. Local only (not in pages.yml): it's timing-sensitive and needs Chrome.
 //
 // Usage: npm run build && npm run check:browser
-//   ONLY=smoke               only the cases whose title contains this
+//   ONLY=smoke               only the cases whose title contains this (no match: exit 2)
 //   CHROME=/path/to/chrome   another Chrome/Chromium binary (default: the macOS app, then
 //                            google-chrome / chromium on PATH)
 //
@@ -362,8 +362,10 @@ const check = (name, ok, detail) => {
 };
 const quick = (at) => at !== null && at.ms <= 120;
 
+let ran = 0;
 async function run(title, view, body) {
   if (process.env.ONLY && !title.includes(process.env.ONLY)) return;
+  ran++;
   console.log(`\n${title}`);
   const tab = await openTab(view);
   // One browser profile serves every case and storage is per origin: start each with none, so
@@ -3247,5 +3249,10 @@ chrome.kill();
 await exited;
 server.close();
 rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+// A filter that matches no case ran nothing: that is a failure, not a pass.
+if (process.env.ONLY && ran === 0) {
+  console.log(`\nONLY="${process.env.ONLY}" matches no case title`);
+  process.exit(2);
+}
 console.log(failed ? `\n${failed} check(s) failed` : "\nall checks passed");
 process.exit(failed ? 1 : 0);

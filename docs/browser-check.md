@@ -10,5 +10,6 @@ Read before adding or changing a case in scripts/browser-check.mjs. Moved from C
 - The browser profile is shared, so `run()` clears the site's local and session storage before each case: a case that sets a preference (shortcuts off, the egg counter) can't leak it into the next.
 - `tab.key("Enter")` sends the key with its text (`"\r"`): without it Chrome doesn't turn a press on a focused button into a click. The key table (`KEY`) lists the keys a case can press; add an entry before using a new one.
 - `CHROME=` picks the binary; on macOS it falls back to Chrome, then Brave. The script closes its browser on exit and on Ctrl-C.
+- `ONLY=<part of a case title>` runs the matching cases; a filter that matches none exits 2 ("matches no case title"), so a typo can't pass as "all checks passed".
 - A full run takes several minutes: run it in the background, and use `ONLY=` while working on one case.
 - Don't select by CSS-module class name (`[class*="Intro-module"]`): Next 16.4 changed the generated names to `_hash_name`, and a selector that stopped matching made `openTerm` stop waiting for the intro, which then swallowed the case's keys (the egg cases failed). Use a data attribute or class the app sets itself (`html[data-loading]` while the intro plays, `boot-intro`).
