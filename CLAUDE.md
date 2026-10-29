@@ -66,7 +66,7 @@ Open work is tracked in `TODO.MD` (local). The code-level gaps left on purpose (
 
 ## Git Commits
 
-- Commit and push straight to `main`; no branches or PRs (personal project). Run `lint`, `format:check`, `test` and `build` first, plus `npm run check:browser` for UI changes.
+- Commit and push straight to `main`; no branches or PRs (personal project). Run `lint`, `format:check`, `test` and `build` first, plus `npm run check:browser` for UI changes or a `next`/`react` bump.
 - Never include a `Co-Authored-By` line in commit messages. Do not credit Claude or any AI as a co-author.
 - Before pushing, run `git log origin/main..HEAD --oneline` and tell Danny about every commit going out that you didn't make this session.
 - Commit trailers come from the Claude Code `attribution` setting (empty in Danny's user settings); don't add any by hand.

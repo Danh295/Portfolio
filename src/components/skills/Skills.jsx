@@ -79,7 +79,9 @@ export default function Skills({ skills, total, active, open, skillSel, onOpen, 
       <div className={styles.grid}>
         {skills.map((g, gi) => (
           <div key={g.label} className={styles.group}>
-            <span className={styles.label}>{g.label}/</span>
+            <span className={styles.label} data-skill-label="">
+              {g.label}/
+            </span>
             {g.items.map((s, ii) => {
               const i = starts[gi] + ii,
                 on = skillSel === i && active,

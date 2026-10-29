@@ -1198,15 +1198,24 @@ const TERM_STATE = `(() => {
 })()`;
 const TERM_TEXT = `${shellBox(TERM)}.innerText`;
 const openTerm = async (tab) => {
+  // The log isn't mounted yet at first: read it as empty then, not as a TypeError.
+  const termText = `(${shellBox(TERM)})?.innerText ?? ""`;
   await tab.go("#home");
   await tab.evaluate(`sessionStorage.setItem("danny-mode", "term")`);
   await tab.send("Page.reload");
   await sleep(2500);
   // The boot intro (a deep link doesn't skip it after a reload) takes every key while it plays,
   // and terminal mode types a couple of commands itself at load: keys wait for both.
-  await tab.evaluate(
-    `(async () => { for (let t = 0; t < 12000; t += 250) { const intro = document.documentElement.classList.contains("boot-intro") || document.documentElement.dataset.loading; if (!intro && /try: tree projects/.test(${TERM_TEXT})) return; await new Promise((r) => setTimeout(r, 250)); } })()`,
+  const ready = await tab.evaluate(
+    `(async () => { for (let t = 0; t < 12000; t += 250) { const intro = document.documentElement.classList.contains("boot-intro") || document.documentElement.dataset.loading; if (!intro && /try: tree projects/.test(${termText})) return true; await new Promise((r) => setTimeout(r, 250)); } return false; })()`,
   );
+  // Fail here, not in the cases after it: a key sent while the intro still plays is swallowed.
+  if (!ready) {
+    const why = await tab.evaluate(
+      `JSON.stringify({ loading: document.documentElement.dataset.loading ?? null, bootIntro: document.documentElement.classList.contains("boot-intro"), tail: ${termText}.slice(-80) })`,
+    );
+    throw new Error(`terminal not ready after 12s: ${why}`);
+  }
   await sleep(600);
 };
 // `keyboard`: pretend the on-screen keyboard is up (a headless browser has none): the page
@@ -2200,7 +2209,7 @@ await run(
         open.right <= open.vw,
       open,
     );
-    await tab.tap(`document.querySelector("#skills [class*=label]")`);
+    await tab.tap(`document.querySelector("#skills [data-skill-label]")`);
     await sleep(200);
     check("a tap elsewhere puts it away", !(await tab.evaluate(`!!${PANEL}`)));
     await tab.tap(SKILL("Python"));
