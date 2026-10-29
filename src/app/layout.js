@@ -56,11 +56,13 @@ export const metadata = {
     title: site.title,
     description: site.description,
     locale: "en_US",
+    images: [site.ogImage],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: site.title,
     description: site.description,
+    images: [site.ogImage],
   },
   robots: {
     index: true,

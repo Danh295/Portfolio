@@ -33,6 +33,7 @@ const head = (file) => {
 // expected values below are pinned here, not read from the layout's metadata, so a wrong layout
 // can't agree with its own check.
 const SITE_NAME = "danny hu";
+const ORIGIN = "https://danh295.github.io/Portfolio/";
 const sitemap = readFileSync(join(OUT, "sitemap.xml"), "utf8");
 const INDEXABLE = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 const fileOf = (url) => url.replace(/^https:\/\/[^/]+\/Portfolio\//, "") + "index.html";
@@ -72,6 +73,31 @@ for (const url of INDEXABLE) {
     meta("og:site_name", "property"),
   );
   check(`${file}: no keywords meta`, meta("keywords").length === 0, meta("keywords"));
+
+  // The link preview: an absolute image under the site, once (no doubled base path), that exists
+  // in the build and is the 1200×630 a large card needs, on both og and twitter.
+  check(
+    `${file}: twitter:card is summary_large_image`,
+    meta("twitter:card")[0]?.content === "summary_large_image",
+    meta("twitter:card"),
+  );
+  for (const [key, attr] of [
+    ["og:image", "property"],
+    ["twitter:image", "name"],
+  ]) {
+    const src = meta(key, attr)[0]?.content ?? "";
+    const rel = src.startsWith(ORIGIN) ? src.slice(ORIGIN.length) : null;
+    const png =
+      rel && !rel.includes("Portfolio/") && existsSync(join(OUT, rel))
+        ? readFileSync(join(OUT, rel))
+        : null;
+    const size = png && png.length > 24 ? [png.readUInt32BE(16), png.readUInt32BE(20)] : null;
+    check(
+      `${file}: ${key} is an absolute 1200×630 image in the build`,
+      size?.[0] === 1200 && size?.[1] === 630,
+      { src, size },
+    );
+  }
 }
 
 // Pages that must stay out of the index: the old section URLs (they redirect home) and the 404.

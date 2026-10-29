@@ -4,6 +4,8 @@
 // tabs (and Google's white results page), light ink for dark tabs. icon.svg switches by itself
 // with prefers-color-scheme; the PNG/ICO pairs are linked with a media query in layout.js.
 // apple-icon.png keeps a solid tile, since iOS fills transparency with black.
+// public/og-card.png (1200×630, one file for og and twitter; site.ogImage) is the link-preview card: a shell window with
+// `$ whoami`, the name and the egg (variant A of the prototype, 2026-10-29).
 // public/icon-search.{png,ico} is the icon Google Search shows (linked from the host root page,
 // danh295.github.io/: Google reads one icon per host, from its home page): the egg in paper glyphs
 // inside a square tile of # glyphs, transparent outside the tile and between the strokes, so it
@@ -220,4 +222,38 @@ writeFileSync("src/app/apple-icon.png", await png(tile, 180));
 const search = render(svgSearch, "search");
 writeFileSync("public/icon-search.png", await png(search, 192));
 writeFileSync("public/icon-search.ico", await ico(search, [16, 32, 48]));
+
+// The link-preview card, drawn by Chrome from an HTML page: the egg from `svgAdaptive`'s light
+// twin, the text in Plex (Regular and Medium, embedded).
+const plex = (f) => readFileSync(`src/app/fonts/plex/IBMPlexMono-${f}.woff2`).toString("base64");
+const CARD = { fg: LIGHT_INK, mid: "#94928d", line: "#302f2c", soft: "#1d1c1b" };
+const eggImg = `data:image/svg+xml;base64,${Buffer.from(makeSvg(inkStyle(LIGHT_INK))).toString("base64")}`;
+const cardHtml = `<!doctype html><meta charset="utf-8"><style>
+@font-face{font-family:P;font-weight:400;src:url(data:font/woff2;base64,${plex("Regular")})}
+@font-face{font-family:P;font-weight:500;src:url(data:font/woff2;base64,${plex("Medium")})}
+*{box-sizing:border-box}html,body{margin:0}
+body{width:1200px;height:630px;background:${BG};color:${CARD.fg};font-family:P,monospace;overflow:hidden;position:relative}
+.win{position:absolute;inset:48px;border:2px solid ${CARD.line};background:${CARD.soft}}
+.bar{height:56px;border-bottom:2px solid ${CARD.line};display:flex;align-items:center;padding:0 28px;color:${CARD.mid};font-size:24px}
+.in{padding:44px 56px 0;color:${CARD.mid}}
+</style>
+<div class="win"><div class="bar">danny@portfolio: ~</div>
+<div class="in" style="font-size:30px">$ whoami</div>
+<div style="padding:44px 56px 0;font-size:116px;font-weight:500;line-height:1">danny hu</div>
+<div style="padding:30px 56px 0;font-size:34px;color:${CARD.mid}">student and full-stack developer</div>
+<div style="padding:34px 56px 0;font-size:30px;color:${CARD.mid}">$ <span style="background:${CARD.fg};color:${BG}">&nbsp;</span></div>
+<img src="${eggImg}" width="300" height="300" style="position:absolute;right:56px;top:128px"></div>`;
+const cardHtmlPath = join(dir, "card.html");
+const cardShot = join(dir, "card.png");
+writeFileSync(cardHtmlPath, cardHtml);
+execFileSync(chrome, [
+  "--headless=new",
+  "--hide-scrollbars",
+  "--force-device-scale-factor=1",
+  "--window-size=1200,630",
+  `--screenshot=${cardShot}`,
+  `file://${cardHtmlPath}`,
+]);
+const cardPng = readFileSync(cardShot);
+writeFileSync("public/og-card.png", cardPng);
 for (const row of grid) console.log(row.join(""));
