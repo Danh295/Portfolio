@@ -24,6 +24,7 @@ Read the one that matches before changing that area; they hold the reasons, meas
 - `docs/pages.md`: redirect stubs, the 404, the resume viewer.
 - `docs/skills.md`: skill bars and the skill panel.
 - `docs/libs.md`: which pure lib owns what (pure libs stay free of DOM and React).
+- `docs/deploys.md`: the workflow, its pins and token scope, Dependabot, the `main` ruleset, alerts, the 60-day pause.
 - `docs/browser-check.md`: what each browser-check case pins, and how to write one.
 - `docs/known-gaps.md`: things left on purpose.
 
@@ -53,7 +54,7 @@ npm run check:head    # after a build: canonical, robots and og tags in out/*.ht
 npm run check:browser # drive out/ in headless Chrome (after npm run build; ONLY=<case> runs one)
 ```
 
-**Deploys.** `.github/workflows/pages.yml` runs `lint`, `format:check`, `test`, the GitHub sync, `next build` and `check:head` and deploys `out/` with GitHub's Pages artifact actions on every push to `main`, daily at 09:17 UTC (refreshing the GitHub snapshot; the previous snapshot is restored from the actions cache first, so an API failure keeps the last good data) and on `gh workflow run pages.yml`. Settings → Pages → Source must be **GitHub Actions**. A red check on `main` means nothing was deployed. There are no pull-request checks. Every `uses:` line is pinned to a commit SHA with a `# vX.Y.Z` comment, checkout doesn't persist credentials, both jobs have a timeout, and only the `npm run sync` step gets `GITHUB_TOKEN` (the build runs `npx next build`, since `npm run build` would rerun the sync through `prebuild` without the token). `.github/dependabot.yml` opens weekly PRs for the `github-actions` ecosystem only, to move those pins; there is no npm entry, so npm bumps stay by hand (see the lockfile rule below). `main` has a ruleset that blocks force-push and deletion (switch it off in Settings → Rules before rewriting history), and Dependabot alerts are on (no security-update PRs; dismiss the dev-only `zod` alert as not used). GitHub disables scheduled workflows after 60 days with no repo activity, which would silently stop the daily deploy (and the `● now` retirement it drives); `gh workflow enable pages.yml` turns it back on. Node version: `.nvmrc`.
+**Deploys.** `.github/workflows/pages.yml` runs `lint`, `format:check`, `test`, the GitHub sync, `next build` and `check:head` on every push to `main` (and daily), then deploys `out/` to GitHub Pages; a red check on `main` means nothing was deployed. Read `docs/deploys.md` before changing the workflow, the Dependabot config, Pages settings, the `main` ruleset or alerts, or when the daily deploy stops (60-day pause).
 
 **Tests** (`test/*.test.mjs`) import the app's modules unchanged through `test/hooks.mjs`, which resolves `@/` and extensionless imports like Next does and loads `src/**/*.js` as ESM. Keep the pure libs free of DOM and React so they stay testable. What reads the page or browser storage (the intro plan, the reveal, when sections type in, reduced motion) is pinned by the browser check instead.
 
