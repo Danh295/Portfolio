@@ -87,18 +87,18 @@ Recorded as decisions, not findings; both are in the repo's CLAUDE.md.
 
 ## 5. Summary table
 
-| Item                                                                     | Status                  | Commit or pointer                       |
-| ------------------------------------------------------------------------ | ----------------------- | --------------------------------------- |
-| next 16.3.8 -> 16.4.1 (three advisories)                                 | fixed this round        | 51ee5fb                                 |
-| Actions pinned to SHAs, checkout without persisted credentials, timeouts | fixed this round        | 51ee5fb                                 |
-| Dependabot version updates for github-actions                            | fixed this round        | 51ee5fb                                 |
-| Redirect stubs and 404 carry no home canonical or link preview           | fixed this round        | 694fb00, 3bde65b                        |
-| Single robots meta, `og:site_name`, keywords meta removed                | fixed this round        | 694fb00                                 |
-| `check:head` CI step pinning built heads                                 | fixed this round        | 694fb00, 3bde65b                        |
-| 1200x630 link-preview card, `summary_large_image`, versioned URL         | fixed this round        | bee2a15, 158e37e                        |
-| X card and X/LinkedIn cache claims                                       | deferred (unverified)   | no commit; re-check when docs reachable |
-| Target size audit (2.5.8)                                                | deferred, measure first | TODO.MD                                 |
-| 404 egg pause control (2.2.2)                                            | deferred, measure first | TODO.MD                                 |
-| Lighthouse / CrUX (LCP, INP, CLS)                                        | deferred, measure first | TODO.MD                                 |
-| No `scroll-padding-top`                                                  | decided                 | CLAUDE.md                               |
-| Reduced motion: reduce, don't remove                                     | decided                 | CLAUDE.md                               |
+| Item                                                                     | Status                                         | Commit or pointer                       |
+| ------------------------------------------------------------------------ | ---------------------------------------------- | --------------------------------------- |
+| next 16.3.8 -> 16.4.1 (three advisories)                                 | fixed this round                               | 51ee5fb                                 |
+| Actions pinned to SHAs, checkout without persisted credentials, timeouts | fixed this round                               | 51ee5fb                                 |
+| Dependabot version updates for github-actions                            | fixed this round                               | 51ee5fb                                 |
+| Redirect stubs and 404 carry no home canonical or link preview           | fixed this round                               | 694fb00, 3bde65b                        |
+| Single robots meta, `og:site_name`, keywords meta removed                | fixed this round                               | 694fb00                                 |
+| `check:head` CI step pinning built heads                                 | fixed this round                               | 694fb00, 3bde65b                        |
+| 1200x630 link-preview card, `summary_large_image`, versioned URL         | fixed this round                               | bee2a15, 158e37e                        |
+| X card and X/LinkedIn cache claims                                       | deferred (unverified)                          | no commit; re-check when docs reachable |
+| Target size audit (2.5.8)                                                | measured, fixes proposed                       | audit-2026-10.md §4, §6                 |
+| 404 egg pause control (2.2.2)                                            | measured, fix proposed                         | audit-2026-10.md §5, §6                 |
+| Lighthouse / CrUX (LCP, INP, CLS)                                        | lab measured; Lighthouse and CrUX not obtained | audit-2026-10.md §2                     |
+| No `scroll-padding-top`                                                  | decided                                        | CLAUDE.md                               |
+| Reduced motion: reduce, don't remove                                     | decided                                        | CLAUDE.md                               |
