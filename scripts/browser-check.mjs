@@ -363,6 +363,9 @@ const check = (name, ok, detail) => {
 const quick = (at) => at !== null && at.ms <= 120;
 
 let ran = 0;
+// Well over what any case takes (a full run averages ~10s a case); CASE_LIMIT_MS=1 makes any case
+// fail, which is how the limit is tested.
+const CASE_LIMIT_MS = Number(process.env.CASE_LIMIT_MS) || 180_000;
 async function run(title, view, body) {
   if (process.env.ONLY && !title.includes(process.env.ONLY)) return;
   ran++;
@@ -376,11 +379,21 @@ async function run(title, view, body) {
     storageTypes: "local_storage,session_storage",
   });
   check("storage cleared before the case", !cleared.error, cleared.error);
+  // A stalled DevTools call never settles, and the whole run then waits on it for good (one sat
+  // 45 minutes on a case that passes alone): past the limit the case fails and the run goes on.
+  let timer;
+  const limit = new Promise((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`no result after ${CASE_LIMIT_MS / 1000}s (a stalled call?)`)),
+      CASE_LIMIT_MS,
+    );
+  });
   try {
-    await body(tab);
+    await Promise.race([body(tab), limit]);
   } catch (e) {
     check("ran without error", false, String(e));
   }
+  clearTimeout(timer);
   check("no console errors", tab.errors.length === 0, tab.errors.slice(0, 3));
   await tab.close();
 }
