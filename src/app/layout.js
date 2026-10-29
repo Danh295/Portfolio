@@ -44,19 +44,6 @@ export const metadata = {
   metadataBase: new URL(site.url),
   title: site.title,
   description: site.description,
-  keywords: [
-    "portfolio",
-    "student",
-    "developer",
-    "software developer",
-    "web developer",
-    "computer vision",
-    "OCR",
-    site.name,
-    "projects",
-    "skills",
-    "experience",
-  ],
   authors: [{ name: site.name, url: site.url }],
   creator: site.name,
   alternates: {
@@ -65,7 +52,7 @@ export const metadata = {
   openGraph: {
     type: "website",
     url: `${site.url}/`,
-    siteName: site.title,
+    siteName: site.name,
     title: site.title,
     description: site.description,
     locale: "en_US",

@@ -11,7 +11,7 @@ export const metadata = {
   title,
   description,
   alternates: { canonical: url },
-  openGraph: { type: "profile", url, title, description, siteName: site.title },
+  openGraph: { type: "profile", url, title, description, siteName: site.name },
   twitter: { card: "summary", title, description },
 };
 
