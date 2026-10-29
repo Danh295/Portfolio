@@ -114,7 +114,8 @@ export default function App({ initialView = null }) {
     navRef = useRef(null),
     barRef = useRef(null),
     scrollSpy = useRef(null),
-    tabFocus = useRef(null); // the element the Tab key last moved focus to
+    tabFocus = useRef(null), // the element the Tab key last moved focus to
+    pointerHeld = useRef(false); // a mouse button is down (a press's focus is no reason to scroll)
 
   // Both shells (state, commands, keys); their page effects come back through applyFx,
   // defined below and reached through fxRef.
@@ -727,6 +728,10 @@ export default function App({ initialView = null }) {
     };
     const onPointer = () => {
       tabbing = false;
+      pointerHeld.current = true;
+    };
+    const onPointerEnd = () => {
+      pointerHeld.current = false;
     };
     const onFocusIn = (e) => {
       tabFocus.current = tabbing ? e.target : null;
@@ -734,6 +739,8 @@ export default function App({ initialView = null }) {
     };
     window.addEventListener("keydown", onAnyKey, true);
     window.addEventListener("pointerdown", onPointer, true);
+    window.addEventListener("pointerup", onPointerEnd, true);
+    window.addEventListener("pointercancel", onPointerEnd, true);
     window.addEventListener("focusin", onFocusIn);
     // A focused button activated by Enter/Space fires a click with detail 0: flash it too.
     const onKeyClick = (e) => {
@@ -776,6 +783,8 @@ export default function App({ initialView = null }) {
       window.removeEventListener("pointerdown", onPress);
       window.removeEventListener("keydown", onAnyKey, true);
       window.removeEventListener("pointerdown", onPointer, true);
+      window.removeEventListener("pointerup", onPointerEnd, true);
+      window.removeEventListener("pointercancel", onPointerEnd, true);
       window.removeEventListener("focusin", onFocusIn);
       window.removeEventListener("click", onKeyClick, true);
       freeNav(navLock, true); // quietly: the sections are unmounting too
@@ -846,7 +855,9 @@ export default function App({ initialView = null }) {
   // section aligned under the nav, align it; otherwise scroll just enough to show it.
   const ensureVisible = (selector) => {
     const row = document.querySelector(selector);
-    if (!row) return;
+    // Under a held mouse press the row is already under the pointer: scrolling it away would
+    // lose the click.
+    if (!row || pointerHeld.current) return;
     const sec = row.closest("[data-sec]");
     const viewTop = (navRef.current?.getBoundingClientRect().height ?? 58) + 8,
       viewBottom = window.innerHeight - (barRef.current?.getBoundingClientRect().height ?? 38) - 8;
@@ -927,10 +938,7 @@ export default function App({ initialView = null }) {
   // The j/k selection is shown by colour only, so it's also read out (a polite live region).
   // The rows of the other sections take focus and carry their own names, so only the hero's
   // stops are read out here.
-  const selName =
-    activeSec === 0
-      ? selectionLabel({ mode, view, activeSec, heroSel, sel, expSel, skillSel, list })
-      : "";
+  const selName = selectionLabel({ mode, view, activeSec, heroSel });
 
   // The gui's big pieces are built up front, not inside the mode/view conditionals
   // below: React Compiler caches each element on its own inputs, so a keystroke in the

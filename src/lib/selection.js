@@ -45,19 +45,11 @@ export function stepSelection(dir, s) {
 const HERO_NAMES = { more: "more about me", rules: "how to play", egg: "egg minigame" };
 
 /**
- * What the polite live region reads for the j/k selection (it's shown by colour only),
- * from `s` = { mode, view, activeSec, heroSel, sel, expSel, skillSel, list }: `list` is the work
- * list as filtered, so a project reads as "n of" that list. "" on a section's header,
- * in terminal mode and on a project page.
+ * What the polite live region reads for the hero's j/k stops (they are shown by colour only),
+ * from `s` = { mode, view, activeSec, heroSel }. "" on the heading, on every other section (their
+ * rows take focus and carry their own names), in terminal mode and on a project page.
  */
 export function selectionLabel(s) {
-  if (s.mode !== "gui" || s.view) return "";
-  if (s.activeSec === 0) return HERO_NAMES[s.heroSel] ?? "";
-  if (s.activeSec === 1 && s.list[s.sel])
-    return s.list[s.sel].title + ", project " + (s.sel + 1) + " of " + s.list.length;
-  if (s.activeSec === 2 && s.expSel >= 0)
-    return experienceEntries[s.expSel].title + " at " + experienceEntries[s.expSel].company;
-  if (s.activeSec === 3 && SKILL_NAMES[s.skillSel])
-    return SKILL_NAMES[s.skillSel] + ", skill " + (s.skillSel + 1) + " of " + SKILL_NAMES.length;
-  return "";
+  if (s.mode !== "gui" || s.view || s.activeSec !== 0) return "";
+  return HERO_NAMES[s.heroSel] ?? "";
 }

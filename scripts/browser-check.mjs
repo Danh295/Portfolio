@@ -137,9 +137,22 @@ const chrome = spawn(
   { stdio: "ignore" },
 );
 // A run cut off (Ctrl-C, a kill) must not leave its headless browser behind: orphans pile up
-// and make every later run slow and flaky.
-process.on("exit", () => chrome.kill());
-for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"]) process.on(sig, () => process.exit(130));
+// and make every later run slow and flaky. Its temp profile goes too (best effort: the browser
+// may still be closing its files), and the exit status is the shell's 128 + the signal.
+process.on("exit", () => {
+  chrome.kill();
+  try {
+    rmSync(profile, { recursive: true, force: true });
+  } catch {
+    // left in the temp dir
+  }
+});
+for (const [sig, code] of [
+  ["SIGINT", 130],
+  ["SIGTERM", 143],
+  ["SIGHUP", 129],
+])
+  process.on(sig, () => process.exit(code));
 let browserWs = null;
 for (let i = 0; i < 100 && !browserWs; i++) {
   await sleep(100);
@@ -2045,6 +2058,62 @@ await run("focus follows the j/k selection and the other way (1291×808)", DESKT
   const down = await at();
   check("and j carries on from there", down.focused === "2" && down.current === "2", down);
 });
+
+// Leaving a project hands focus to its row (landOnList). A section key pressed right after
+// must win: the active section is the one jumped to, and the page stays there.
+await run(
+  "leaving a project, then a section key, keeps the jump (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#projects");
+    await tab.key("j");
+    await tab.key("Enter");
+    await sleep(1200);
+    check("a project is open", await tab.evaluate(`/\\/projects\\//.test(location.pathname)`));
+    await tab.key("Escape");
+    await tab.key("3");
+    await sleep(1800);
+    const st =
+      await tab.evaluate(`({ nav: document.querySelector('nav [data-key][aria-current="true"]')?.dataset.key,
+    sec: document.querySelector("#skills").getBoundingClientRect().top, y: scrollY,
+    focus: document.activeElement.dataset.row ?? document.activeElement.tagName })`);
+    check("skills is the active section and on screen", st.nav === "3" && st.sec < 200, st);
+  },
+);
+
+// A mouse press focuses the row, which becomes the selection and scrolls into view (ensureVisible,
+// smooth): the page moving under a pressed button must not lose the click.
+await run(
+  "a click on a row half under the bottom bar opens it (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#projects");
+    await tab.evaluate(`(() => { const r = document.querySelector('[data-row="3"]');
+    scrollTo(0, scrollY + r.getBoundingClientRect().top - (innerHeight - 38 - 14)); })()`);
+    await sleep(600);
+    const vis =
+      await tab.evaluate(`(() => { const r = document.querySelector('[data-row="3"]').getBoundingClientRect();
+    return { top: Math.round(r.top), bottom: Math.round(r.bottom), h: innerHeight }; })()`);
+    check(
+      "the row sits half under the bottom bar",
+      vis.top < vis.h - 38 && vis.bottom > vis.h - 38,
+      vis,
+    );
+    // The visible sliver of the row, above the bar, pressed and held a moment like a real click.
+    const pt =
+      await tab.evaluate(`(() => { const r = document.querySelector('[data-row="3"]').getBoundingClientRect();
+      return { x: r.x + 40, y: r.y + 6 }; })()`);
+    const mouse = (type, buttons) =>
+      tab.send("Input.dispatchMouseEvent", { type, ...pt, button: "left", buttons, clickCount: 1 });
+    await mouse("mouseMoved", 0);
+    await mouse("mousePressed", 1);
+    await sleep(150);
+    await mouse("mouseReleased", 0);
+    await sleep(1500);
+    const path = await tab.evaluate(`location.pathname`);
+    check("the project opens", /\/projects\//.test(path), { vis, path });
+  },
+);
 
 // The skill selection and where focus is, for the skill cases.
 const SKILL_STATE = `(() => { const a = document.activeElement, cur = document.querySelector('[data-skillrow][aria-current="true"]');
