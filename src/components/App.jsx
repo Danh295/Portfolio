@@ -115,7 +115,7 @@ export default function App({ initialView = null }) {
     barRef = useRef(null),
     scrollSpy = useRef(null),
     tabFocus = useRef(null), // the element the Tab key last moved focus to
-    pointerHeld = useRef(false); // a mouse button is down (a press's focus is no reason to scroll)
+    pointerHeld = useRef(false); // a pointer is down (a press's focus is no reason to scroll)
 
   // Both shells (state, commands, keys); their page effects come back through applyFx,
   // defined below and reached through fxRef.
@@ -725,6 +725,7 @@ export default function App({ initialView = null }) {
     let tabbing = false;
     const onAnyKey = (e) => {
       tabbing = e.key === "Tab";
+      pointerHeld.current = false; // a release that never came (a context menu) can't outlast a key
     };
     const onPointer = () => {
       tabbing = false;
@@ -741,6 +742,7 @@ export default function App({ initialView = null }) {
     window.addEventListener("pointerdown", onPointer, true);
     window.addEventListener("pointerup", onPointerEnd, true);
     window.addEventListener("pointercancel", onPointerEnd, true);
+    window.addEventListener("blur", onPointerEnd);
     window.addEventListener("focusin", onFocusIn);
     // A focused button activated by Enter/Space fires a click with detail 0: flash it too.
     const onKeyClick = (e) => {
@@ -785,6 +787,7 @@ export default function App({ initialView = null }) {
       window.removeEventListener("pointerdown", onPointer, true);
       window.removeEventListener("pointerup", onPointerEnd, true);
       window.removeEventListener("pointercancel", onPointerEnd, true);
+      window.removeEventListener("blur", onPointerEnd);
       window.removeEventListener("focusin", onFocusIn);
       window.removeEventListener("click", onKeyClick, true);
       freeNav(navLock, true); // quietly: the sections are unmounting too

@@ -2115,6 +2115,38 @@ await run(
   },
 );
 
+// A press whose release never arrives (a context menu, alt-tab) must not leave the page unable to
+// scroll the j/k selection into view.
+await run("a press with no release doesn't stop j/k scrolling (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#projects");
+  const at = { x: 8, y: 300 };
+  await tab.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...at });
+  await tab.send("Input.dispatchMouseEvent", {
+    type: "mousePressed",
+    ...at,
+    button: "left",
+    buttons: 1,
+    clickCount: 1,
+  });
+  await tab.key("j");
+  // The selected row goes off the top; the next j must bring its neighbour back.
+  await tab.evaluate(`scrollTo(0, scrollY + 220)`);
+  await sleep(300);
+  await tab.key("j");
+  await sleep(800);
+  const r =
+    await tab.evaluate(`(() => { const row = document.querySelector('[data-row][aria-current="true"]'), b = row?.getBoundingClientRect();
+    return { row: row?.dataset.row ?? null, top: Math.round(b?.top), bottom: Math.round(b?.bottom), limit: innerHeight - 38, y: scrollY }; })()`);
+  check("the selected row is on screen above the bar", r.top >= 0 && r.bottom <= r.limit, r);
+  await tab.send("Input.dispatchMouseEvent", {
+    type: "mouseReleased",
+    ...at,
+    button: "left",
+    buttons: 0,
+    clickCount: 1,
+  });
+});
+
 // The skill selection and where focus is, for the skill cases.
 const SKILL_STATE = `(() => { const a = document.activeElement, cur = document.querySelector('[data-skillrow][aria-current="true"]');
   return { focused: a.dataset?.skillrow ?? null, current: cur ? cur.dataset.skillrow : null,
