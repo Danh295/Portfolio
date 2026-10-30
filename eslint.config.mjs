@@ -28,6 +28,9 @@ const config = [
       // eslint-config-next leaves this off; its globals already cover the browser and node,
       // so this only catches names a rename left behind.
       "no-undef": "error",
+      // Prettier doesn't wrap comments, so a long one slips through format:check. Only
+      // comment lines are held to the width; code is Prettier's.
+      "max-len": ["error", { code: 1000, comments: 100, ignoreUrls: true }],
     },
   },
 ];

@@ -284,7 +284,8 @@ export default function ResumeViewer() {
           if (e.pointerType === "touch") pressFx(e.target.closest?.(PRESSABLE));
         }}
       >
-        {/* A tab the app opened closes itself (leave above); otherwise this is a plain link home. */}
+        {/* A tab the app opened closes itself (leave above); otherwise this is a plain link
+            home. */}
         <Link
           href="/"
           className={styles.leave}

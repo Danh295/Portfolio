@@ -7,9 +7,10 @@ export const MIN_SCALE = 0.5;
 
 /**
  * @param {{ areaPx: number, framePx: number, reservePx: number, touchPhone: boolean }} p
- *   `areaPx`: the height the block may take (the visible output area, less what lies under it); `framePx`: the pot frame's natural height;
- *   `reservePx`: what the block needs under the pot (status lines at their tallest, the
- *   buttons, gaps and padding), so the pot never resizes between stages.
+ *   `areaPx`: the height the block may take (the visible output area, less what lies under it);
+ *   `framePx`: the pot frame's natural height; `reservePx`: what the block needs under the pot
+ *   (status lines at their tallest, the buttons, gaps and padding), so the pot never resizes
+ *   between stages.
  * @returns {{ fill: number, scale: number }} `fill`: the block's height (0 = leave it be);
  *   `scale`: the pot's scale, from MIN_SCALE to 1.
  */

@@ -42,8 +42,8 @@ test("zooming in at a point scrolls so the point stays under the fingers", () =>
 });
 
 test("a centred page that starts to overflow has moved: that counts too", () => {
-  // Corner 50px in from the left (centred), then flush left at zoom 2: the point's offset
-  // (150, 40) doubles to (300, 80) from the new corner (0, 60): at (300, 140) vs the fingers (200, 100).
+  // Corner 50px in from the left (centred), then flush left at zoom 2: the point's offset (150, 40)
+  // doubles to (300, 80) from the new corner (0, 60): at (300, 140) vs the fingers (200, 100).
   assert.deepEqual(
     anchorDelta({
       zoomFrom: 1,

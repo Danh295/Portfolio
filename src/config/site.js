@@ -13,7 +13,8 @@ export const site = {
   // on purpose: Next's own opengraph-image file under basePath doubles it (/Portfolio/Portfolio/),
   // and the pages that set their own openGraph would lose it.
   ogImage: {
-    // `?v=` is the card's version: platforms cache a preview by URL, so bump it when the card changes.
+    // `?v=` is the card's version: platforms cache a preview by URL, so bump it when the card
+    // changes.
     url: `${url}/og-card.png?v=1`,
     width: 1200,
     height: 630,

@@ -1,8 +1,8 @@
-// Press feedback for buttons activated by keyboard or touch (a mouse click keeps its hover look): the element
-// flips its colours (invert filter, as the palette's --bg/--fg are near-inverses) and
-// drops 1px for a beat, then snaps back (globals.css, [data-pressed]).
-// Elements with no background of their own get --bg painted in for the flash, so plain
-// text buttons flip to the "selected" look and selected ones flip back to plain.
+// Press feedback for buttons activated by keyboard or touch (a mouse click keeps its hover look):
+// the element flips its colours (invert filter, as the palette's --bg/--fg are near-inverses) and
+// drops 1px for a beat, then snaps back (globals.css, [data-pressed]). Elements with no background
+// of their own get --bg painted in for the flash, so plain text buttons flip to the "selected" look
+// and selected ones flip back to plain.
 
 const MS = 160;
 const timers = new WeakMap();

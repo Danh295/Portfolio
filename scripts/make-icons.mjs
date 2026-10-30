@@ -1,15 +1,15 @@
 // Regenerates the favicon set (src/app/{icon.svg,icon.png,apple-icon.png,favicon.ico}) and the
-// link-preview card (public/og-card.png) from a small ASCII egg. Run by hand (`node scripts/make-icons.mjs`) when the egg should change.
-// The egg is drawn in ink on a transparent ground, once per tab colour: dark ink for light
-// tabs (and Google's white results page), light ink for dark tabs. icon.svg switches by itself
-// with prefers-color-scheme; the PNG/ICO pairs are linked with a media query in layout.js.
-// apple-icon.png keeps a solid tile, since iOS fills transparency with black.
-// public/og-card.png (1200×630, one file for og and twitter; site.ogImage) is the link-preview card: a shell window with
-// `$ whoami`, the name and the egg (variant A of the prototype, 2026-10-29).
-// public/icon-search.{png,ico} is the icon Google Search shows (linked from the host root page,
-// danh295.github.io/: Google reads one icon per host, from its home page): the egg in paper glyphs
-// inside a square tile of # glyphs, transparent outside the tile and between the strokes, so it
-// reads as mid-grey on both Google themes (docs/research/favicon.md).
+// link-preview card (public/og-card.png) from a small ASCII egg. Run by hand (`node
+// scripts/make-icons.mjs`) when the egg should change. The egg is drawn in ink on a transparent
+// ground, once per tab colour: dark ink for light tabs (and Google's white results page), light ink
+// for dark tabs. icon.svg switches by itself with prefers-color-scheme; the PNG/ICO pairs are
+// linked with a media query in layout.js. apple-icon.png keeps a solid tile, since iOS fills
+// transparency with black. public/og-card.png (1200×630, one file for og and twitter; site.ogImage)
+// is the link-preview card: a shell window with `$ whoami`, the name and the egg (variant A of the
+// prototype, 2026-10-29). public/icon-search.{png,ico} is the icon Google Search shows (linked from
+// the host root page, danh295.github.io/: Google reads one icon per host, from its home page): the
+// egg in paper glyphs inside a square tile of # glyphs, transparent outside the tile and between
+// the strokes, so it reads as mid-grey on both Google themes (docs/research/favicon.md).
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

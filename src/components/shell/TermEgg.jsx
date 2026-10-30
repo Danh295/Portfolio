@@ -11,14 +11,14 @@ import styles from "./TermLines.module.css";
 const SETTLE_MS = [60, 250, 600, 1100];
 
 /**
- * terminal mode's inline ./egg. On a touch screen it is played like the hero's egg: a tap on
- * the pot only holds it (src/lib/egg/held.js; one finger turns the pot), the stages are
- * buttons under it, and `quit` replaces ctrl-c. On a phone the block fills the visible output
- * area exactly (src/lib/egg/fit.js) and keeps its top at the area's top edge whenever the
- * area changes, instead of relying on the output staying pinned to its bottom (that pin
- * lets go mid keyboard change). It ends above the area's bottom padding, so the pin and the
- * alignment agree. `frameRef` is the hook's, to tell a press inside the block from one outside (held.js);
- * `egg`: { held, stage, enter, prompt, play, quit, release }.
+ * terminal mode's inline ./egg. On a touch screen it is played like the hero's egg: a tap on the
+ * pot only holds it (src/lib/egg/held.js; one finger turns the pot), the stages are buttons under
+ * it, and `quit` replaces ctrl-c. On a phone the block fills the visible output area exactly
+ * (src/lib/egg/fit.js) and keeps its top at the area's top edge whenever the area changes, instead
+ * of relying on the output staying pinned to its bottom (that pin lets go mid keyboard change). It
+ * ends above the area's bottom padding, so the pin and the alignment agree. `frameRef` is the
+ * hook's, to tell a press inside the block from one outside (held.js); `egg`: { held, stage, enter,
+ * prompt, play, quit, release }.
  */
 export default function TermEgg({ preRef, fxRef, statusRef, frameRef, handlers, egg }) {
   const root = useRef(null),

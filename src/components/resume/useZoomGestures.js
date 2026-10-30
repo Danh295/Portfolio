@@ -15,12 +15,12 @@ const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
  * trackpad) Ctrl+wheel and Safari's trackpad pinch. They replace the browser's page zoom over the
  * stage, which the stage turns off with `touch-action: pan-x pan-y`; one finger still scrolls.
  *
- * `getZoom()` is the zoom asked for (events that arrive before the screen catches up build on it), `getFit()` the zoom that fits the width, and
- * `zoomAt(zoomTo, focal, atFit, pin)` applies a zoom keeping a point of the page under `focal`
- * (screen px): by default the point that is under it now; for a pinch, `pin` names the point
- * that was under the fingers when they landed ({ zoom, offset } from the page's corner), so the
- * early frames, when the page is still too short to scroll, are made up for later.
- * Returns the pointer handlers for the stage element.
+ * `getZoom()` is the zoom asked for (events that arrive before the screen catches up build on it),
+ * `getFit()` the zoom that fits the width, and `zoomAt(zoomTo, focal, atFit, pin)` applies a zoom
+ * keeping a point of the page under `focal` (screen px): by default the point that is under it now;
+ * for a pinch, `pin` names the point that was under the fingers when they landed ({ zoom, offset }
+ * from the page's corner), so the early frames, when the page is still too short to scroll, are
+ * made up for later. Returns the pointer handlers for the stage element.
  */
 export function useZoomGestures(stageRef, getZoom, getFit, zoomAt) {
   const touches = useRef(new Map()); // pointerId → { x, y, x0, y0, t0, pinched }

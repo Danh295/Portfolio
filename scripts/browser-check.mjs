@@ -1962,7 +1962,8 @@ const PANEL = `document.querySelector("#skills [data-skill-panel]")`;
 const NOT_PPEO = `[...document.querySelectorAll("#skills [data-skill-panel] button")].filter((b) => !b.innerText.includes("ppeo scan"))`;
 // A project button's name: without the tree prefix, the " at org" and the "(via …)".
 const projName = `(b) => b.innerText.replace(/^.*█\\s*/, "").replace(/\\s+at\\s.*$/, "").replace(/\\s*\\(.*$/, "").trim()`;
-// Where the page is after a jump to a project row: no project page, the row selected inside the band.
+// Where the page is after a jump to a project row: no project page, the row selected inside the
+// band.
 const LANDED = (title) => `(() => {
   const cs = getComputedStyle(document.documentElement),
     nav = parseFloat(cs.getPropertyValue("--nav-h")) || 56, bar = parseFloat(cs.getPropertyValue("--bar-h")) || 40,
