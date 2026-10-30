@@ -156,6 +156,18 @@ export function restTime() {
   return T.time[best];
 }
 
+/**
+ * When the egg should stop if it starts rolling at time `from` and may roll for at most
+ * `limit` seconds (at least one turn, so a rest moment always fits): the latest time in
+ * (from, from + limit] at which it lies on its side. Stopping there holds the same pose as
+ * the reduced-motion still frame, rather than freezing it mid-tumble.
+ */
+export function nextStop(from, limit = 5) {
+  const P = tables().period,
+    rest = restTime();
+  return rest + Math.floor((from + limit - rest) / P) * P;
+}
+
 /** Body-frame facts the renderer needs: where the centre of mass sits on the long axis. */
 export const eggCentre = () => tables().uc;
 

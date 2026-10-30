@@ -42,6 +42,27 @@
   margin: 18px 0 8px;
 }
 
+.again,
+.againOff {
+  display: block;
+  margin: 0 auto 10px;
+  padding: 0 8px;
+  min-height: 24px;
+  background: none;
+  border: 0;
+  color: var(--mid);
+  font: inherit;
+  cursor: pointer;
+}
+
+.againOff {
+  visibility: hidden;
+}
+
+:global(html:not(.kbd)) .again:hover {
+  color: var(--fg);
+}
+
 .pre {
   margin: 0 auto;
   font-family: var(--mono);

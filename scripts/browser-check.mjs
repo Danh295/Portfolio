@@ -3256,6 +3256,104 @@ await run("reduced motion: the page (1291×808)", REDUCED, async (tab) => {
   check("a jump is instant (parked within 50ms of the key)", ms !== null && ms <= 50, { ms });
 });
 
+// The 404's egg (WCAG 2.2.2): it rolls for at most 5s, comes to rest on its side, and a
+// click, the button or `r` rolls it again for another 5s at most.
+const EGG_404 = `document.querySelector('pre[role="img"]').textContent`;
+const AGAIN_404 = `[...document.querySelectorAll('button')].find(b=>/roll again/.test(b.textContent))`;
+// Still: three samples 150ms apart all read the same (a rolling egg changes every frame).
+const eggStill = async (tab) => {
+  const seen = new Set();
+  for (let i = 0; i < 3; i++) {
+    seen.add(await tab.evaluate(EGG_404));
+    await sleep(150);
+  }
+  return seen.size === 1;
+};
+
+await run(
+  "the 404 egg rests after 5s and rolls again on a click, a key or the button",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("nope/", 800);
+    // Premise: it really is rolling at the start, and the replay button is not offered yet.
+    const rolling = !(await eggStill(tab));
+    const hiddenAtStart = await tab.evaluate(
+      `getComputedStyle(${AGAIN_404}).visibility === "hidden"`,
+    );
+    check(
+      "the 404 egg is rolling and the replay button hidden at the start",
+      rolling && hiddenAtStart,
+      {
+        rolling,
+        hiddenAtStart,
+      },
+    );
+    await sleep(5200);
+    const stopped = await eggStill(tab);
+    const shown = await tab.evaluate(`getComputedStyle(${AGAIN_404}).visibility === "visible"`);
+    check("the 404 egg is at rest by about 6s, and the replay button shows", stopped && shown, {
+      stopped,
+      shown,
+    });
+
+    // A click on the egg rolls it again, and it rests again within 5s.
+    await tab.click(`document.querySelector('pre[role="img"]')`);
+    await sleep(300);
+    const clickRolls = !(await eggStill(tab));
+    await sleep(5200);
+    const clickRests = await eggStill(tab);
+    check("a click on the 404 egg rolls it again, and it rests again", clickRolls && clickRests, {
+      clickRolls,
+      clickRests,
+    });
+
+    // `r` does the same, but not with single-character shortcuts off.
+    await tab.evaluate(`document.documentElement.dataset.keys = "off"`);
+    await tab.key("r");
+    await sleep(300);
+    const offIgnored = await eggStill(tab);
+    await tab.evaluate(`document.documentElement.dataset.keys = "on"`);
+    await tab.key("r");
+    await sleep(300);
+    const keyRolls = !(await eggStill(tab));
+    await sleep(5200);
+    const keyRests = await eggStill(tab);
+    check(
+      "r rolls the 404 egg again (not with shortcuts off), and it rests again",
+      offIgnored && keyRolls && keyRests,
+      {
+        offIgnored,
+        keyRolls,
+        keyRests,
+      },
+    );
+
+    // The button (reachable by keyboard and screen reader) does it too.
+    await tab.click(AGAIN_404);
+    await sleep(300);
+    const buttonRolls = !(await eggStill(tab));
+    check("the replay button rolls the 404 egg again", buttonRolls, { buttonRolls });
+  },
+);
+
+await run(
+  "reduced motion: the 404 egg holds one still frame and offers no replay",
+  REDUCED,
+  async (tab) => {
+    await tab.go("nope/", 800);
+    await sleep(1200);
+    const still = await eggStill(tab);
+    const hidden = await tab.evaluate(`getComputedStyle(${AGAIN_404}).visibility === "hidden"`);
+    check("the 404 egg is still from the start, with no replay button", still && hidden, {
+      still,
+      hidden,
+    });
+    await tab.key("r");
+    await sleep(400);
+    check("r does not start the egg under reduced motion", await eggStill(tab));
+  },
+);
+
 /* ---------- done ---------- */
 
 ws.close();
