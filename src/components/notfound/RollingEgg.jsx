@@ -46,7 +46,11 @@ export default function RollingEgg() {
       draw();
     });
     ro.observe(box);
-    if (reduce) return () => ro.disconnect();
+    if (reduce)
+      return () => {
+        ro.disconnect();
+        setStopped(false);
+      };
     let raf = 0,
       last = 0,
       stopAt = nextStop(t);
@@ -78,15 +82,16 @@ export default function RollingEgg() {
     };
     const again = againRef.current;
     box.addEventListener("click", roll);
-    again?.addEventListener("click", roll);
+    again.addEventListener("click", roll);
     window.addEventListener("keydown", onKey);
     raf = requestAnimationFrame(frame);
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
       box.removeEventListener("click", roll);
-      again?.removeEventListener("click", roll);
+      again.removeEventListener("click", roll);
       window.removeEventListener("keydown", onKey);
+      setStopped(false); // a new run (reduced motion flipped) starts rolling, not resting
     };
   }, [reduce]);
 

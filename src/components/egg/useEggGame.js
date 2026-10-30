@@ -254,9 +254,10 @@ export function useEggGame({ clockMode, mode }) {
     setStats(countEgg(g.type, eggTypes));
   }, [setStage, setResult, setStats, setTimer]);
 
-  // The frame loop. Physics every frame, paint every other frame (every fourth at rest:
-  // see `paintThisFrame`). At rest (stage 0 or 5) it idles while there's nothing to show: the pot is off screen or the tab hidden. Any
-  // scroll, resize, key, pointer, stage or mode change wakes it. The egg plays under reduced
+  // The frame loop. Physics every frame, paint every other frame (every fourth once it
+  // is idle: see `paintThisFrame`). At rest (stage 0 or 5) it idles while there's nothing
+  // to show: the pot is off screen or the tab hidden. Any scroll, resize, key, pointer
+  // (over the pot), stage or mode change wakes it. The egg plays under reduced
   // motion too: it's contained in its own box, and a frozen egg read as a stuck page.
   useEffect(() => {
     live.current.touch = isTouch();
@@ -424,6 +425,15 @@ export function useEggGame({ clockMode, mode }) {
         t = getScene();
       t.mx = Math.max(-1, Math.min(1, (e.clientX - rc.left - rc.width / 2) / rc.width));
       t.my = Math.max(-1, Math.min(1, (e.clientY - rc.top - rc.height / 2) / rc.height));
+      // Over the pot the hover tilts it, so it paints at the full rate again (the 300ms
+      // wake). Elsewhere it doesn't: that would restart an idle loop on every mouse move.
+      if (
+        e.clientX >= rc.left &&
+        e.clientX <= rc.right &&
+        e.clientY >= rc.top &&
+        e.clientY <= rc.bottom
+      )
+        run();
     };
     document.addEventListener("mousemove", onMove, { passive: true });
     // Capture phase: scrolls inside the terminal don't bubble, and a key or click may

@@ -3258,6 +3258,8 @@ await run("reduced motion: the page (1291×808)", REDUCED, async (tab) => {
 
 // The 404's egg (WCAG 2.2.2): it rolls for at most 5s, comes to rest on its side, and a
 // click, the button or `r` rolls it again for another 5s at most.
+// Long enough for the egg to have come to rest: it rolls for at most 5s (src/lib/egg/roll.js).
+const EGG_REST_MS = 5200;
 const EGG_404 = `document.querySelector('pre[role="img"]').textContent`;
 const AGAIN_404 = `[...document.querySelectorAll('button')].find(b=>/roll again/.test(b.textContent))`;
 // Still: three samples 150ms apart all read the same (a rolling egg changes every frame).
@@ -3288,7 +3290,7 @@ await run(
         hiddenAtStart,
       },
     );
-    await sleep(5200);
+    await sleep(EGG_REST_MS);
     const stopped = await eggStill(tab);
     const shown = await tab.evaluate(`getComputedStyle(${AGAIN_404}).visibility === "visible"`);
     check("the 404 egg is at rest by about 6s, and the replay button shows", stopped && shown, {
@@ -3300,12 +3302,14 @@ await run(
     await tab.click(`document.querySelector('pre[role="img"]')`);
     await sleep(300);
     const clickRolls = !(await eggStill(tab));
-    await sleep(5200);
+    const hintHidden = await tab.evaluate(`getComputedStyle(${AGAIN_404}).visibility === "hidden"`);
+    await sleep(EGG_REST_MS);
     const clickRests = await eggStill(tab);
-    check("a click on the 404 egg rolls it again, and it rests again", clickRolls && clickRests, {
-      clickRolls,
-      clickRests,
-    });
+    check(
+      "a click on the 404 egg rolls it again (the replay button hides while it rolls), and it rests again",
+      clickRolls && hintHidden && clickRests,
+      { clickRolls, hintHidden, clickRests },
+    );
 
     // `r` does the same, but not with single-character shortcuts off.
     await tab.evaluate(`document.documentElement.dataset.keys = "off"`);
@@ -3316,7 +3320,7 @@ await run(
     await tab.key("r");
     await sleep(300);
     const keyRolls = !(await eggStill(tab));
-    await sleep(5200);
+    await sleep(EGG_REST_MS);
     const keyRests = await eggStill(tab);
     check(
       "r rolls the 404 egg again (not with shortcuts off), and it rests again",
@@ -3333,6 +3337,30 @@ await run(
     await sleep(300);
     const buttonRolls = !(await eggStill(tab));
     check("the replay button rolls the 404 egg again", buttonRolls, { buttonRolls });
+    // The preference flipping while the egg rests: the button goes away with it (it would
+    // do nothing), and turning it off again starts a rolling egg without a button.
+    await sleep(EGG_REST_MS);
+    const restedBeforeFlip = await eggStill(tab);
+    const media = (value) =>
+      tab.send("Emulation.setEmulatedMedia", {
+        features: [{ name: "prefers-reduced-motion", value }],
+      });
+    await media("reduce");
+    await sleep(500);
+    const hiddenWhenReduced = await tab.evaluate(
+      `getComputedStyle(${AGAIN_404}).visibility === "hidden"`,
+    );
+    await media("no-preference");
+    await sleep(500);
+    const rollingAgain = !(await eggStill(tab));
+    const hiddenWhileRolling = await tab.evaluate(
+      `getComputedStyle(${AGAIN_404}).visibility === "hidden"`,
+    );
+    check(
+      "the 404 replay button follows the reduced-motion preference",
+      restedBeforeFlip && hiddenWhenReduced && rollingAgain && hiddenWhileRolling,
+      { restedBeforeFlip, hiddenWhenReduced, rollingAgain, hiddenWhileRolling },
+    );
   },
 );
 
