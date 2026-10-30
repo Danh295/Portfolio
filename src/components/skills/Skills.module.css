@@ -172,7 +172,8 @@
 }
 
 /* The smallest phones (320px): the longest row, "Hugging Face" + 16 cells + counts, ran 8px
-   past its box with the padding and gaps above. */
+   past its box with the padding and gaps above. Git counts every item, so once it reached
+   two-digit project counts ("11·3·3") its row ran 4px past; the 3px gap leaves 2px spare. */
 @media (max-width: 340px) {
   .skills {
     padding: 28px 8px 20px;
@@ -180,6 +181,6 @@
 
   .row,
   .rowOn {
-    gap: 6px;
+    gap: 3px;
   }
 }
