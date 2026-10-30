@@ -36,6 +36,8 @@
 
 .folder {
   display: flex;
+  align-items: center;
+  min-height: 24px; /* WCAG 2.5.8: 18px rows stacked with no gap failed it */
   white-space: pre;
   text-align: left;
 }
@@ -154,11 +156,10 @@
   }
 }
 
-/* A finger's reach for the folder rows (WCAG 2.5.8 wants 24px with no gap; 18px rows
-   fail it): 28px tall, the text centred, so the ├── lines break a little between rows. */
+/* A finger's reach for the folder rows: 28px tall instead of the 24px every pointer gets
+   (the text is centred, so the ├── lines break a little between rows either way). */
 @media (hover: none) and (pointer: coarse) {
   .folder {
     min-height: 28px;
-    align-items: center;
   }
 }
