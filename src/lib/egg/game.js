@@ -11,6 +11,16 @@ export function clockConfig(mode = "seconds") {
   return { m: false, T: 6.5, hide: 3, ice: 2, max: 15, fmt: (x) => x.toFixed(2) + "s" };
 }
 
+// The hero egg's paint rate, as every Nth animation frame (of 60/s: 30 and 15 paints a
+// second). The physics runs every frame either way; only the drawing thins out. At rest the
+// pot only boils and flickers, and the audit measured its paint at ~half the main thread
+// at 4x CPU, so it paints less often until something happens (docs/research/audit-2026-10.md).
+const PAINT_EVERY = 2,
+  PAINT_EVERY_AT_REST = 4;
+
+/** Whether animation frame number `n` repaints the egg (`atRest`: nothing is going on). */
+export const paintThisFrame = (n, atRest) => n % (atRest ? PAINT_EVERY_AT_REST : PAINT_EVERY) === 0;
+
 export const fillTimes = (s, C) => s.replace(/\{T\}/g, C.fmt(C.T)).replace(/\{H\}/g, C.fmt(C.hide));
 
 /** Clock text while boiling: live time, then a "hides in" countdown, then hidden. */

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { clockConfig, gradeEgg, statsView } from "@/lib/egg/game";
+import { clockConfig, gradeEgg, statsView, paintThisFrame } from "@/lib/egg/game";
 import { rollPeriod, rollPose, restTime, nextStop, dwell } from "@/lib/egg/roll";
 
 test("gradeEgg boundaries (seconds)", () => {
@@ -74,4 +74,12 @@ test("nextStop: the 404 egg comes to rest on its side within the limit, from any
     assert.ok(apart(rollPose(stop).theta, rest) < 1e-3, "lies on its side: " + from);
     assert.ok(stop + P > from + 5, "the last rest moment that fits: " + from);
   }
+});
+
+test("paintThisFrame: half the frames normally, a quarter at rest", () => {
+  const frames = Array.from({ length: 12 }, (_, n) => n);
+  const live = frames.filter((n) => paintThisFrame(n, false)),
+    rest = frames.filter((n) => paintThisFrame(n, true));
+  assert.deepEqual(live, [0, 2, 4, 6, 8, 10], "30 paints a second on a 60Hz display");
+  assert.deepEqual(rest, [0, 4, 8], "15 paints a second");
 });
