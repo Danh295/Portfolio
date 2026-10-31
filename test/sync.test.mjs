@@ -73,7 +73,7 @@ test("repoDrift: a public repo that is not linked is missing, unless a fork or i
       { full_name: "me/skipped" },
     ],
     contributed: [{ full_name: "them/team-project" }],
-    ignore: { skipped: "coursework" },
+    ignore: { "me/skipped": "coursework" },
   });
   assert.deepEqual(d.missing, ["me/new", "them/team-project"]);
   assert.equal(d.ok, false);
@@ -106,6 +106,40 @@ test("repoDrift: nothing to report when every repo is linked and current", () =>
     resolved: { "me/a": { full_name: "me/a" } },
   });
   assert.deepEqual(d, { missing: [], renamed: [], archived: [], gone: [], ok: true });
+});
+
+test("repoDrift: an ignore entry is a full name, so it never silences another owner's repo", () => {
+  const d = drift({
+    owned: [{ full_name: "me/Notes" }],
+    contributed: [{ full_name: "them/notes" }],
+    ignore: { "ME/notes": "scratch" },
+  });
+  assert.deepEqual(d.missing, ["them/notes"]);
+  // a bare name is not an owner/name, so it silences nothing (it could match a stranger's repo)
+  const bare = drift({
+    owned: [{ full_name: "me/Notes" }],
+    contributed: [{ full_name: "them/notes" }],
+    ignore: { notes: "scratch" },
+  });
+  assert.deepEqual(bare.missing, ["me/Notes", "them/notes"]);
+});
+
+test("repoDrift: a repo listed as both owned and contributed is reported once", () => {
+  const d = drift({
+    owned: [{ full_name: "me/dup" }],
+    contributed: [{ full_name: "Me/Dup" }],
+  });
+  assert.deepEqual(d.missing, ["me/dup"]);
+});
+
+// Ignoring a repo only keeps it off the site; one the site links is still checked.
+test("repoDrift: a linked repo is still reported when it is archived, even if ignored", () => {
+  const d = drift({
+    linked: ["me/shown"],
+    resolved: { "me/shown": { full_name: "me/shown", archived: true } },
+    ignore: { "me/shown": "mistake" },
+  });
+  assert.deepEqual(d.archived, ["me/shown"]);
 });
 
 test("driftReport: one line per kind of drift, each saying what to do", () => {

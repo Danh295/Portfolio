@@ -103,7 +103,7 @@ export const projects = [
     bullets: [
       "built it as one Next.js app with a gui and a terminal mode that read the same data, so the shell's ls and cat show exactly what the project pages show",
       "kept every keypress decision in one pure function with tests pinning the order, so j/k, number jumps and shortcuts don't fight each other",
-      "measured the site and fixed what it found: layout shift is 0, the home page ships about 254 KB of gzipped JavaScript, and the hero egg paints 15 times a second at rest instead of 30",
+      "measured the site and fixed what it found: layout shift is under 0.01, the home page ships about 254 KB of gzipped JavaScript, and the hero egg paints 15 times a second at rest instead of 30",
       "deploys to GitHub Pages daily after lint, tests and a build pass, and pulls my repos' stars and last-push dates at build time so visitors never call the GitHub API",
     ],
     tags: ["Next.js", "React", "JavaScript", "CSS Modules", "GitHub Pages", "HTML/CSS"],
@@ -117,7 +117,7 @@ export const projects = [
     title: "baseline",
     category: "hackathon",
     org: "Hack the Valley 2026",
-    role: "team of 4 · idea, research, spec and tickets",
+    role: "team of 4 · idea, spec, tickets and the speech backend",
     context: "speech analysis, healthcare AI, backend services",
     timeline: "oct 2026",
     year: "2026",

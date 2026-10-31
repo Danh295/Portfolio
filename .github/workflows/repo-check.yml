@@ -2,9 +2,10 @@ name: Repo check
 
 # Compares the public repos Danny owns or contributes to with the ones src/data/projects.js
 # links (scripts/check-repos.mjs) and fails when one is missing from the site, or a linked one
-# is renamed, archived or gone, so GitHub emails the failed run. It is its own workflow, so a
-# red run here never touches the deploy (a red Pages run still means nothing was deployed), and
-# nothing may require it as a check. Repos chosen to stay off the site: scripts/repo-check.json.
+# is renamed, archived or gone, so GitHub (per its docs) emails the failed run. It is its own
+# workflow, so a red run here never touches the deploy (a red Pages run still means nothing was
+# deployed), and nothing may require it as a check. Repos chosen to stay off the site:
+# scripts/repo-check.json.
 on:
   push:
     branches: [main]

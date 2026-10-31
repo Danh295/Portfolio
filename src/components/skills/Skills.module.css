@@ -173,7 +173,9 @@
 
 /* The smallest phones (320px): the longest row, "Hugging Face" + 16 cells + counts, ran 8px
    past its box with the padding and gaps above. Git counts every item, so once it reached
-   two-digit project counts ("11·3·3") its row ran 4px past; the 3px gap leaves 2px spare. */
+   two-digit project counts ("11·3·3") its row ran 4px past (the browser check's 320px skills
+   case measured it). The 3px gap saves 6px, so about 2px should be spare: an inference, since
+   that case only checks for no overflow. */
 @media (max-width: 340px) {
   .skills {
     padding: 28px 8px 20px;

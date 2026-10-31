@@ -48,8 +48,9 @@ const lower = (s) => s.toLowerCase();
  * repos the user contributed to but doesn't own) are GitHub's lists of { full_name, fork? },
  * `linked` the "owner/name" repos projects.js links, `resolved` GitHub's answer for each
  * linked repo ({ full_name, archived? } or { gone: true } for a 404), and `ignore` a
- * { name: reason } map of repos chosen to stay off the site (bare name or "owner/name", any
- * case). A renamed repo counts as linked under its new name.
+ * { "owner/name": reason } map of repos chosen to stay off the site (any case; a bare name
+ * matches nothing, since it could be a stranger's repo). A renamed repo counts as linked under
+ * its new name. Ignoring only filters `missing`: a repo the site links is still checked.
  */
 export function repoDrift({
   linked = [],
@@ -76,11 +77,12 @@ export function repoDrift({
     if (r.archived) archived.push(from);
   }
   const skipped = new Set(Object.keys(ignore).map(lower));
+  const seen = new Set();
   const missing = [...owned, ...contributed]
     .filter((r) => !r.fork)
     .map((r) => r.full_name)
-    .filter((full) => !shown.has(lower(full)))
-    .filter((full) => !skipped.has(lower(full)) && !skipped.has(lower(full.split("/")[1])));
+    .filter((full) => !shown.has(lower(full)) && !skipped.has(lower(full)))
+    .filter((full) => !seen.has(lower(full)) && seen.add(lower(full)));
   const ok = !missing.length && !renamed.length && !archived.length && !gone.length;
   return { missing, renamed, archived, gone, ok };
 }
@@ -91,7 +93,7 @@ export function driftReport(d) {
   if (d.missing.length)
     lines.push(
       `not on the site: ${d.missing.join(", ")} (add a project in src/data/projects.js, or add ` +
-        `it to "ignore" in scripts/repo-check.json with a reason)`,
+        `it to "ignore" in scripts/repo-check.json as owner/name with a reason)`,
     );
   for (const r of d.renamed)
     lines.push(`renamed: ${r.from} is now ${r.to} (update its link in src/data/projects.js)`);

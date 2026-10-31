@@ -5,10 +5,12 @@
 //
 // - Owned repos: the user's public non-fork repos (GET /users/{user}/repos).
 // - Contributed repos: public repos the user contributed to but doesn't own (GraphQL
-//   repositoriesContributedTo, which GitHub limits to roughly the last year and which needs a
-//   token; without GITHUB_TOKEN this half is skipped with a notice).
-// - Repos chosen to stay off the site go in the "ignore" map of scripts/repo-check.json, each
-//   with its reason. The decision logic is the pure repoDrift in github-snapshot.mjs.
+//   repositoriesContributedTo, which needs a token; without GITHUB_TOKEN this half is skipped
+//   with a notice). GitHub's docs only say "recently"; one run showed about the last year, so
+//   a repo that drops out of the list is not drift (a per-run observation, not a guarantee).
+//   It asks for the first 100 repos, with no paging.
+// - Repos chosen to stay off the site go in the "ignore" map of scripts/repo-check.json
+//   ("owner/name": reason). The decision logic is the pure repoDrift in github-snapshot.mjs.
 //
 // Usage: node scripts/check-repos.mjs   (GITHUB_TOKEN=... for the contributed half)
 
