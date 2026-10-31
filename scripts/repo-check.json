@@ -1,0 +1,18 @@
+{
+  "user": "Danh295",
+  "ignore": {
+    "Danh295": "profile README, not a project",
+    "CrapOS": "parked until its boot sector is finished (TODO.MD); remove this line then add the project",
+    "RAIInet": "CS 246 coursework, already counted as a course",
+    "GodotGameThing": "a first game jam try",
+    "Dataset_CleanerUpper": "coursework practice",
+    "Bromden-of-The-Ward": "RPG Maker game from 2023",
+    "Boggle_Game": "school Java practice",
+    "RhymeTime": "old HTML practice",
+    "ButtonGridGUI": "school Java practice",
+    "PhoneBook": "school Java practice",
+    "CCC_CppSolutions": "contest solutions",
+    "CCC_PythonSolutions": "contest solutions",
+    "CompetitiveProgrammingGuide": "a guide based on someone else's handbook"
+  }
+}

@@ -52,11 +52,12 @@ npm run format:check  # prettier --check .
 npm test              # node:test suites in test/ (pure libs + data checks)
 npm run build         # next build → out/
 npm run sync          # refresh the build-time GitHub snapshot
+npm run check:repos   # repos you own or contribute to vs the ones projects.js links (exit 1 on drift)
 npm run check:head    # after a build: canonical, robots and og tags in out/*.html
 npm run check:browser # drive out/ in headless Chrome (after npm run build; ONLY=<case> runs one)
 ```
 
-**Deploys.** `.github/workflows/pages.yml` runs `lint`, `format:check`, `test`, the GitHub sync, `next build` and `check:head` on every push to `main` (and daily), then deploys `out/` to GitHub Pages; a red check on `main` means nothing was deployed. Read `docs/deploys.md` before changing the workflow, the Dependabot config, Pages settings, the `main` ruleset or alerts, or when the daily deploy stops (60-day pause).
+**Deploys.** `.github/workflows/pages.yml` runs `lint`, `format:check`, `test`, the GitHub sync, `next build` and `check:head` on every push to `main` (and daily), then deploys `out/` to GitHub Pages; a red check on `main` means nothing was deployed. A separate `repo-check.yml` workflow fails when a repo you own or contribute to is missing from `projects.js` (or a linked one is renamed, archived or gone) without blocking the deploy; leave a repo off the site on purpose in `scripts/repo-check.json`. Read `docs/deploys.md` before changing the workflow, the Dependabot config, Pages settings, the `main` ruleset or alerts, or when the daily deploy stops (60-day pause).
 
 **Tests** (`test/*.test.mjs`) import the app's modules unchanged through `test/hooks.mjs`, which resolves `@/` and extensionless imports like Next does and loads `src/**/*.js` as ESM. Keep the pure libs free of DOM and React so they stay testable. What reads the page or browser storage (the intro plan, the reveal, when sections type in, reduced motion) is pinned by the browser check instead.
 

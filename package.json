@@ -16,6 +16,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:head": "node scripts/check-head.mjs",
+    "check:repos": "node scripts/check-repos.mjs",
     "check:browser": "node scripts/browser-check.mjs"
   },
   "dependencies": {

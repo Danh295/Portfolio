@@ -40,3 +40,66 @@ export function mergeRepos(list, results, prev = {}) {
   });
   return { repos, failed };
 }
+
+const lower = (s) => s.toLowerCase();
+
+/**
+ * What the repo check reports. `owned` (the user's public repos) and `contributed` (public
+ * repos the user contributed to but doesn't own) are GitHub's lists of { full_name, fork? },
+ * `linked` the "owner/name" repos projects.js links, `resolved` GitHub's answer for each
+ * linked repo ({ full_name, archived? } or { gone: true } for a 404), and `ignore` a
+ * { name: reason } map of repos chosen to stay off the site (bare name or "owner/name", any
+ * case). A renamed repo counts as linked under its new name.
+ */
+export function repoDrift({
+  linked = [],
+  owned = [],
+  contributed = [],
+  resolved = {},
+  ignore = {},
+}) {
+  const shown = new Set(linked.map(lower));
+  const renamed = [],
+    archived = [],
+    gone = [];
+  for (const from of linked) {
+    const r = resolved[from];
+    if (!r) continue;
+    if (r.gone) {
+      gone.push(from);
+      continue;
+    }
+    if (lower(r.full_name) !== lower(from)) {
+      renamed.push({ from, to: r.full_name });
+      shown.add(lower(r.full_name));
+    }
+    if (r.archived) archived.push(from);
+  }
+  const skipped = new Set(Object.keys(ignore).map(lower));
+  const missing = [...owned, ...contributed]
+    .filter((r) => !r.fork)
+    .map((r) => r.full_name)
+    .filter((full) => !shown.has(lower(full)))
+    .filter((full) => !skipped.has(lower(full)) && !skipped.has(lower(full.split("/")[1])));
+  const ok = !missing.length && !renamed.length && !archived.length && !gone.length;
+  return { missing, renamed, archived, gone, ok };
+}
+
+/** The lines the repo check prints for a `repoDrift` result: one per kind, saying what to do. */
+export function driftReport(d) {
+  const lines = [];
+  if (d.missing.length)
+    lines.push(
+      `not on the site: ${d.missing.join(", ")} (add a project in src/data/projects.js, or add ` +
+        `it to "ignore" in scripts/repo-check.json with a reason)`,
+    );
+  for (const r of d.renamed)
+    lines.push(`renamed: ${r.from} is now ${r.to} (update its link in src/data/projects.js)`);
+  if (d.archived.length)
+    lines.push(
+      `archived: ${d.archived.join(", ")} (read-only now; say so in its project or drop it)`,
+    );
+  if (d.gone.length)
+    lines.push(`gone (404: deleted or made private): ${d.gone.join(", ")} (remove its link)`);
+  return lines;
+}
