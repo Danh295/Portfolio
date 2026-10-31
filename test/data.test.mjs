@@ -18,6 +18,14 @@ test("projects: unique slugs, known category, required fields, https links", () 
   }
 });
 
+// A hackathon is a team effort, so it says how big the team was and which part was Danny's:
+// "solo" or "team of N", then optionally " · what i built".
+test("every hackathon says the team size and, for a team, which part was Danny's", () => {
+  for (const p of projects.filter((p) => p.category === "hackathon")) {
+    assert.match(p.role ?? "", /^(solo|team of \d+ · .+)$/, p.slug + " role");
+  }
+});
+
 test("experience: required fields, unique companies (they become file names)", () => {
   const names = experienceEntries.map((e) => e.company.toLowerCase());
   assert.equal(new Set(names).size, names.length);
