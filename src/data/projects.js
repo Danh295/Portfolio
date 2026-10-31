@@ -80,7 +80,7 @@ export const projects = [
     timeline: "oct 2026",
     year: "2026",
     purpose:
-      "two plugins for Claude Code. jot is a notes pane for text i reuse in prompts, and jargon underlines technical terms in Claude's replies and explains them in plain english",
+      "two plugins for Claude Code. jot is a notes pane for text i reuse in prompts, and jargon underlines technical terms in Claude's replies and explains them in plain English",
     bullets: [
       "built jot: type a few letters to find a note, press enter to paste it at the cursor; notes carry over between sessions and open windows",
       "built jargon: it links about 190 built-in dev terms and shows a definition card on hover with no model call; an unknown term costs one small Haiku lookup, then it is remembered",
@@ -103,7 +103,7 @@ export const projects = [
     bullets: [
       "built it as one Next.js app with a gui and a terminal mode that read the same data, so the shell's ls and cat show exactly what the project pages show",
       "kept every keypress decision in one pure function with tests pinning the order, so j/k, number jumps and shortcuts don't fight each other",
-      "measured the site and fixed what it found: layout shift is under 0.01, the home page ships about 254 KB of gzipped JavaScript, and the hero egg paints 15 times a second at rest instead of 30",
+      "measured the site and fixed what it found: layout shift is under 0.01, the home page ships about 250 KB of gzipped JavaScript (both measured in october 2026), and the hero egg paints 15 times a second at rest instead of 30",
       "deploys to GitHub Pages daily after lint, tests and a build pass, and pulls my repos' stars and last-push dates at build time so visitors never call the GitHub API",
     ],
     tags: ["Next.js", "React", "JavaScript", "CSS Modules", "GitHub Pages", "HTML/CSS"],

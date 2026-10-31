@@ -30,14 +30,29 @@ const headers = {
   ...(token ? { Authorization: `Bearer ${token}` } : {}),
 };
 
+const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+
+// A 404 or a refused token won't change on a retry; a timeout or a 5xx might, and one flaky
+// reply should not turn a push or the daily run red like real drift does.
 async function api(path, init = {}) {
-  const r = await fetch("https://api.github.com" + path, {
-    ...init,
-    headers: { ...headers, ...(init.headers || {}) },
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  });
-  if (!r.ok) throw Object.assign(new Error(`${path}: ${r.status}`), { status: r.status });
-  return r.json();
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const r = await fetch("https://api.github.com" + path, {
+        ...init,
+        headers: { ...headers, ...(init.headers || {}) },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+      if (!r.ok) {
+        const refused = r.status === 401 || r.status === 403 ? " (GitHub refused the token)" : "";
+        throw Object.assign(new Error(`${path}: ${r.status}${refused}`), { status: r.status });
+      }
+      return await r.json();
+    } catch (e) {
+      const final = e.status && e.status < 500;
+      if (final || attempt === 3) throw e;
+      await sleep(attempt * 1000);
+    }
+  }
 }
 
 async function ownedRepos() {
@@ -54,15 +69,21 @@ async function contributedRepos() {
     privacy:PUBLIC, includeUserRepositories:false,
     contributionTypes:[COMMIT,PULL_REQUEST,PULL_REQUEST_REVIEW,ISSUE])
     {nodes{nameWithOwner isFork}}}}`;
-  const r = await api("/graphql", {
-    method: "POST",
-    body: JSON.stringify({ query: q, variables: { login: USER } }),
-  });
-  if (r.errors?.length) throw new Error("graphql: " + r.errors[0].message);
-  return r.data.user.repositoriesContributedTo.nodes.map((n) => ({
-    full_name: n.nameWithOwner,
-    fork: n.isFork,
-  }));
+  // If the token isn't allowed to read this, say so: the failure would otherwise look like drift.
+  const why = "the list of repos you contributed to could not be read (is the token allowed to?)";
+  let r;
+  try {
+    r = await api("/graphql", {
+      method: "POST",
+      body: JSON.stringify({ query: q, variables: { login: USER } }),
+    });
+  } catch (e) {
+    throw new Error(`${why}: ${e.message}`);
+  }
+  const nodes = r.data?.user?.repositoriesContributedTo?.nodes;
+  if (r.errors?.length || !nodes)
+    throw new Error(`${why}: ${r.errors?.[0]?.message ?? "no repositories in the reply"}`);
+  return nodes.map((n) => ({ full_name: n.nameWithOwner, fork: n.isFork }));
 }
 
 // GitHub follows a renamed repo's old name to the new one, so full_name shows the rename.
