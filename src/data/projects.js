@@ -113,6 +113,26 @@ export const projects = [
     ],
   },
   {
+    slug: "picklelarp-live",
+    title: "picklelarp live",
+    category: "hackathon",
+    org: "LarpHacks",
+    role: "team of 2 · pose tracking, swing detection and coaching",
+    context: "computer vision, pose tracking, desktop app",
+    timeline: "nov 1, 2026",
+    year: "2026",
+    purpose:
+      "a webcam app that turns a rec pickleball player into a televised pro: swing a paddle at air and it tracks your arm, flies a ball off your hand, and puts you in a broadcast with a radar gun that inflates your speed",
+    bullets: [
+      "built the part that watches you: it follows your body through a webcam, smooths out the shaky readings, and walks you through a guided setup (step into frame, hold still, raise your paddle hand) before going live",
+      "tested the swing detector against 200 random variants of each wrong move: up-and-down arm moves fired 76 times and outward sweeps 58, so i made a swing have to cross the body, and after that both fired 0 times while 200 of 200 real swings still counted",
+      "added a ball that leaves your hand at the moment of contact and flies the way your arm moved, and a coach that gives a short tip after each swing (speed, elbow, swing path, contact angle) from simple rules on your pose",
+      "made the screens explain themselves to strangers: step labels, a framing outline, a how-to-play card, and a nudge after 8 seconds without a swing",
+    ],
+    tags: ["JavaScript", "MediaPipe", "Electron", "Web Audio", "HTML/CSS"],
+    links: [{ label: "GitHub", href: repoUrl("larphacks-picklelarp-live") }],
+  },
+  {
     slug: "baseline",
     title: "baseline",
     category: "hackathon",
