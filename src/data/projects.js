@@ -82,9 +82,9 @@ export const projects = [
     purpose:
       "two plugins for Claude Code. jot is a notes pane for text i reuse in prompts, and jargon underlines technical terms in Claude's replies and explains them in plain English",
     bullets: [
-      "built jot: type a few letters to find a note, press enter to paste it at the cursor; notes carry over between sessions and open windows",
-      "built jargon: it links about 190 built-in dev terms and shows a definition card on hover with no model call; an unknown term costs one small Haiku lookup, then it is remembered",
-      "changed jot's design twice in its first week (a search-first pane in 0.3.0, simpler keys and a click-first pane in 0.4.0), and shipped both mods as a marketplace anyone can install with /plugin marketplace add",
+      "built jot, a notes shelf inside Claude Code: type a few letters to find a saved note, press enter to paste it into the prompt, and the notes carry over between sessions and open windows",
+      "built jargon, which underlines about 190 technical terms in Claude's replies and shows a plain definition when you hover; highlighting costs nothing, and a term it doesn't know costs one small Haiku call, then it remembers the answer",
+      "reworked jot's design twice in its first week (first a search-first pane, then simpler keys and a click-first pane), and packaged both mods so anyone can install them from my GitHub with two commands",
     ],
     tags: ["TypeScript", "Claude Code", "Claude Haiku"],
     links: [{ label: "GitHub", href: repoUrl("dannys-claude-mods") }],
@@ -101,10 +101,10 @@ export const projects = [
     purpose:
       "my portfolio, written as a terminal. click through it like a normal site, or switch to a shell with ls, cd and vim; there's an egg-cooking game in the hero",
     bullets: [
-      "built it as one Next.js app with a gui and a terminal mode that read the same data, so the shell's ls and cat show exactly what the project pages show",
-      "kept every keypress decision in one pure function with tests pinning the order, so j/k, number jumps and shortcuts don't fight each other",
-      "measured the site and fixed what it found: layout shift is under 0.01, the home page ships about 250 KB of gzipped JavaScript (both measured in october 2026), and the hero egg paints 15 times a second at rest instead of 30",
-      "deploys to GitHub Pages daily after lint, tests and a build pass, and pulls my repos' stars and last-push dates at build time so visitors never call the GitHub API",
+      "built the whole site myself as one app with two faces, a normal site you click through and a terminal you type into, both showing the same content",
+      "sent every key press through one place, so shortcuts like j and k to move or numbers to jump never fight each other, and tested that order",
+      "measured the site and fixed what showed up: the page barely jumps while it loads (layout shift under 0.01), the home page downloads about 250 KB of code, and the hero animation draws half as often when nothing is happening (measured in october 2026)",
+      "publishes itself to GitHub Pages every day after automatic checks pass, and collects my repos' stars and last-push dates while it builds, so visitors never wait on GitHub",
     ],
     tags: ["Next.js", "React", "JavaScript", "CSS Modules", "GitHub Pages", "HTML/CSS"],
     links: [
@@ -117,7 +117,7 @@ export const projects = [
     title: "baseline",
     category: "hackathon",
     org: "Hack the Valley 2026",
-    role: "team of 4 · idea, spec, tickets and the speech backend",
+    role: "team of 4 · idea, spec, task breakdown and the speech backend",
     context: "speech analysis, healthcare AI, backend services",
     timeline: "oct 2026",
     year: "2026",
@@ -125,7 +125,7 @@ export const projects = [
       "a speech check for long-term care. a care aide asks a resident to count to 20 (about ten seconds), and baseline compares how they spoke with that same resident's own history, so a nurse hears about a change before it shows up as confusion",
     bullets: [
       "came up with the idea after reading that nurses recognised about 13% of delirium cases in one study of residents with dementia, researched the care setting, and wrote the proposal around PointClickCare's Catch It Early challenge",
-      "wrote the spec and the decision records for why we chose each approach, split the plan into 35 tasks so four people could build at the same time, and left notes on later tasks telling teammates which backend rules their screens had to follow",
+      "wrote the spec and a log of why we chose each approach, split the plan into 35 tasks so four people could build at the same time, and left notes on later tasks telling teammates which backend rules their screens had to follow",
       "built the core of the backend: the code that turns a ten-second recording into measurements of speech speed, pauses and pitch, rejects recordings too poor to trust, and compares each check with that resident's own history",
       "built the database changes, the upload endpoint, and the part that lets a resident's record explain a change, such as a new medication, so the system can tell when a shift already has a reason",
       "wrote tests that run the speech pipeline on recorded sample clips, and a tool that times a check from upload to result, because the goal was an answer in under five seconds",

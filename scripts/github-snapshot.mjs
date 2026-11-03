@@ -77,12 +77,14 @@ export function repoDrift({
     if (r.archived) archived.push(from);
   }
   const skipped = new Set(Object.keys(ignore).map(lower));
-  const seen = new Set();
-  const missing = [...owned, ...contributed]
-    .filter((r) => !r.fork)
-    .map((r) => r.full_name)
-    .filter((full) => !shown.has(lower(full)) && !skipped.has(lower(full)))
-    .filter((full) => !seen.has(lower(full)) && seen.add(lower(full)));
+  // One entry per repo whatever its case, in the order GitHub listed them (first spelling wins).
+  const unlinked = new Map();
+  for (const { full_name, fork } of [...owned, ...contributed]) {
+    const key = lower(full_name);
+    if (!fork && !shown.has(key) && !skipped.has(key) && !unlinked.has(key))
+      unlinked.set(key, full_name);
+  }
+  const missing = [...unlinked.values()];
   const ok = !missing.length && !renamed.length && !archived.length && !gone.length;
   return { missing, renamed, archived, gone, ok };
 }
