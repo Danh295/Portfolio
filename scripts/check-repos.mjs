@@ -43,7 +43,13 @@ async function api(path, init = {}) {
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       if (!r.ok) {
-        const refused = r.status === 401 || r.status === 403 ? " (GitHub refused the token)" : "";
+        // A 403 is a refused token or a rate limit (GitHub answers both that way), so say both.
+        const refused =
+          r.status === 401
+            ? " (GitHub refused the token)"
+            : r.status === 403 || r.status === 429
+              ? " (forbidden or rate limited)"
+              : "";
         throw Object.assign(new Error(`${path}: ${r.status}${refused}`), { status: r.status });
       }
       return await r.json();
@@ -68,7 +74,7 @@ async function contributedRepos() {
   const q = `query($login:String!){user(login:$login){repositoriesContributedTo(first:100,
     privacy:PUBLIC, includeUserRepositories:false,
     contributionTypes:[COMMIT,PULL_REQUEST,PULL_REQUEST_REVIEW,ISSUE])
-    {nodes{nameWithOwner isFork}}}}`;
+    {pageInfo{hasNextPage} nodes{nameWithOwner isFork}}}}`;
   // If the token isn't allowed to read this, say so: the failure would otherwise look like drift.
   const why = "the list of repos you contributed to could not be read (is the token allowed to?)";
   let r;
@@ -80,9 +86,14 @@ async function contributedRepos() {
   } catch (e) {
     throw new Error(`${why}: ${e.message}`);
   }
-  const nodes = r.data?.user?.repositoriesContributedTo?.nodes;
+  const list = r.data?.user?.repositoriesContributedTo;
+  const nodes = list?.nodes;
   if (r.errors?.length || !nodes)
     throw new Error(`${why}: ${r.errors?.[0]?.message ?? "no repositories in the reply"}`);
+  if (list.pageInfo?.hasNextPage)
+    console.warn(
+      "repo check: you contributed to more than 100 repos; only the first 100 are checked",
+    );
   return nodes.map((n) => ({ full_name: n.nameWithOwner, fork: n.isFork }));
 }
 

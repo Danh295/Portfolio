@@ -101,7 +101,7 @@ export function driftReport(d) {
     lines.push(`renamed: ${r.from} is now ${r.to} (update its link in src/data/projects.js)`);
   if (d.archived.length)
     lines.push(
-      `archived: ${d.archived.join(", ")} (read-only now; say so in its project or drop it)`,
+      `archived: ${d.archived.join(", ")} (read-only now; the check stays red until you unlink it or unarchive it)`,
     );
   if (d.gone.length)
     lines.push(`gone (404: deleted or made private): ${d.gone.join(", ")} (remove its link)`);

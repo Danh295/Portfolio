@@ -155,6 +155,8 @@ test("driftReport: one line per kind of drift, each saying what to do", () => {
   assert.match(lines[0], /ignore/);
   assert.match(lines[1], /me\/a .*me\/b/);
   assert.match(lines[2], /me\/c/);
+  // an archived link keeps the check red until it is unlinked or unarchived, and says so
+  assert.match(lines[2], /unlink it or unarchive it/);
   assert.match(lines[3], /me\/d/);
   assert.deepEqual(driftReport({ missing: [], renamed: [], archived: [], gone: [], ok: true }), []);
 });
