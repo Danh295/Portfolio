@@ -157,10 +157,10 @@ export default function Cursor({ mode = "gui" }) {
   const ref = useRef(null);
 
   useEffect(() => {
-    // The primary pointer can change after load (DevTools' device toolbar, a touch screen or a
-    // tablet attached), so the gate is followed, not read once: while it doesn't match, the
-    // system cursor stays and the handlers below do nothing (touch events would never move the
-    // custom one).
+    // The primary pointer can change after load, so the gate is followed, not read once: while it
+    // doesn't match, the system cursor stays and the handlers below do nothing (touch events would
+    // never move the custom one). Tested with DevTools' touch emulation; a touch screen or a
+    // tablet attached is an inference (it should flip the same query).
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)");
     const root = document.documentElement,
       el = ref.current;
@@ -197,8 +197,10 @@ export default function Cursor({ mode = "gui" }) {
         setState();
       }
     };
+    // A real mouse, while the pointer is a fine one (a touch or pen pointer is not the cursor).
+    const isMouse = (e) => fine.matches && (!e.pointerType || e.pointerType === "mouse");
     const onMove = (e) => {
-      if (!fine.matches || (e.pointerType && e.pointerType !== "mouse")) return;
+      if (!isMouse(e)) return;
       // Browsers send synthetic moves at the same spot after scrolling; only a real
       // move leaves keyboard mode.
       if (e.clientX === x && e.clientY === y) return;
@@ -223,7 +225,7 @@ export default function Cursor({ mode = "gui" }) {
       setState();
     };
     const onDown = (e) => {
-      if (!fine.matches || (e.pointerType && e.pointerType !== "mouse")) return;
+      if (!isMouse(e)) return;
       // A click also ends keyboard mode, even without moving first.
       root.classList.remove("kbd");
       el.dataset.hidden = "false";

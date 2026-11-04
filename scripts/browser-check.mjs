@@ -3390,22 +3390,26 @@ await run(
 // mounts on a mouse or trackpad. Where that rule is lost, a visitor sees the system cursor on top
 // of the custom one. So after a real mouse move, over each kind of thing a pointer can land on,
 // the element under it must compute `cursor: none`, the class must be on <html>, and the custom
-// cursor must be showing in the state that spot calls for.
+// cursor must be showing in the state that spot calls for (a spot with no `state` only checks the
+// cursor is shown). A `required` spot must exist, so a rename can't quietly shrink the coverage;
+// the gui's text field is optional (its input isn't on the page until the shell opens).
 const GUI_SPOTS = [
-  { name: "the hero heading", sel: "h1", state: "arrow" },
-  { name: "a button", sel: "button", state: "pointer" },
-  { name: "a link", sel: "a[href]", state: "pointer" },
-  { name: "a skill row", sel: "#skills [data-skillrow]" },
-  { name: "the egg", sel: 'pre[role="img"]', state: "pan" },
+  { name: "the hero heading", sel: "h1", state: "arrow", required: true },
+  { name: "a button", sel: "button", state: "pointer", required: true },
+  { name: "a link", sel: "a[href]", state: "pointer", required: true },
+  { name: "a project row", sel: "[data-row]", required: true },
+  { name: "a tooltip target", sel: "[data-tip]", required: true },
+  { name: "a skill row", sel: "#skills [data-skillrow]", required: true },
+  { name: "the egg", sel: 'pre[role="img"]', state: "pan", required: true },
   { name: "a text field", sel: "input", state: "text" },
 ];
 // The terminal's prompt input sits under a click-to-focus pane, so the element under the pointer
 // there is the pane (an arrow), not the input: no state is asserted for it.
 const TERM_SPOTS = [
-  { name: "the prompt", sel: '[data-mode="term"] input' },
-  { name: "the terminal output", sel: '[data-mode="term"] pre' },
-  { name: "the terminal pane", sel: '[data-mode="term"]', state: "arrow" },
-  { name: "a button", sel: '[data-mode="term"] button', state: "pointer" },
+  { name: "the prompt", sel: '[data-mode="term"] input', required: true },
+  { name: "the terminal output", sel: '[data-mode="term"] pre', required: true },
+  { name: "the terminal pane", sel: '[data-mode="term"]', state: "arrow", required: true },
+  { name: "a button", sel: '[data-mode="term"] button', state: "pointer", required: true },
 ];
 
 // Moves a real mouse onto the first visible element matching `sel`, then reads what a visitor
@@ -3440,16 +3444,18 @@ async function nativeCursorAt(tab, sel) {
 }
 
 async function checkNativeCursor(tab, spots, where) {
-  const bad = [];
-  let found = 0;
+  const bad = [],
+    missing = [];
   for (const s of spots) {
     const r = await nativeCursorAt(tab, s.sel);
-    if (!r) continue;
-    found++;
+    if (!r) {
+      if (s.required) missing.push(s.name);
+      continue;
+    }
     if (!r.class || r.native !== "none" || r.hidden !== "false" || (s.state && r.state !== s.state))
       bad.push({ spot: s.name, wanted: s.state, ...r });
   }
-  check(`${where}: enough spots found to mean something`, found >= 3, { found });
+  check(`${where}: every required spot is on the page`, !missing.length, { missing });
   check(
     `${where}: the native cursor is hidden and the custom one shows at every spot`,
     !bad.length,
