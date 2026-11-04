@@ -3383,6 +3383,153 @@ await run(
   },
 );
 
+/* ---------- the native cursor ---------- */
+
+// The custom cursor (components/overlay/Cursor.jsx) hides the system one with a single rule,
+// `html.cursor-custom * { cursor: none !important }` (globals.css), and adds that class once it
+// mounts on a mouse or trackpad. Where that rule is lost, a visitor sees the system cursor on top
+// of the custom one. So after a real mouse move, over each kind of thing a pointer can land on,
+// the element under it must compute `cursor: none`, the class must be on <html>, and the custom
+// cursor must be showing in the state that spot calls for.
+const GUI_SPOTS = [
+  { name: "the hero heading", sel: "h1", state: "arrow" },
+  { name: "a button", sel: "button", state: "pointer" },
+  { name: "a link", sel: "a[href]", state: "pointer" },
+  { name: "a skill row", sel: "#skills [data-skillrow]" },
+  { name: "the egg", sel: 'pre[role="img"]', state: "pan" },
+  { name: "a text field", sel: "input", state: "text" },
+];
+// The terminal's prompt input sits under a click-to-focus pane, so the element under the pointer
+// there is the pane (an arrow), not the input: no state is asserted for it.
+const TERM_SPOTS = [
+  { name: "the prompt", sel: '[data-mode="term"] input' },
+  { name: "the terminal output", sel: '[data-mode="term"] pre' },
+  { name: "the terminal pane", sel: '[data-mode="term"]', state: "arrow" },
+  { name: "a button", sel: '[data-mode="term"] button', state: "pointer" },
+];
+
+// Moves a real mouse onto the first visible element matching `sel`, then reads what a visitor
+// would be shown: the class, the computed cursor of the element under the pointer, and the
+// custom cursor's own state. `null` when nothing matches.
+async function nativeCursorAt(tab, sel) {
+  const at = await tab.evaluate(`(() => {
+    const e = [...document.querySelectorAll(${JSON.stringify(sel)})].find((e) => {
+      const r = e.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    });
+    if (!e) return null;
+    e.scrollIntoView({ block: "center" });
+    const r = e.getBoundingClientRect();
+    return { x: Math.round(r.x + Math.min(r.width / 2, 40)), y: Math.round(r.y + r.height / 2) };
+  })()`);
+  if (!at) return null;
+  await tab.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 1, y: 1 });
+  await tab.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...at });
+  await sleep(250);
+  return tab.evaluate(`(() => {
+    const under = document.elementFromPoint(${at.x}, ${at.y});
+    const cur = document.querySelector("[data-set]");
+    return {
+      class: document.documentElement.classList.contains("cursor-custom"),
+      native: under ? getComputedStyle(under).cursor : "no element",
+      under: under ? under.tagName.toLowerCase() : null,
+      state: cur?.dataset.state,
+      hidden: cur?.dataset.hidden,
+    };
+  })()`);
+}
+
+async function checkNativeCursor(tab, spots, where) {
+  const bad = [];
+  let found = 0;
+  for (const s of spots) {
+    const r = await nativeCursorAt(tab, s.sel);
+    if (!r) continue;
+    found++;
+    if (!r.class || r.native !== "none" || r.hidden !== "false" || (s.state && r.state !== s.state))
+      bad.push({ spot: s.name, wanted: s.state, ...r });
+  }
+  check(`${where}: enough spots found to mean something`, found >= 3, { found });
+  check(
+    `${where}: the native cursor is hidden and the custom one shows at every spot`,
+    !bad.length,
+    bad,
+  );
+}
+
+await run(
+  "the native cursor is hidden under the custom one (gui, 1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#home");
+    await sleep(1500);
+    await checkNativeCursor(tab, GUI_SPOTS, "gui");
+  },
+);
+
+await run(
+  "the native cursor is hidden under the custom one (terminal, 1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#home");
+    await tab.evaluate(`sessionStorage.setItem("danny-mode", "term")`);
+    await tab.send("Page.reload");
+    await sleep(2500);
+    await checkNativeCursor(tab, TERM_SPOTS, "terminal");
+  },
+);
+
+// The cursor decides whether to hide the system one from the primary pointer, and that can change
+// after the page loads (DevTools' device toolbar, a tablet or touch screen attached): touch events
+// then arrive that the custom cursor ignores, so it must stop hiding the system cursor, and take
+// over again when a mouse is the primary pointer again.
+await run("the cursor follows the pointer capability (gui, 1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  await sleep(1500);
+  const read = () =>
+    tab.evaluate(`(() => ({
+      class: document.documentElement.classList.contains("cursor-custom"),
+      native: getComputedStyle(document.body).cursor,
+      hidden: document.querySelector("[data-set]")?.dataset.hidden,
+      fine: matchMedia("(hover: hover) and (pointer: fine)").matches,
+    }))()`);
+  const moveMouse = async () => {
+    await tab.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 400, y: 300 });
+    await tab.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 430, y: 330 });
+    await sleep(300);
+  };
+  const touch = (on) =>
+    Promise.all([
+      tab.send("Emulation.setTouchEmulationEnabled", { enabled: on, maxTouchPoints: 1 }),
+      tab.send("Emulation.setEmitTouchEventsForMouse", { enabled: on, configuration: "mobile" }),
+    ]);
+
+  await moveMouse();
+  const mouse = await read();
+  check(
+    "with a mouse the system cursor is hidden and the custom one shows",
+    mouse.class && mouse.native === "none" && mouse.hidden === "false",
+    mouse,
+  );
+  await touch(true);
+  await sleep(500);
+  const touched = await read();
+  check(
+    "when touch becomes the primary pointer the system cursor is back and the custom one hides",
+    !touched.fine && !touched.class && touched.native !== "none" && touched.hidden === "true",
+    touched,
+  );
+  await touch(false);
+  await sleep(500);
+  await moveMouse();
+  const again = await read();
+  check(
+    "when a mouse is primary again the custom cursor takes over",
+    again.fine && again.class && again.native === "none" && again.hidden === "false",
+    again,
+  );
+});
+
 /* ---------- done ---------- */
 
 ws.close();

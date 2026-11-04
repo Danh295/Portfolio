@@ -157,10 +157,22 @@ export default function Cursor({ mode = "gui" }) {
   const ref = useRef(null);
 
   useEffect(() => {
-    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    // The primary pointer can change after load (DevTools' device toolbar, a touch screen or a
+    // tablet attached), so the gate is followed, not read once: while it doesn't match, the
+    // system cursor stays and the handlers below do nothing (touch events would never move the
+    // custom one).
+    const fine = window.matchMedia("(hover: hover) and (pointer: fine)");
     const root = document.documentElement,
       el = ref.current;
-    root.classList.add("cursor-custom");
+    const follow = () => {
+      root.classList.toggle("cursor-custom", fine.matches);
+      if (!fine.matches) {
+        root.classList.remove("kbd");
+        el.dataset.hidden = "true";
+      }
+    };
+    follow();
+    fine.addEventListener("change", follow);
     let x = -100,
       y = -100,
       raf = 0,
@@ -186,7 +198,7 @@ export default function Cursor({ mode = "gui" }) {
       }
     };
     const onMove = (e) => {
-      if (e.pointerType && e.pointerType !== "mouse") return;
+      if (!fine.matches || (e.pointerType && e.pointerType !== "mouse")) return;
       // Browsers send synthetic moves at the same spot after scrolling; only a real
       // move leaves keyboard mode.
       if (e.clientX === x && e.clientY === y) return;
@@ -211,7 +223,7 @@ export default function Cursor({ mode = "gui" }) {
       setState();
     };
     const onDown = (e) => {
-      if (e.pointerType && e.pointerType !== "mouse") return;
+      if (!fine.matches || (e.pointerType && e.pointerType !== "mouse")) return;
       // A click also ends keyboard mode, even without moving first.
       root.classList.remove("kbd");
       el.dataset.hidden = "false";
@@ -234,6 +246,7 @@ export default function Cursor({ mode = "gui" }) {
       if (!e.relatedTarget) el.dataset.hidden = "true";
     };
     const onKey = (e) => {
+      if (!fine.matches) return;
       if (["Shift", "Control", "Alt", "Meta", "CapsLock"].includes(e.key)) return;
       if (e.metaKey || e.ctrlKey) return; // shortcuts like cmd-c aren't navigation
       root.classList.add("kbd");
@@ -248,6 +261,7 @@ export default function Cursor({ mode = "gui" }) {
     window.addEventListener("keydown", onKey, true);
     return () => {
       cancelAnimationFrame(raf);
+      fine.removeEventListener("change", follow);
       root.classList.remove("cursor-custom", "kbd");
       document.removeEventListener("selectionchange", checkSelect);
       window.removeEventListener("pointermove", onMove);
