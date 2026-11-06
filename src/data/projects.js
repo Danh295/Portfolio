@@ -90,6 +90,25 @@ export const projects = [
     links: [{ label: "GitHub", href: repoUrl("dannys-claude-mods") }],
   },
   {
+    slug: "crapos",
+    title: "crapos",
+    category: "personal",
+    org: "personal project",
+    role: "solo",
+    context: "operating systems, x86 assembly, emulator testing",
+    timeline: "started jun 2024, rebuilt nov 2026",
+    year: "2026",
+    purpose:
+      "a tiny operating system written in assembly: it boots from a floppy image, loads a second stage from disk, and drops you into a shell that talks back",
+    bullets: [
+      "wrote the first 512 bytes the computer runs at startup: they remember which drive the system booted from and load the rest of it from disk, trying again up to 3 times when a read fails",
+      "built a small shell on top: it reads a line of typing with backspace, looks the command up in a table, and runs help, reboot, clear or crap (which picks a line from the system clock)",
+      "wrote tests that boot it in an emulator with no window, type into the shell and read the screen back, on three emulated machine types, and from a hard disk as well as a floppy, and broke the OS on purpose six ways to check that each test catches its break",
+    ],
+    tags: ["x86 Assembly", "NASM", "QEMU", "Python", "Make"],
+    links: [{ label: "GitHub", href: repoUrl("CrapOS") }],
+  },
+  {
     slug: "portfolio",
     title: "portfolio",
     category: "personal",
@@ -111,25 +130,6 @@ export const projects = [
       { label: "GitHub", href: repoUrl("Portfolio") },
       { label: "live", href: `${site.url}/` },
     ],
-  },
-  {
-    slug: "crapos",
-    title: "crapos",
-    category: "personal",
-    org: "personal project",
-    role: "solo",
-    context: "operating systems, x86 assembly, emulator testing",
-    timeline: "jun 2024 – nov 2026",
-    year: "2024",
-    purpose:
-      "a tiny operating system in 16-bit x86 assembly: it boots from a floppy image, loads a second stage from disk, and drops you into a shell that insults you",
-    bullets: [
-      "wrote the 512-byte boot sector that the BIOS starts: it sets up memory, remembers which drive it booted from, and loads the rest of the system from disk, retrying when a read fails",
-      "built a small shell on top: it reads a line of typing with backspace, looks the command up in a table, and runs help, reboot, clear or crap (which picks a line from the system clock)",
-      "wrote tests that boot it in an emulator with no window, type into the shell and read the screen back, across three machine types and both floppy and hard disk boots, and broke the OS on purpose six ways to check that each test catches its break",
-    ],
-    tags: ["x86 Assembly", "NASM", "QEMU", "Python", "Make"],
-    links: [{ label: "GitHub", href: repoUrl("CrapOS") }],
   },
   {
     slug: "picklelarp-live",
