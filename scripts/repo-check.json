@@ -2,7 +2,6 @@
   "user": "Danh295",
   "ignore": {
     "Danh295/Danh295": "profile README, not a project",
-    "Danh295/CrapOS": "parked until its boot sector is finished (TODO.MD); remove this line then add the project",
     "Danh295/RAIInet": "CS 246 coursework, already counted as a course",
     "Danh295/GodotGameThing": "a first game jam try",
     "Danh295/Dataset_CleanerUpper": "coursework practice",

@@ -113,6 +113,25 @@ export const projects = [
     ],
   },
   {
+    slug: "crapos",
+    title: "crapos",
+    category: "personal",
+    org: "personal project",
+    role: "solo",
+    context: "operating systems, x86 assembly, emulator testing",
+    timeline: "jun 2024 – nov 2026",
+    year: "2024",
+    purpose:
+      "a tiny operating system in 16-bit x86 assembly: it boots from a floppy image, loads a second stage from disk, and drops you into a shell that insults you",
+    bullets: [
+      "wrote the 512-byte boot sector that the BIOS starts: it sets up memory, remembers which drive it booted from, and loads the rest of the system from disk, retrying when a read fails",
+      "built a small shell on top: it reads a line of typing with backspace, looks the command up in a table, and runs help, reboot, clear or crap (which picks a line from the system clock)",
+      "wrote tests that boot it in an emulator with no window, type into the shell and read the screen back, across three machine types and both floppy and hard disk boots, and broke the OS on purpose six ways to check that each test catches its break",
+    ],
+    tags: ["x86 Assembly", "NASM", "QEMU", "Python", "Make"],
+    links: [{ label: "GitHub", href: repoUrl("CrapOS") }],
+  },
+  {
     slug: "picklelarp-live",
     title: "picklelarp live",
     category: "hackathon",
@@ -138,8 +157,9 @@ export const projects = [
     category: "hackathon",
     org: "Hack the Valley 2026",
     role: "team of 4 · idea, spec, task breakdown and the speech backend",
+    location: "University of Toronto Scarborough",
     context: "speech analysis, healthcare AI, backend services",
-    timeline: "oct 2026",
+    timeline: "oct 16–18, 2026",
     year: "2026",
     purpose:
       "a speech check for long-term care. a care aide asks a resident to count to 20 (about ten seconds), and baseline compares how they spoke with that same resident's own history, so a nurse hears about a change before it shows up as confusion",
