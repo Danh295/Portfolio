@@ -197,7 +197,7 @@ export const projects = [
     title: "recall",
     category: "hackathon",
     org: "GenAI Genesis 2026",
-    role: "team of 3 · first version of the backend and the document ingestion tool",
+    role: "team of 3 · early backend prototype and the document importing tool",
     location: "University of Toronto",
     context: "MCP integration, AI memory systems, Electron app",
     timeline: "mar 13–15, 2026",
@@ -205,8 +205,8 @@ export const projects = [
     purpose:
       "a desktop AI memory system that captures digital context across screen activity and connected sources, then exposes searchable memory through MCP",
     bullets: [
-      "wrote the first version of the backend: a Python server that stores memories for search, an MCP server that lets AI agents read them, screen capture that reads the text on screen with OCR, and a first Electron app on top",
-      "built the tool that lets an agent pull documentation into recall's memory: give it a web page, a PDF or a GitHub markdown file, and it fetches the text, splits it up and stores it for search",
+      "built an early prototype of the memory backend before the team's final version: a Python server that stores memories for search, an MCP server that lets AI agents read them, screen capture that reads the text on screen with OCR, and a first Electron app on top",
+      "built the tool that lets an agent import documentation into recall's memory: give it a web page, a PDF or a GitHub markdown file, and it fetches the text, splits it up and stores it for search",
       "added a built-in list of about 30 popular packages mapped to their docs, so an agent can read a project's dependencies and load the right docs on its own",
       "wrote the demo video script",
     ],
@@ -239,10 +239,10 @@ export const projects = [
     purpose:
       "a multimodal repair assistant that helps users identify appliance problems from photos or video and produces clearer, more actionable repair instructions",
     bullets: [
-      "built the web frontend: the landing page, a photo and video upload screen using Cloudinary's upload widget, and the dashboard that shows the diagnosis",
+      "built the web frontend: the landing page, a photo and video upload screen using Cloudinary's upload widget, and the layout of the dashboard for the diagnosis",
       "added speech input so you can describe the fault out loud (Chromium browsers only)",
       "wrote the instructions generator: it reads a product manual and writes IKEA-style repair steps, plus a voice function that reads each step aloud with ElevenLabs",
-      "set up the first backend skeleton",
+      "set up the first backend (initial server setup)",
       "the team won over $2k across 2 tracks",
     ],
     tags: [
@@ -264,7 +264,7 @@ export const projects = [
     org: "Ctrl-Hack-Del 2.0 · winner",
     role: "team of 4 · project setup, Live2D avatar and mouth sync",
     location: "York University",
-    context: "AI integration, motion/graphics sync, interactive frontend",
+    context: "AI chat, animated characters, speech-synced mouth movement",
     timeline: "feb 14–22, 2026",
     year: "2026",
     purpose:
@@ -308,7 +308,7 @@ export const projects = [
       "built most of the frontend: the chat screen, the financial dashboard, and the action-plan cards that turn advice into next steps",
       "added sign-in and a financial profile form",
       "connected the chat to the database: each conversation gets a session id and its history is saved to Supabase",
-      "added the research agent that looks up real-time market data with Tavily, and made the agents reply in formatted text",
+      "added the research agent that searches the web for financial information with Tavily, and made the agents reply in formatted text",
     ],
     tags: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Supabase", "Tavily", "HTML/CSS"],
     links: [
@@ -354,14 +354,14 @@ export const projects = [
     org: "GeeseHacks 2025",
     role: "team of 3 · home page, challenge cards and shop",
     location: "waterloo, on",
-    context: "gamified fintech, frontend, rewards platform",
+    context: "student finance app, frontend, rewards",
     timeline: "jan 25–26, 2025",
     year: "2025",
     purpose:
       "a gamified student finance app that helps users track insurance-related finances, create AI-guided savings challenges, and earn rewards for healthy financial habits",
     bullets: [
-      "built the home page: an insurance coverage card and a carousel of savings challenges, whose cards you can edit as you make progress and delete once finished",
-      "built the shop front where points turn into rewards, plus the navbar and profile link",
+      "built the home page: an insurance coverage card and a carousel of savings challenge cards with edit and delete buttons",
+      "built a prototype shop front where you spend points, plus the navbar and profile link",
       "added the links on the learning page's education-centre buttons, and the favicon and page styling",
     ],
     tags: ["Next.js", "React", "TypeScript", "Tailwind CSS", "MongoDB", "HTML/CSS"],
