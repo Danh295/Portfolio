@@ -197,7 +197,7 @@ export const projects = [
     title: "recall",
     category: "hackathon",
     org: "GenAI Genesis 2026",
-    role: "team of 3 · document ingestion tool for the memory server",
+    role: "team of 3 · first version of the backend and the document ingestion tool",
     location: "University of Toronto",
     context: "MCP integration, AI memory systems, Electron app",
     timeline: "mar 13–15, 2026",
@@ -242,7 +242,8 @@ export const projects = [
       "built the web frontend: the landing page, a photo and video upload screen using Cloudinary's upload widget, and the dashboard that shows the diagnosis",
       "added speech input so you can describe the fault out loud (Chromium browsers only)",
       "wrote the instructions generator: it reads a product manual and writes IKEA-style repair steps, plus a voice function that reads each step aloud with ElevenLabs",
-      "set up the first backend skeleton; the team won over $2k across 2 tracks",
+      "set up the first backend skeleton",
+      "the team won over $2k across 2 tracks",
     ],
     tags: [
       "Python",
@@ -272,7 +273,7 @@ export const projects = [
       "set up the project and got the Live2D character showing in the browser, then added a second, male character",
       "tied the character's mouth to the voice so its lips move with the spoken reply",
       "added friendly error messages for when the AI or voice services fail",
-      "drew the pipeline diagram in the README; the team won Best Valentine's Day Hack",
+      "drew the diagram in the README that shows how a message becomes a spoken, lip-synced reply",
     ],
     tags: [
       "Next.js",
@@ -298,7 +299,7 @@ export const projects = [
     org: "UofTHacks 13",
     role: "team of 4 · frontend, sign-in and chat history",
     location: "University of Toronto",
-    context: "full-stack AI product, multi-agent orchestration",
+    context: "AI chat product, frontend, sign-in and chat history",
     timeline: "jan 16–18, 2026",
     year: "2026",
     purpose:
@@ -327,9 +328,9 @@ export const projects = [
     purpose:
       "a surgical AI assistant prototype that transcribes spoken medical queries, retrieves relevant patient records and scans, and presents them through a structured file-viewing interface",
     bullets: [
-      "set up the project and added the speech-to-text step with ElevenLabs",
+      "set up the project and wrote the speech-to-text script that uses ElevenLabs",
       "built the browser side that records your voice and plays it back",
-      "built the frontend and connected it to Supabase, so a spoken request can bring up patient records and scans",
+      "built the frontend and connected it to Supabase to show patient records and scans",
     ],
     tags: [
       "Next.js",
@@ -353,7 +354,7 @@ export const projects = [
     org: "GeeseHacks 2025",
     role: "team of 3 · home page, challenge cards and shop",
     location: "waterloo, on",
-    context: "gamified fintech, AI goal planning, rewards platform",
+    context: "gamified fintech, frontend, rewards platform",
     timeline: "jan 25–26, 2025",
     year: "2025",
     purpose:
