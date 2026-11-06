@@ -99,11 +99,11 @@ export const projects = [
     timeline: "started jun 2024, rebuilt nov 2026",
     year: "2026",
     purpose:
-      "a tiny operating system written in assembly: it boots from a floppy image, loads a second stage from disk, and drops you into a shell that talks back",
+      "a tiny operating system written in assembly: it boots from a floppy image, loads the rest of itself from disk, and drops you into a shell that talks back",
     bullets: [
-      "wrote the first 512 bytes the computer runs at startup: they remember which drive the system booted from and load the rest of it from disk, trying again up to 3 times when a read fails",
-      "built a small shell on top: it reads a line of typing with backspace, looks the command up in a table, and runs help, reboot, clear or crap (which picks a line from the system clock)",
-      "wrote tests that boot it in an emulator with no window, type into the shell and read the screen back, on three emulated machine types, and from a hard disk as well as a floppy, and broke the OS on purpose six ways to check that each test catches its break",
+      "wrote the 512-byte boot sector, the first piece of the system the computer loads: it remembers which drive it booted from and loads the rest of the system from disk, making up to 3 attempts when a read fails",
+      "built a small shell on top: it reads what you type (backspace works), looks the command up in a table, and runs help, reboot, clear or crap (which uses the system clock to pick one of its unhelpful lines)",
+      "wrote tests that boot it in an emulator with no window, type into the shell and read the screen back: it must boot on three emulated machine types and from a hard disk as well as a floppy, and every command and the typing rules have their own test; i broke the OS on purpose six ways to check the tests fail when something is wrong",
     ],
     tags: ["x86 Assembly", "NASM", "QEMU", "Python", "Make"],
     links: [{ label: "GitHub", href: repoUrl("CrapOS") }],
@@ -162,12 +162,12 @@ export const projects = [
     timeline: "oct 16–18, 2026",
     year: "2026",
     purpose:
-      "a speech check for long-term care. a care aide asks a resident to count to 20 (about ten seconds), and baseline compares how they spoke with that same resident's own history, so a nurse hears about a change before it shows up as confusion",
+      "a speech check for long-term care. a care aide asks a resident to count to 20 (about ten seconds), and baseline compares how they spoke with that same resident's own history, so a nurse can hear about a change before it shows up as confusion",
     bullets: [
       "came up with the idea after reading that in one study of residents with dementia, nurses recognised about 13% of delirium cases, researched the care setting, and wrote the proposal around PointClickCare's Catch It Early challenge",
       "wrote the spec and a log of why we chose each approach, split the plan into 35 tasks so four people could build at the same time, and left notes on later tasks telling teammates which backend rules their screens had to follow",
       "built the core of the backend: the code that turns a ten-second recording into measurements of speech speed, pauses and pitch, rejects recordings too poor to trust, and compares each check with that resident's own history",
-      "built the database changes, the upload endpoint, and the part that lets a resident's record explain a change, such as a new medication, so the system can tell when a shift already has a reason",
+      "built the database changes, the upload endpoint, and the part that lets a resident's record explain a change, such as new dentures, or raise a flag, such as a new high-risk medication, so the system can tell when a shift already has a reason",
       "wrote tests that run the speech pipeline on recorded sample clips, and a tool that times a check from upload to result, because the goal was an answer in under five seconds",
       "polished the demo overnight: walked through it start to finish, fixed what broke, and replaced the scattered fictional-data labels with one clear disclosure",
     ],
