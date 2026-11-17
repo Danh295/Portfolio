@@ -12,7 +12,7 @@ test("Back from a project lands on the list position it was opened from", () => 
   assert.equal(open.mode, "push");
   assert.equal(open.url, "/projects/recall/");
   const back = popPlan({ pathname: "/", hash: "", state: open.homeState });
-  assert.deepEqual(back, { view: null, land: { scrollTo: 1234 } });
+  assert.deepEqual(back, { view: null, land: { scrollTo: 1234, focus: "row" } });
 });
 
 // Esc on a project the app opened goes back to the entry it came from (the list, at its
@@ -34,7 +34,7 @@ test("Esc after stepping between projects goes back to the list entry", () => {
 // history.state survives a reload, so a project entry from an earlier page load must not
 // be trusted: back() would leave this document. It replaces instead.
 test("Esc after a reload, or on a deep-linked project, replaces with the projects section", () => {
-  const replace = { mode: "replace", url: "/#projects", land: { sec: 1 } };
+  const replace = { mode: "replace", url: "/#projects", land: { sec: 1, focus: "row" } };
   assert.deepEqual(
     leavePlan({ n: 1, how: "back", state: { fromApp: "OLD" }, loadId: "L" }),
     replace,
@@ -50,11 +50,11 @@ test("jumping to a section from a project replaces its entry; Back then skips it
   assert.deepEqual(leavePlan({ n: 0, how: "jump", state: a.state, loadId: "L" }), {
     mode: "replace",
     url: "/#home",
-    land: { sec: 0 },
+    land: { sec: 0, focus: "head" },
   });
   assert.deepEqual(popPlan({ pathname: "/", hash: "", state: a.homeState }), {
     view: null,
-    land: { scrollTo: 700 },
+    land: { scrollTo: 700, focus: "row" },
   });
 });
 
@@ -77,11 +77,11 @@ test("an old /#projects/<slug> entry opens the project and is rewritten to its p
 test("a section entry without a saved position lands on its section", () => {
   assert.deepEqual(popPlan({ pathname: "/", hash: "#experience", state: null }), {
     view: null,
-    land: { sec: 2 },
+    land: { sec: 2, focus: "head" },
   });
   assert.deepEqual(popPlan({ pathname: "/", hash: "", state: {} }), {
     view: null,
-    land: { sec: 0 },
+    land: { sec: 0, focus: "head" },
   });
 });
 
@@ -89,9 +89,12 @@ test("a section entry without a saved position lands on its section", () => {
 // back where it was, as before; other sections align under the nav.
 test("jumping to projects from a project restores the remembered list position", () => {
   const leave = (n) => leavePlan({ n, how: "jump", state: {}, loadId: "L", listY: 640 });
-  assert.deepEqual(leave(1).land, { scrollTo: 640 });
-  assert.deepEqual(leave(2).land, { sec: 2 });
-  assert.deepEqual(leavePlan({ n: 1, how: "jump", state: {}, loadId: "L" }).land, { sec: 1 });
+  assert.deepEqual(leave(1).land, { scrollTo: 640, focus: "head" });
+  assert.deepEqual(leave(2).land, { sec: 2, focus: "head" });
+  assert.deepEqual(leavePlan({ n: 1, how: "jump", state: {}, loadId: "L" }).land, {
+    sec: 1,
+    focus: "head",
+  });
 });
 
 // A home entry Next doesn't own (a #hash typed into the address bar has no state) is
@@ -108,6 +111,22 @@ test("the list position is only saved on a home entry Next owns", () => {
 // remembered when the project was opened (`listY`); any other Back lands on the section.
 test("Esc back onto an entry with no saved position uses the remembered one", () => {
   const pop = (listY) => popPlan({ pathname: "/", hash: "#projects", state: null, listY });
-  assert.deepEqual(pop(450), { view: null, land: { scrollTo: 450 } });
-  assert.deepEqual(pop(null), { view: null, land: { sec: 1 } });
+  assert.deepEqual(pop(450), { view: null, land: { scrollTo: 450, focus: "row" } });
+  assert.deepEqual(pop(null), { view: null, land: { sec: 1, focus: "row" } });
+});
+
+// NAV-01: only Esc/[back] focus the row of the project just left. A section key lands on
+// the target section's heading, however the project was opened; Back/Forward focus a row
+// only when they land on the list.
+test("a section jump focuses the target heading, Esc and Back the project row", () => {
+  const leave = (n, how, listY) => leavePlan({ n, how, state: {}, loadId: "L", listY }).land.focus;
+  for (const n of [0, 1, 2, 3]) {
+    assert.equal(leave(n, "jump", null), "head", "deep-linked, section " + n);
+    assert.equal(leave(n, "jump", 500), "head", "opened from the list, section " + n);
+  }
+  assert.equal(leave(1, "back", null), "row");
+  assert.equal(leave(1, "back", 500), "row");
+  const pop = (hash) => popPlan({ pathname: "/", hash, state: null }).land.focus;
+  assert.equal(pop("#projects"), "row");
+  assert.equal(pop("#experience"), "head");
 });

@@ -24,11 +24,17 @@ export function openPlan({ slug, view, scrollY, state, loadId }) {
  * project this page load opened go back to the entry it was opened from. Anything else
  * (a section jump, a deep-linked project, an entry from before a reload) replaces the
  * project entry with the section, so Back never reopens it; back on the projects
- * section, the list returns to `listY`, where it was when the project was opened.
+ * section, the list returns to `listY`, where it was when the project was opened. `land`
+ * carries the whole landing, including `focus` ("row": the project last shown, "head": the
+ * target section's heading), so the app only carries it out.
  */
 export function leavePlan({ n, how, state, loadId, listY = null }) {
   if (how === "back" && loadId && state?.fromApp === loadId) return { mode: "back" };
-  const land = n === 1 && listY != null ? { scrollTo: listY } : { sec: n };
+  // Where focus goes once the list is back: Esc/[back] return to the project's row, a jump
+  // to the heading of the section it asked for (a row focused off screen would pull the
+  // page back to the projects).
+  const focus = how === "back" ? "row" : "head";
+  const land = n === 1 && listY != null ? { scrollTo: listY, focus } : { sec: n, focus };
   return { mode: "replace", url: secUrl(n), land };
 }
 
@@ -36,7 +42,8 @@ export function leavePlan({ n, how, state, loadId, listY = null }) {
  * A Back/Forward landed on `pathname` + `hash` with `state`. A project page opens it (an
  * old /#projects/<slug> link also gets its real URL, `rewrite`); a home entry that saved
  * a list position lands exactly there, any other on its section. `listY`: the position
- * remembered when the project was opened, passed when this is Esc's own back().
+ * remembered when the project was opened, passed when this is Esc's own back(). Back and
+ * Forward focus the project's row when they land on the list, else the section's heading.
  */
 export function popPlan({ pathname, hash, state, listY: remembered = null }) {
   const r = parsePath(pathname, hash);
@@ -45,5 +52,11 @@ export function popPlan({ pathname, hash, state, listY: remembered = null }) {
     return onPath ? { view: r.slug } : { view: r.slug, rewrite: projUrl(r.slug) };
   }
   const listY = state?.listY ?? remembered;
-  return { view: null, land: listY != null ? { scrollTo: listY } : { sec: r.sec } };
+  return {
+    view: null,
+    land:
+      listY != null
+        ? { scrollTo: listY, focus: "row" }
+        : { sec: r.sec, focus: r.sec === 1 ? "row" : "head" },
+  };
 }

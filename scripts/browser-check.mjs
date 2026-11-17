@@ -2099,6 +2099,84 @@ await run(
   },
 );
 
+// NAV-01: a section key from a project lands on that section's heading (focus included) and
+// stays there: focus on the project's row, off screen, used to pull the page back to the list.
+// Only Esc and Back/Forward put focus on the row.
+for (const [label, path, fromList] of [
+  ["deep-linked project", "projects/crapos/", false],
+  ["a project opened from the list", "#projects", true],
+]) {
+  for (const n of ["2", "3"])
+    await run(
+      `${n} from ${label} lands on the section heading (1291×808)`,
+      DESKTOP,
+      async (tab) => {
+        await tab.go(path);
+        if (fromList) {
+          await tab.click(`document.querySelector('[data-row="2"]')`, 30);
+          await sleep(1000);
+        }
+        check(
+          "a project is open",
+          await tab.evaluate(
+            `/\\/projects\\//.test(location.pathname) && !!document.querySelector('[data-detail-title]')`,
+          ),
+        );
+        await tab.key(n);
+        await sleep(1800);
+        const st = await tab.evaluate(`(() => { const a = document.activeElement;
+          return { nav: document.querySelector('nav [data-key][aria-current="true"]')?.dataset.key,
+            focus: a.tagName + (a.dataset.row != null ? " row " + a.dataset.row : "") + " in sec " + (a.closest("[data-sec]")?.dataset.sec ?? "-"),
+            secTop: Math.round(document.querySelector('[data-sec="${n}"]').getBoundingClientRect().top) }; })()`);
+        check(
+          `${n} lands on section ${n}: active in the nav, parked under it, its heading focused`,
+          st.nav === n && st.secTop > 0 && st.secTop < 200 && st.focus === `H2 in sec ${n}`,
+          st,
+        );
+      },
+    );
+}
+
+// Back/Forward still put the list back where it was, with focus on the row that was opened.
+await run(
+  "Back and Forward restore the list position and the row (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#projects");
+    await tab.gesture(120);
+    await sleep(600);
+    const y0 = await tab.evaluate("Math.round(scrollY)");
+    await tab.click(`document.querySelector('[data-row="1"]')`, 30);
+    await sleep(1200);
+    check("a project is open", await tab.evaluate(`/\\/projects\\//.test(location.pathname)`));
+    await tab.evaluate("history.back()");
+    await sleep(1500);
+    const back = await tab.evaluate(
+      `({ y: Math.round(scrollY), focus: document.activeElement.dataset.row ?? document.activeElement.tagName })`,
+    );
+    check(
+      "Back: the list position returns and the opened row has focus",
+      Math.abs(back.y - y0) <= 2 && back.focus === "1",
+      { y0, back },
+    );
+    await tab.evaluate("history.forward()");
+    await sleep(1200);
+    check(
+      "Forward reopens the project",
+      await tab.evaluate(`!!document.querySelector('[data-detail-title]')`),
+    );
+    await tab.key("Escape");
+    await sleep(1500);
+    const esc = await tab.evaluate(
+      `({ y: Math.round(scrollY), focus: document.activeElement.dataset.row ?? document.activeElement.tagName })`,
+    );
+    check("Esc: the same position and row", Math.abs(esc.y - y0) <= 2 && esc.focus === "1", {
+      y0,
+      esc,
+    });
+  },
+);
+
 // A mouse press focuses the row, which becomes the selection and scrolls into view (ensureVisible,
 // smooth): the page moving under a pressed button must not lose the click.
 await run(

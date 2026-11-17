@@ -180,16 +180,17 @@ export default function App({ initialView = null }) {
 
   // Leaving a project page for the section list ({ scrollTo }: the list position it was
   // opened from; { sec }: a section aligned under the nav). State first, from the leave
-  // or Back/Forward itself: the active section, and a keyboard selection follows the
-  // project last shown (←/→ may have moved on from the row that opened it).
+  // or Back/Forward itself: the active section, and, when the landing focuses the row, a
+  // keyboard selection follows the project last shown (←/→ may have moved on from the row
+  // that opened it).
   const leaveState = (land, prevSlug) => {
     if (land.sec != null) setActiveSec(land.sec);
     const row = list.findIndex((p) => p.slug === prevSlug);
-    if (sel >= 0 && row >= 0) setSel(row);
+    if (land.focus === "row" && sel >= 0 && row >= 0) setSel(row);
   };
   // Then, once the list is back: scroll there (a restored position's scroll event lets the
-  // spy pick the active section) and move focus, which was on the page that is gone, to
-  // that project's row.
+  // spy pick the active section) and move focus, which was on the page that is gone, where
+  // the plan says (land.focus): that project's row, or the target section's heading.
   const landOnList = (land, prevSlug) => {
     const park =
       land.sec === 0 && parkOnLand.current > 0 && performance.now() - parkOnLand.current < 2000;
@@ -199,8 +200,11 @@ export default function App({ initialView = null }) {
     // A project outside the current filter has no row: fall back to the selected one.
     const row = list.findIndex((p) => p.slug === prevSlug);
     const focusRow = row >= 0 ? row : sel;
-    if (focusRow >= 0 && document.activeElement === document.body)
-      focusQuiet(document.querySelector('[data-row="' + focusRow + '"]'));
+    if (document.activeElement !== document.body) {
+      // focus already went somewhere on purpose
+    } else if (land.focus === "head")
+      focusQuiet(document.querySelector('[data-sec="' + (land.sec ?? 1) + '"] h2'));
+    else if (focusRow >= 0) focusQuiet(document.querySelector('[data-row="' + focusRow + '"]'));
   };
 
   // Back/Forward leaves any popup, the embedded shell and the rules card behind.
