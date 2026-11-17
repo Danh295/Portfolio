@@ -1,5 +1,7 @@
 import styles from "./Header.module.css";
 import Hint from "@/components/Hint";
+import { inApp } from "@/lib/linkClick";
+import { secUrl } from "@/lib/urls";
 
 const SECTIONS = [
   { n: 1, label: "projects", tip: "jump to projects" },
@@ -24,9 +26,9 @@ export default function Header({
   return (
     <nav ref={navRef} className={styles.nav} aria-label="site" inert={inert}>
       <div className={styles.inner}>
-        <button
-          type="button"
-          onClick={onHome}
+        <a
+          href={secUrl(0)}
+          onClick={inApp(onHome)}
           data-key="h"
           data-tip="home"
           className={activeSec === 0 ? `${styles.home} ${styles.chip}` : styles.home}
@@ -34,13 +36,13 @@ export default function Header({
         >
           <Hint className={styles.key}>[h] </Hint>
           ~/danny
-        </button>
+        </a>
         <div className={styles.links}>
           {SECTIONS.map((s) => (
-            <button
+            <a
               key={s.n}
-              type="button"
-              onClick={() => onSection(s.n)}
+              href={secUrl(s.n)}
+              onClick={inApp(() => onSection(s.n))}
               data-key={s.n}
               data-tip={s.tip}
               className={activeSec === s.n ? `${styles.link} ${styles.chip}` : styles.link}
@@ -48,7 +50,7 @@ export default function Header({
             >
               <Hint className={styles.key}>[{s.n}] </Hint>
               {s.label}
-            </button>
+            </a>
           ))}
         </div>
         <div className={styles.actions}>

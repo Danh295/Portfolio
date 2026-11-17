@@ -621,7 +621,7 @@ for (const size of [
       // before the menu button).
       if (size.width >= 360) {
         const gaps = await tab.evaluate(`(() => {
-          const items = [...document.querySelectorAll("nav button")].filter((b) => b.getClientRects().length > 0);
+          const items = [...document.querySelectorAll("nav button, nav a")].filter((b) => b.getClientRects().length > 0);
           const box = items.map((b) => b.getBoundingClientRect());
           const gaps = box.slice(1).map((b, i) => Math.round(b.left - box[i].right));
           return { n: items.length, gaps };
@@ -680,7 +680,7 @@ await run(
   async (tab) => {
     await tab.go("projects/ai-room-editor/");
     const r = await tab.evaluate(`(() => {
-      const row = [...document.querySelectorAll("button")].filter((b) =>
+      const row = [...document.querySelectorAll("button, a")].filter((b) =>
         /cd \\.\\.|previous project|next project/.test(b.innerText + " " + b.ariaLabel));
       const box = row.map((b) => b.getBoundingClientRect());
       return {
@@ -690,7 +690,7 @@ await run(
         text: row.map((b) => b.innerText.trim()),
       };
     })()`);
-    check("cd .., previous and next are three buttons", r.n === 3, r);
+    check("cd .., previous and next are three controls", r.n === 3, r);
     check("they share one row", Math.max(...r.tops) - Math.min(...r.tops) <= 2, r);
     check(
       "each is 44px tall",
@@ -2295,6 +2295,119 @@ await run(
     check("another row has its name while the rows type in", other === (await want(0)), { other });
   },
 );
+
+// NAV-02: project rows, the nav's section links and a project page's back/prev/next are real
+// links (<a href>): the export has the addresses with scripts off, a plain click is the app's
+// (no page load, no hash written), a modified click is left to the browser.
+await run("rows, nav and project buttons are real links (1291×808)", DESKTOP, async (tab) => {
+  const html = (path) => readFileSync(join(OUT, path), "utf8");
+  const home = html("index.html"),
+    page = html("projects/crapos/index.html");
+  const hrefs = (src) => [...src.matchAll(/<a [^>]*href="([^"]+)"/g)].map((m) => m[1]);
+  const homeLinks = hrefs(home),
+    pageLinks = hrefs(page);
+  check(
+    "the exported home page links every project row and the section links, with no script",
+    homeLinks.filter((h) => /\/projects\/[\w-]+\/$/.test(h)).length >= 10 &&
+      ["#projects", "#experience", "#skills"].every((h) => homeLinks.includes(BASE + h)),
+    { sample: homeLinks.slice(0, 8) },
+  );
+  check(
+    "and a project page links back and the neighbouring projects",
+    pageLinks.includes(BASE + "#projects") &&
+      pageLinks.filter((h) => /\/projects\/[\w-]+\/$/.test(h)).length >= 2,
+    { pageLinks: pageLinks.slice(0, 8) },
+  );
+  await tab.go("#home");
+  // Record what the app did with each click, then stop the browser following it.
+  await tab.evaluate(`window.__seen = [];
+    window.addEventListener("click", (e) => { __seen.push(e.defaultPrevented); e.preventDefault(); })`);
+  const click = (sel, init) =>
+    tab.evaluate(`document.querySelector(${JSON.stringify(sel)}).dispatchEvent(
+      new MouseEvent("click", { bubbles: true, cancelable: true, button: 0, ...${JSON.stringify(init)} }))`);
+  const at0 = await tab.evaluate("location.pathname + location.hash");
+  await click('nav a[data-key="2"]', { ctrlKey: true });
+  await click('[data-row="1"]', { metaKey: true });
+  await click('[data-row="1"]', { shiftKey: true });
+  await sleep(500);
+  const mod = await tab.evaluate(
+    `({ seen: __seen, path: location.pathname + location.hash, open: !!document.querySelector("[data-detail-title]") })`,
+  );
+  check(
+    "modified clicks are left to the browser (not handled, nothing opens or scrolls)",
+    mod.seen.length === 3 && mod.seen.every((x) => x === false) && !mod.open && mod.path === at0,
+    mod,
+  );
+  await tab.click(navButton("experience"));
+  await sleep(1200);
+  const jumped = await tab.evaluate(
+    `({ hash: location.hash, top: Math.round(document.querySelector('[data-sec="2"]').getBoundingClientRect().top) })`,
+  );
+  check(
+    "a plain click on a section link scrolls there in the app and leaves the hash alone",
+    jumped.hash === "#" + at0.split("#")[1] && jumped.top < 200,
+    jumped,
+  );
+  // Hover: a row is no text link (no underline), a section link keeps its underline.
+  await tab.go("#projects");
+  const look = async (sel) => {
+    const at = await tab.evaluate(
+      `(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { x: r.x + 30, y: r.y + r.height / 2 }; })()`,
+    );
+    await tab.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...at });
+    await sleep(150);
+    return tab.evaluate(
+      `getComputedStyle(document.querySelector(${JSON.stringify(sel)})).textDecorationLine`,
+    );
+  };
+  const row = await look('[data-row="2"]'),
+    link = await look('nav a[data-key="3"]');
+  check(
+    "hovering a row doesn't underline it, a nav link still does",
+    row === "none" && link === "underline",
+    {
+      row,
+      link,
+    },
+  );
+  // Enter on a focused row opens it, as it did on the button.
+  await tab.evaluate(`document.querySelector('[data-row="2"]').focus()`);
+  await tab.key("Enter");
+  await sleep(1000);
+  check(
+    "Enter on a focused row opens the project",
+    await tab.evaluate(
+      `/\\/projects\\//.test(location.pathname) && !!document.querySelector("[data-detail-title]")`,
+    ),
+  );
+  await tab.evaluate(`document.querySelector('a[data-key="ArrowRight"]').focus()`);
+  const before = await tab.evaluate("location.pathname");
+  await tab.key("Enter");
+  await sleep(800);
+  check(
+    "Enter on the next link steps to the next project in the app",
+    (await tab.evaluate("location.pathname")) !== before &&
+      (await tab.evaluate("history.length")) > 1,
+  );
+});
+
+// Space presses a row the j/k selection (and so focus) is on, as it did while rows were buttons;
+// as a link it would have scrolled the page.
+await run("Space on the selected project row opens it (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#projects");
+  await tab.key("j");
+  const row = await tab.evaluate(`document.activeElement.dataset.row ?? null`);
+  await tab.key(" ");
+  await sleep(1000);
+  check(
+    "the focused row opens",
+    row === "0" &&
+      (await tab.evaluate(
+        `/\\/projects\\//.test(location.pathname) && !!document.querySelector("[data-detail-title]")`,
+      )),
+    { row },
+  );
+});
 
 // Back/Forward still put the list back where it was, with focus on the row that was opened.
 await run(

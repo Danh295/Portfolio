@@ -178,8 +178,14 @@ function table(f, tabbed) {
   // earlier click (e.g. the rules chip), so a timed press never goes elsewhere.
   const eggKey = isPress(f) && !tabbed && !covered(f) && f.activeSec === 0 && f.heroSel === "egg";
   if (eggKey) return { prevent: true, ...(f.repeat ? {} : press(f)) };
-  // Otherwise Enter/Space on a focused link or button are left to the browser.
-  if (isPress(f) && f.onControl) return null;
+  // Otherwise Enter/Space on a focused link or button are left to the browser, except Space
+  // on one of the app's own links (project rows, the nav, back/prev/next): those were buttons
+  // that Space pressed, and a link would scroll the page instead.
+  if (isPress(f) && f.onControl) {
+    if (key === " " && f.onAppLink)
+      return { prevent: true, ...(f.repeat ? {} : { do: "clickFocused" }) };
+    return null;
+  }
   // Space presses the selected element like Enter (with nothing selected it scrolls).
   if (key === " ") return selection(f) ? { prevent: true, ...(f.repeat ? {} : press(f)) } : null;
   // Shortcuts off: every single-character key is left alone.

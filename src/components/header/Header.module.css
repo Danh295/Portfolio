@@ -24,6 +24,7 @@
    they were (the chip's fill reaches 4px past the text). */
 .home,
 .link {
+  display: inline-block; /* links, which were buttons */
   padding: 0 4px;
 }
 
@@ -34,6 +35,10 @@
 
 .home {
   font-weight: 500;
+}
+
+:global(html:not(.kbd)) .home:hover {
+  text-decoration: none;
 }
 
 .home .key {

@@ -19,6 +19,7 @@
 
 .back,
 .step {
+  display: inline-block; /* links, which were buttons */
   padding: 5px 10px;
   line-height: 18px;
   color: var(--fg);
@@ -37,6 +38,7 @@
 :global(html:not(.kbd)) .step:hover {
   background: var(--fg);
   color: var(--bg);
+  text-decoration: none;
 }
 
 .pn {

@@ -2,6 +2,8 @@ import SectionFrame from "@/components/frame/SectionFrame";
 import Hint, { KeyLabel } from "@/components/Hint";
 import { projects, projectFolders } from "@/data/projects";
 import { pad, projectRowName } from "@/lib/format";
+import { inApp } from "@/lib/linkClick";
+import { projUrl } from "@/lib/urls";
 import { fmtStamp, syncedAt, syncedCount } from "@/lib/github";
 import styles from "./ProjectList.module.css";
 
@@ -67,13 +69,14 @@ export default function ProjectList({ list, filter, sel, active, listRef, onFilt
         {list.map((p, i) => {
           const on = sel === i && active;
           return (
-            <button
+            <a
               key={p.slug}
-              type="button"
+              href={projUrl(p.slug)}
               data-row={i}
+              draggable={false}
               aria-current={on ? "true" : undefined}
               aria-label={projectRowName(p, i, list.length)}
-              onClick={() => onOpen(p.slug)}
+              onClick={inApp(() => onOpen(p.slug))}
               data-tip={p.purpose}
               className={on ? styles.rowOn : styles.row}
             >
@@ -83,7 +86,7 @@ export default function ProjectList({ list, filter, sel, active, listRef, onFilt
               <span className={styles.org}>{p.org}</span>
               <span className={styles.small}>{p.year}</span>
               <span className={styles.arrow}>{on ? "↲" : "→"}</span>
-            </button>
+            </a>
           );
         })}
       </div>

@@ -4,6 +4,8 @@ import { useRef } from "react";
 import { projects } from "@/data/projects";
 import { useTextFx } from "@/lib/useTextFx";
 import { pad } from "@/lib/format";
+import { inApp } from "@/lib/linkClick";
+import { projUrl, secUrl } from "@/lib/urls";
 import { fmtDate, repoFor } from "@/lib/github";
 import { KeyLabel, TouchText } from "@/components/Hint";
 import styles from "./ProjectDetail.module.css";
@@ -37,19 +39,19 @@ export default function ProjectDetail({ slug, onBack, onOpen }) {
   return (
     <div className={styles.page}>
       <div className={styles.nav}>
-        <button
-          type="button"
-          onClick={onBack}
+        <a
+          href={secUrl(1)}
+          onClick={inApp(onBack)}
           data-key="Escape"
           data-tip="back to ~/projects"
           className={styles.back}
         >
           <KeyLabel className={styles.dim}>[esc]</KeyLabel> ← cd ..
-        </button>
+        </a>
         <div className={styles.pn}>
-          <button
-            type="button"
-            onClick={() => onOpen(prev.slug)}
+          <a
+            href={projUrl(prev.slug)}
+            onClick={inApp(() => onOpen(prev.slug))}
             data-key="ArrowLeft"
             data-tip={prev.title}
             aria-label={"previous project: " + prev.title}
@@ -58,10 +60,10 @@ export default function ProjectDetail({ slug, onBack, onOpen }) {
             <KeyLabel className={styles.dim}>[←]</KeyLabel>
             <TouchText>←</TouchText>
             <span className={styles.stepName}> {prev.title}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onOpen(next.slug)}
+          </a>
+          <a
+            href={projUrl(next.slug)}
+            onClick={inApp(() => onOpen(next.slug))}
             data-key="ArrowRight"
             data-tip={next.title}
             aria-label={"next project: " + next.title}
@@ -70,7 +72,7 @@ export default function ProjectDetail({ slug, onBack, onOpen }) {
             <span className={styles.stepName}>{next.title} </span>
             <KeyLabel className={styles.dim}>[→]</KeyLabel>
             <TouchText>→</TouchText>
-          </button>
+          </a>
         </div>
       </div>
       <article className={styles.frame}>

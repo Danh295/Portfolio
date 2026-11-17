@@ -402,3 +402,14 @@ test("in a skill's panel j/k and the arrows walk its buttons; Tab and Enter are 
   assert.equal(inp({ key: "ArrowDown", keysOn: false }).dir, 1);
   assert.equal(inp({ key: "j", repeat: true }).dir, 1, "moving keys repeat");
 });
+
+// NAV-02: rows, the nav's section links and back/prev/next are links now, and Space on a
+// focused link would scroll the page; on these it presses, as it did on the buttons.
+test("Space on one of the app's own links presses it; on any other link it is the browser's", () => {
+  const space = (over) => route({ key: " ", onButton: true, onControl: true, ...over });
+  assert.deepEqual(space({ onAppLink: true }), { prevent: true, do: "clickFocused" });
+  assert.deepEqual(space({ onAppLink: true, repeat: true }), { prevent: true });
+  assert.equal(space({ onAppLink: false }), null);
+  // Enter stays the browser's: it clicks a link by itself
+  assert.equal(route({ key: "Enter", onButton: true, onControl: true, onAppLink: true }), null);
+});

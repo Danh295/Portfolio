@@ -471,6 +471,7 @@ export default function App({ initialView = null }) {
       alt: e.altKey,
       typing: !!ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA"),
       onButton: !!focused?.closest("a, button"),
+      onAppLink: !!focused?.closest("a[data-row], a[data-key]"),
       onControl,
       tabFocused: onControl && ae === tabFocus.current,
       selectionCollapsed: window.getSelection()?.isCollapsed ?? true,
@@ -645,6 +646,9 @@ export default function App({ initialView = null }) {
         break;
       case "openLink":
         openTab(LINKS[d.link]);
+        break;
+      case "clickFocused":
+        document.activeElement?.click(); // Space on one of the app's own links
         break;
     }
     // A shortcut with a visible button (header, bottom bar, hero, project page, dialog
