@@ -1,7 +1,7 @@
 import SectionFrame from "@/components/frame/SectionFrame";
 import Hint, { KeyLabel } from "@/components/Hint";
 import { projects, projectFolders } from "@/data/projects";
-import { pad } from "@/lib/format";
+import { pad, projectRowName } from "@/lib/format";
 import { fmtStamp, syncedAt, syncedCount } from "@/lib/github";
 import styles from "./ProjectList.module.css";
 
@@ -72,6 +72,7 @@ export default function ProjectList({ list, filter, sel, active, listRef, onFilt
               type="button"
               data-row={i}
               aria-current={on ? "true" : undefined}
+              aria-label={projectRowName(p, i, list.length)}
               onClick={() => onOpen(p.slug)}
               data-tip={p.purpose}
               className={on ? styles.rowOn : styles.row}
@@ -82,7 +83,6 @@ export default function ProjectList({ list, filter, sel, active, listRef, onFilt
               <span className={styles.org}>{p.org}</span>
               <span className={styles.small}>{p.year}</span>
               <span className={styles.arrow}>{on ? "↲" : "→"}</span>
-              <span className="sr-only">{", project " + (i + 1) + " of " + list.length}</span>
             </button>
           );
         })}

@@ -11,14 +11,15 @@ const CHAR_MS = 9, // per character…
 const blankOf = (s) => s.replace(/\S/g, BLANK);
 
 /**
- * Blank every text node under `root` except those inside `skip`. Returns the entries to
- * hand to typeIn (or restore).
+ * Blank every text node under `root` except those inside `skip` (an element or a list of
+ * them; null ones are ignored). Returns the entries to hand to typeIn (or restore).
  */
 export function blankText(root, skip) {
   const out = [],
+    keep = [skip].flat().filter(Boolean),
     walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-    if (!n.nodeValue.trim() || (skip && skip.contains(n))) continue;
+    if (!n.nodeValue.trim() || keep.some((el) => el.contains(n))) continue;
     const text = n.nodeValue,
       shown = blankOf(text);
     n.nodeValue = shown;

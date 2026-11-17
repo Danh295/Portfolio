@@ -2255,6 +2255,47 @@ await run("a popup locks the page and keeps Tab inside (1291×808)", DESKTOP, as
   check("closing it unlocks the page", unlocked && (await y()) > 100, { unlocked });
 });
 
+// A11Y-01: a project row's accessible name while its section types in. The frame blanks its
+// text to spaces when it starts, so a name taken from the text read as nothing (and a focused row
+// was blanked too). Rows carry a fixed aria-label, and focus starting the type-in leaves the
+// focused row's text alone. Read from Chrome's accessibility tree, not from the DOM.
+await run(
+  "project rows keep their name while the section types in (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#home");
+    const waiting = await tab.evaluate(`document.querySelector('[data-sec="1"]').dataset.fx`);
+    const nameOf = async (row) => {
+      const { result } = await tab.send("Runtime.evaluate", {
+        expression: `document.querySelector('[data-row="${row}"]')`,
+      });
+      const ax = await tab.send("Accessibility.getPartialAXTree", {
+        objectId: result.result.objectId,
+        fetchRelatives: false,
+      });
+      return ax.result.nodes.find((n) => !n.ignored)?.name?.value ?? null;
+    };
+    await tab.send("Accessibility.enable");
+    const last = await tab.evaluate(`document.querySelectorAll("[data-row]").length - 1`);
+    // Focus starts the section (its frame is still waiting), and the focused row is read at once.
+    await tab.evaluate(`document.querySelector('[data-row="${last}"]').focus()`);
+    const focused = await nameOf(last);
+    const text = await tab.evaluate(`document.querySelector('[data-row="${last}"]').textContent`);
+    const other = await nameOf(0);
+    const want = (n) =>
+      tab.evaluate(`(() => { const r = document.querySelector('[data-row="${n}"]');
+      return r.getAttribute("aria-label"); })()`);
+    check("the section was waiting before focus", waiting === "pending", { waiting });
+    check(
+      "the focused row's name is its fixed label, in full, at once",
+      focused === (await want(last)) && /project \d+ of \d+$/.test(focused ?? ""),
+      { focused },
+    );
+    check("and its text isn't blanked", text.trim().length > 10, { text });
+    check("another row has its name while the rows type in", other === (await want(0)), { other });
+  },
+);
+
 // Back/Forward still put the list back where it was, with focus on the row that was opened.
 await run(
   "Back and Forward restore the list position and the row (1291×808)",

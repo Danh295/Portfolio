@@ -48,11 +48,15 @@ export default function SectionFrame({
   const pending = titleFx === "active" && !titlePlayed;
 
   // The header started typing: in one go, blank the frame's text (same-width spaces),
-  // un-hide it and type it back in. Unmounting mid-way restores the text.
+  // un-hide it and type it back in. Unmounting mid-way restores the text. A control that
+  // has focus (focus moving in is what started this) keeps its text: it is shown at once,
+  // so a screen reader never meets it blanked.
   const onStart = useCallback(() => {
     const frame = frameRef.current;
     if (!frame || frame.dataset.fx !== "pending") return;
-    const entries = blankText(frame, labelRef.current);
+    const at = document.activeElement;
+    const focused = at !== frame && at !== labelRef.current && frame.contains(at) ? at : null;
+    const entries = blankText(frame, [labelRef.current, focused]);
     delete frame.dataset.fx;
     cancel.current = typeIn(entries, frame);
   }, []);

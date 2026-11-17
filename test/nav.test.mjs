@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { projectRowName } from "@/lib/format";
 import { parseHash, parsePath } from "@/lib/urls";
 import {
   stepSelection,
@@ -109,4 +110,12 @@ test("the hero's stops are read out by name; everything else reads nothing", () 
   assert.equal(at({ activeSec: 1, sel: 0, heroSel: "egg" }), "", "a row names itself");
   assert.equal(at({ mode: "term", heroSel: "egg" }), "", "terminal mode");
   assert.equal(at({ view: projects[0].slug, heroSel: "egg" }), "", "a project page");
+});
+
+// A11Y-01: a project row's name is fixed text, never read from the text the type-in blanks.
+test("projectRowName: title, category, org, year and the row's place", () => {
+  assert.equal(
+    projectRowName({ title: "recall", category: "web", org: "personal", year: 2026 }, 1, 10),
+    "recall, web, personal, 2026, project 2 of 10",
+  );
 });
