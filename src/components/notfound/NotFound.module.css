@@ -38,6 +38,23 @@
   color: var(--mid);
 }
 
+.keys {
+  display: block;
+  width: fit-content;
+  margin: 14px auto 0;
+  padding: 0;
+  min-height: 24px;
+  background: none;
+  border: 0;
+  color: var(--mid);
+  font: inherit;
+  cursor: pointer;
+}
+
+:global(html:not(.kbd)) .keys:hover {
+  color: var(--fg);
+}
+
 .egg {
   margin: 18px 0 8px;
 }

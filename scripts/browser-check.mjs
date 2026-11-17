@@ -2793,6 +2793,108 @@ await run("resume page draws the pdf (1291×808)", DESKTOP, async (tab) => {
   check("cd ~ leads home", home && home.includes("cd ~"), { home });
 });
 
+// RES-01: the PDF file is one click away whether or not it can be drawn, and a visitor with no
+// scripts is told what to do (the export is read straight from out/, no browser needed).
+await run("resume page links the file itself (1291×808)", DESKTOP, async (tab) => {
+  const src = readFileSync(join(OUT, "resume/index.html"), "utf8");
+  check(
+    "the export has the open-pdf link and a <noscript> pointing at the file",
+    /<a [^>]*href="[^"]*Danny_s_Resume\.pdf"[^>]*>open pdf/.test(src) &&
+      /<noscript>[^]*drawn with javascript[^]*Danny_s_Resume\.pdf/.test(src),
+  );
+  await tab.go("resume/", 4000);
+  const open = await tab.evaluate(`(() => { const a = [...document.querySelectorAll("header a")]
+    .find((a) => a.textContent.includes("open pdf"));
+    return a && { href: a.getAttribute("href"), target: a.target, rel: a.rel }; })()`);
+  check(
+    "open pdf is beside download, in a new tab, with no opener",
+    open &&
+      open.href.endsWith("/Danny_s_Resume.pdf") &&
+      open.target === "_blank" &&
+      open.rel.includes("noopener"),
+    open,
+  );
+});
+
+// RES-02: a text layer that fails must not leave the page blank: the drawn canvas still shows.
+// The next stream pdf.js makes (the zoom redraw's text content, the operator list being cached
+// from the first draw) is made to throw.
+await run(
+  "resume page shows the drawing when its text layer fails (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    const before = await tab.evaluate(RESUME.inks);
+    await tab.evaluate(`(() => {
+    const Real = window.ReadableStream;
+    window.ReadableStream = function (...args) {
+      if (window.__break) { window.__break = false; throw new Error("text layer broken on purpose"); }
+      return Reflect.construct(Real, args, new.target ?? Real);
+    };
+    window.ReadableStream.prototype = Real.prototype;
+    window.__canvas = document.querySelector("[data-page] canvas");
+    window.__break = true;
+  })()`);
+    await tab.key("+");
+    await sleep(1500);
+    const inks = await tab.evaluate(RESUME.inks);
+    const st =
+      await tab.evaluate(`({ swapped: document.querySelector("[data-page] canvas") !== window.__canvas,
+    broke: window.__break === false, note: !!document.querySelector("[data-page] p") })`);
+    check(
+      "the page is redrawn with ink though its text layer failed, and shows no failure note",
+      st.broke &&
+        st.swapped &&
+        inks.length === before.length &&
+        inks.every((n) => n > 5000) &&
+        !st.note,
+      { before, inks, st },
+    );
+  },
+);
+
+// RES-03: the resume and the 404 can switch the single-key shortcuts off (WCAG 2.1.4), the same
+// saved choice the app's keys popup makes.
+await run("resume page can turn the shortcuts off (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("resume/", 4000);
+  const keys = () =>
+    tab.evaluate(`({ attr: document.documentElement.dataset.keys,
+      saved: localStorage.getItem("danny-keys"),
+      label: document.querySelector('[data-action="keys"]')?.textContent.trim() })`);
+  const z0 = await tab.evaluate(RESUME.zoom);
+  await tab.click(`document.querySelector('[data-action="keys"]')`);
+  await sleep(300);
+  const off = await keys();
+  await tab.evaluate("document.activeElement.blur()");
+  await tab.key("+");
+  await sleep(500);
+  check(
+    "it turns them off: saved, mirrored, and + no longer zooms",
+    off.attr === "off" &&
+      off.saved === "off" &&
+      off.label === "shortcuts: off" &&
+      (await tab.evaluate(RESUME.zoom)) === z0,
+    { off, z0 },
+  );
+  await tab.click(`document.querySelector('[data-action="keys"]')`);
+  await sleep(300);
+  check("and back on", (await keys()).saved === "on");
+});
+
+await run("404 can turn the shortcuts off (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("nope/", 2500);
+  await tab.click(`document.querySelector('[data-action="keys"]')`);
+  await sleep(300);
+  const st = await tab.evaluate(
+    `({ attr: document.documentElement.dataset.keys, saved: localStorage.getItem("danny-keys") })`,
+  );
+  check(
+    "the choice is saved and applied (the egg's r goes quiet)",
+    st.attr === "off" && st.saved === "off",
+    st,
+  );
+});
+
 await run("resume page zooms in steps (1291×808)", DESKTOP, async (tab) => {
   await tab.go("resume/", 4000);
   const w0 = await tab.evaluate(RESUME.pageW);

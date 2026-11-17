@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { site } from "@/config/site";
 import RollingEgg from "./RollingEgg";
 import { KeyLabel } from "@/components/Hint";
+import KeysToggle from "@/components/KeysToggle";
 import styles from "./NotFound.module.css";
 
 const noopSubscribe = () => () => {};
@@ -57,6 +58,8 @@ export default function NotFound() {
         <Link href="/" className={styles.home}>
           <KeyLabel className={styles.dim}>[↲]</KeyLabel> cd ~
         </Link>
+        {/* The egg's `r` is a one-character shortcut: it can be turned off here too. */}
+        <KeysToggle className={styles.keys} />
       </div>
     </main>
   );

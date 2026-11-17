@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { site } from "@/config/site";
 import { CSS_PX_PER_PT } from "@/lib/resumeView";
 import { linkBoxes } from "@/lib/resumeLinks";
 import styles from "./ResumeViewer.module.css";
@@ -23,6 +24,8 @@ export const PAGE_BORDER = 1;
  */
 export default function PdfPage({ index, pageInfo, zoom }) {
   const boxRef = useRef(null);
+  // The drawing failed (the canvas could not be rendered): say so on the page and offer the file.
+  const [failed, setFailed] = useState(false);
   const scale = zoom * CSS_PX_PER_PT;
 
   // Until the redraw lands, the old text layer is re-scaled with the page, so selecting and
@@ -53,18 +56,28 @@ export default function PdfPage({ index, pageInfo, zoom }) {
       task = page.render({ canvas, viewport });
       await task.promise;
       if (cancelled) return;
+      // The text layer (selecting, finding) is best effort: a drawn page is shown even when it
+      // fails, with an empty layer left in its place (the scale effect above expects one).
       const layer = document.createElement("div");
       layer.className = styles.text;
       layer.style.setProperty("--total-scale-factor", String(scale));
-      const { TextLayer } = await import("pdfjs-dist");
-      text = new TextLayer({
-        textContentSource: page.streamTextContent(),
-        container: layer,
-        viewport: page.getViewport({ scale }),
-      });
-      await text.render();
+      try {
+        const { TextLayer } = await import("pdfjs-dist");
+        text = new TextLayer({
+          textContentSource: page.streamTextContent(),
+          container: layer,
+          viewport: page.getViewport({ scale }),
+        });
+        await text.render();
+      } catch (e) {
+        if (cancelled || e?.name === "AbortException" || e?.name === "RenderingCancelledException")
+          return;
+        console.warn("the resume's text layer failed; the page is drawn without it", e);
+        layer.replaceChildren();
+      }
       if (cancelled) return;
       boxRef.current?.replaceChildren(canvas, layer);
+      setFailed(false);
     };
     // The first drawing starts at once; a later one waits out a burst of zoom steps.
     const timer = setTimeout(
@@ -72,7 +85,9 @@ export default function PdfPage({ index, pageInfo, zoom }) {
         draw().catch((e) => {
           // A superseded render rejects with a "cancelled" exception, and so does one the
           // page was left in the middle of: both are expected.
-          if (!cancelled && e?.name !== "RenderingCancelledException") console.error(e);
+          if (cancelled || e?.name === "RenderingCancelledException") return;
+          console.error(e);
+          setFailed(true);
         }),
       boxRef.current?.firstChild ? REDRAW_DELAY_MS : 0,
     );
@@ -96,6 +111,14 @@ export default function PdfPage({ index, pageInfo, zoom }) {
       }}
     >
       <div ref={boxRef} className={styles.layers} />
+      {failed && (
+        <p className={styles.pageNote}>
+          couldn&apos;t draw this page.{" "}
+          <a href={site.resumePdf} target="_blank" rel="noopener">
+            open the pdf
+          </a>
+        </p>
+      )}
       {(pageInfo.rotated ? [] : linkBoxes(pageInfo.annotations, pageInfo.view, scale)).map((b) => (
         <a
           key={b.href + b.left + b.top}

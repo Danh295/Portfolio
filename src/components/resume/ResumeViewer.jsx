@@ -12,6 +12,7 @@ import { FOLLOW, fitZoom, stepZoom, zoomFor, zoomLabel } from "@/lib/resumeView"
 import { ACTION, resumeKey } from "@/lib/resumeKeys";
 import { anchorDelta } from "@/lib/resumePinch";
 import { printMode } from "@/lib/resumePrint";
+import KeysToggle from "@/components/KeysToggle";
 import PdfPage, { PAGE_BORDER } from "./PdfPage";
 import { useZoomGestures } from "./useZoomGestures";
 import styles from "./ResumeViewer.module.css";
@@ -65,6 +66,15 @@ function printPdf() {
 function DownloadLink({ children, ...rest }) {
   return (
     <a href={site.resumePdf} download={DOWNLOAD_NAME} {...rest}>
+      {children}
+    </a>
+  );
+}
+
+/** A link to the PDF file itself, in a new tab (the browser's own viewer). */
+function PdfLink({ children }) {
+  return (
+    <a href={site.resumePdf} target="_blank" rel="noopener">
       {children}
     </a>
   );
@@ -328,6 +338,10 @@ export default function ResumeViewer() {
             <DownloadLink ref={downloadRef} className={styles.btn} data-action={ACTION.DOWNLOAD}>
               <Hint className={styles.hint}>[d] </Hint>download
             </DownloadLink>
+            {/* The file itself, in the browser's own viewer: always there, drawn or not. */}
+            <a href={site.resumePdf} target="_blank" rel="noopener" className={styles.btn}>
+              open pdf ↗
+            </a>
             <button
               type="button"
               className={styles.btn}
@@ -336,6 +350,7 @@ export default function ResumeViewer() {
             >
               <Hint className={styles.hint}>[p] </Hint>print
             </button>
+            <KeysToggle className={styles.btn} />
           </span>
         </div>
       </header>
@@ -346,11 +361,23 @@ export default function ResumeViewer() {
           ))
         ) : failed ? (
           <p className={styles.note}>
-            couldn&apos;t draw the resume here. <DownloadLink>download the pdf</DownloadLink>{" "}
-            instead.
+            couldn&apos;t draw the resume here. <PdfLink>open the pdf</PdfLink> or{" "}
+            <DownloadLink>download it</DownloadLink> instead.
           </p>
         ) : (
-          <p className={styles.note}>loading resume.pdf…</p>
+          <>
+            <p className={styles.note} data-loading-note="">
+              loading resume.pdf…
+            </p>
+            {/* Without scripts nothing is drawn: say so and point at the file. */}
+            <noscript>
+              <style>{"[data-loading-note]{display:none}"}</style>
+              <p className={styles.note}>
+                the resume is drawn with javascript. <PdfLink>open the pdf</PdfLink> or{" "}
+                <DownloadLink>download it</DownloadLink>.
+              </p>
+            </noscript>
+          </>
         )}
       </main>
     </div>
