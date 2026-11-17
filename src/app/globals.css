@@ -240,9 +240,8 @@ html.boot-term [data-mode="gui"] {
 /* Keyboard mode (html.kbd, components/overlay/Cursor.jsx): hover effects are paused
    by gating every :hover rule on html:not(.kbd), and tooltips hide, until the mouse
    moves again. Clicks still land normally (no pointer-events trick, which swallowed a
-   click made without moving the pointer first). A tooltip shown for keyboard focus
-   (data-focus, Tooltip.jsx) stays. */
-html.kbd [role="tooltip"]:not([data-focus]) {
+   click made without moving the pointer first). */
+html.kbd [role="tooltip"] {
   opacity: 0 !important;
 }
 
