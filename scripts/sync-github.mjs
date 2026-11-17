@@ -18,7 +18,7 @@
 // Usage: node scripts/sync-github.mjs [--if-stale]   (--if-stale: skip if < 6h old)
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { buckets, mergeRepos, reposIn } from "./github-snapshot.mjs";
+import { buckets, dayItems, mergeRepos, reposIn } from "./github-snapshot.mjs";
 
 const USER = "Danh295";
 const OUT = new URL("../src/data/github.generated.json", import.meta.url);
@@ -81,11 +81,9 @@ async function contributions() {
   const days = r.data.user.contributionsCollection.contributionCalendar.weeks.flatMap(
     (w) => w.contributionDays,
   );
-  // A day counts from its end, so today's contributions land in the newest window.
-  return buckets(
-    days.map((d) => [Date.parse(d.date) + 864e5 - 1, d.contributionCount]),
-    now,
-  );
+  // A day counts from its end, capped at now, so today's contributions land in the newest
+  // window (today's end is still in the future, which buckets() would drop).
+  return buckets(dayItems(days, now), now);
 }
 
 // Public push events (no token): up to 3 pages of 100, the API's limit.

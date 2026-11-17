@@ -22,6 +22,16 @@ export function buckets(items, now = Date.now()) {
 }
 
 /**
+ * The [time, count] items for `buckets` from a contribution calendar's days (`date` is a
+ * UTC day, "2026-11-17"). A day counts from its end, but never later than `now`: today's
+ * end is still ahead, and an item in the future falls out of every window, which dropped
+ * today's contributions from the newest one.
+ */
+export function dayItems(days, now = Date.now()) {
+  return days.map((d) => [Math.min(Date.parse(d.date) + 864e5 - 1, now), d.contributionCount]);
+}
+
+/**
  * The new `repos` map from one fetch per repo in `list` (Promise.allSettled results, in
  * order). A repo GitHub answers 404 for (deleted, renamed away, private) drops out; any
  * other failure (rate limit, network) keeps its entry from the previous snapshot.

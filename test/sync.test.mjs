@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   buckets,
+  dayItems,
   driftReport,
   mergeRepos,
   repoDrift,
@@ -23,6 +24,23 @@ test("buckets: 12 rolling weeks ending now, oldest first", () => {
     NOW,
   );
   assert.deepEqual(w, [5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2]);
+});
+
+// DATA-01: today's day ends after `now`, so counting a day from its end put it in the future
+// and buckets() dropped it. It counts at `now` instead, in the newest window.
+test("dayItems: today's contributions land in the newest window", () => {
+  const now = Date.UTC(2026, 10, 17, 15);
+  const days = [
+    { date: "2026-11-17", contributionCount: 4 }, // today, still going
+    { date: "2026-11-16", contributionCount: 2 },
+    { date: "2026-08-30", contributionCount: 7 }, // the oldest window
+  ];
+  const w = buckets(dayItems(days, now), now);
+  assert.equal(w[11], 6, "today and yesterday");
+  assert.equal(w[0], 7);
+  // the old way: today's end is in the future and drops out
+  const old = days.map((d) => [Date.parse(d.date) + 864e5 - 1, d.contributionCount]);
+  assert.equal(buckets(old, now)[11], 2);
 });
 
 test("reposIn finds every linked GitHub repo once", () => {
