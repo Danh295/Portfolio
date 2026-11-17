@@ -11,15 +11,24 @@ export function clockConfig(mode = "seconds") {
   return { m: false, T: 6.5, hide: 3, ice: 2, max: 15, fmt: (x) => x.toFixed(2) + "s" };
 }
 
-// The hero egg's paint rate, as every Nth animation frame (of 60/s: 30 and 15 paints a
-// second). The physics runs every frame either way; only the drawing thins out. At rest the
-// pot only boils and flickers, and the audit measured its paint at ~half the main thread
-// at 4x CPU, so it paints less often until something happens (docs/research/audit-2026-10.md).
-const PAINT_EVERY = 2,
-  PAINT_EVERY_AT_REST = 4;
+// The hero egg's paint rate, by time (30 and 15 paints a second), not by frame count: a 120Hz
+// display runs twice the frames, which doubled a count-based rate. The physics runs every
+// frame either way; only the drawing thins out. At rest the pot only boils and flickers, and
+// the audit measured its paint at ~half the main thread at 4x CPU, so it paints less often
+// until something happens (docs/research/audit-2026-10.md).
+const PAINT_MS = 1000 / 30,
+  PAINT_MS_AT_REST = 1000 / 15;
+// A frame lands up to about a frame early or late of its slot (a 60Hz frame is 16.7ms), so
+// a paint is due a little before its full interval: at 60Hz every 2nd (4th) frame still
+// paints, instead of waiting for the one after.
+const PAINT_SLACK_MS = 4;
 
-/** Whether animation frame number `n` repaints the egg (`atRest`: nothing is going on). */
-export const paintThisFrame = (n, atRest) => n % (atRest ? PAINT_EVERY_AT_REST : PAINT_EVERY) === 0;
+/**
+ * Whether the frame at time `now` (ms) repaints the egg, given when it last painted
+ * (`atRest`: nothing is going on).
+ */
+export const paintDue = (now, lastPaint, atRest) =>
+  now - lastPaint >= (atRest ? PAINT_MS_AT_REST : PAINT_MS) - PAINT_SLACK_MS;
 
 export const fillTimes = (s, C) => s.replace(/\{T\}/g, C.fmt(C.T)).replace(/\{H\}/g, C.fmt(C.hide));
 

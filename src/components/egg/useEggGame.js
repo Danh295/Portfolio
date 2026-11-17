@@ -9,7 +9,7 @@ import {
   gradeEgg,
   isNewBest,
   statsView,
-  paintThisFrame,
+  paintDue,
 } from "@/lib/egg/game";
 import { countEgg, readBest, writeBest } from "@/lib/egg/counter";
 import { eggStages, eggTypes, eggRules } from "@/data/egg";
@@ -254,16 +254,16 @@ export function useEggGame({ clockMode, mode }) {
     setStats(countEgg(g.type, eggTypes));
   }, [setStage, setResult, setStats, setTimer]);
 
-  // The frame loop. Physics every frame, paint every other frame (every fourth once it
-  // is idle: see `paintThisFrame`). At rest (stage 0 or 5) it idles while there's nothing
-  // to show: the pot is off screen or the tab hidden. Any scroll, resize, key, pointer
-  // (over the pot), stage or mode change wakes it. The egg plays under reduced
-  // motion too: it's contained in its own box, and a frozen egg read as a stuck page.
+  // The frame loop. Physics every frame, paint at 30/s (15/s once it is idle: see
+  // `paintDue`, by time, so a 120Hz display doesn't double it). At rest (stage 0 or 5) it
+  // idles while there's nothing to show: the pot is off screen or the tab hidden. Any scroll,
+  // resize, key, pointer (over the pot), stage or mode change wakes it. The egg plays under
+  // reduced motion too: it's contained in its own box, and a frozen egg read as a stuck page.
   useEffect(() => {
     live.current.touch = isTouch();
     let raf = 0,
       last = 0,
-      n = 0,
+      painted = 0, // when the pot last painted
       awake = 0;
     const run = () => {
       // Stay up briefly after any wake, so a layout React commits a moment later (e.g.
@@ -275,7 +275,6 @@ export function useEggGame({ clockMode, mode }) {
     };
     wake.current = run;
     const frame = () => {
-      n++;
       const t = getScene(),
         L = live.current;
       const inTerm = L.mode === "term" && termPre.current && termPre.current.isConnected;
@@ -386,8 +385,9 @@ export function useEggGame({ clockMode, mode }) {
       // Quiet means the pot is idle (stage 0 or 5, not held) and no input has woken it for
       // 300ms, so a hover, key or drag gets the full rate at once.
       const quiet = (st === 0 || st === 5) && !t.drag && now > awake;
-      const painting = el && box && onScreen && paintThisFrame(n, quiet);
+      const painting = el && box && onScreen && paintDue(now, painted, quiet);
       if (painting) {
+        painted = now;
         const W = colsFor(box.clientWidth - (inTerm ? 64 : 48), inTerm ? 540 : 600);
         t.W = W;
         t.H = H;

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { clockConfig, gradeEgg, statsView, paintThisFrame } from "@/lib/egg/game";
+import { clockConfig, gradeEgg, statsView, paintDue } from "@/lib/egg/game";
 import { rollPeriod, rollPose, restTime, nextStop, dwell } from "@/lib/egg/roll";
 
 test("gradeEgg boundaries (seconds)", () => {
@@ -76,10 +76,23 @@ test("nextStop: the 404 egg comes to rest on its side within the limit, from any
   }
 });
 
-test("paintThisFrame: half the frames normally, a quarter at rest", () => {
-  const frames = Array.from({ length: 12 }, (_, n) => n);
-  const live = frames.filter((n) => paintThisFrame(n, false)),
-    rest = frames.filter((n) => paintThisFrame(n, true));
-  assert.deepEqual(live, [0, 2, 4, 6, 8, 10], "30 paints a second on a 60Hz display");
-  assert.deepEqual(rest, [0, 4, 8], "15 paints a second");
+// Paints are timed, not counted: the same 30 and 15 a second on a 60, 120 or 144Hz display.
+test("paintDue: 30 paints a second live and 15 at rest, whatever the display's rate", () => {
+  for (const hz of [60, 120, 144, 240]) {
+    const count = (atRest) => {
+      let last = 0,
+        paints = 0;
+      for (let f = 1; f <= hz * 4; f++) {
+        const now = (f * 1000) / hz;
+        if (paintDue(now, last, atRest)) {
+          paints++;
+          last = now;
+        }
+      }
+      return paints / 4;
+    };
+    assert.ok(Math.abs(count(false) - 30) <= 3, hz + "Hz live: " + count(false));
+    assert.ok(Math.abs(count(true) - 15) <= 2, hz + "Hz at rest: " + count(true));
+  }
+  assert.equal(paintDue(100, 0, true), true, "the first frame paints");
 });
