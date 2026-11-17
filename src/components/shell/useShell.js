@@ -195,7 +195,8 @@ export function useShell({ keysOn, resetEgg, crackEgg, vimOpen, termInputRef, on
       e.preventDefault();
       const step = histStep(T.hist, T.hi, e.key === "ArrowUp" ? 1 : -1);
       if (step) patchSession(k, step);
-    } else if (e.key === "Tab") {
+    } else if (e.key === "Tab" && !e.shiftKey) {
+      // Shift+Tab stays the browser's: it is how a keyboard user leaves the prompt backwards.
       e.preventDefault();
       complete(k);
     } else if (e.ctrlKey && e.key === "l") {

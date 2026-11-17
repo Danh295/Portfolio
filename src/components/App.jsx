@@ -764,9 +764,11 @@ export default function App({ initialView = null }) {
       } catch {
         // storage blocked
       }
-      if (savedMode === "term") setMode("term");
-      else document.documentElement.classList.remove("boot-term"); // never leave it hidden
       const r = parseLocation();
+      // An address that names a project (a /projects/<slug>/ page or an old #projects/<slug>
+      // link) opens that project in the gui, whatever mode the session last left off in.
+      if (savedMode === "term" && !r.slug) setMode("term");
+      else document.documentElement.classList.remove("boot-term"); // never leave it hidden
       if (r.slug) {
         setView(r.slug);
         // An old-style link (/#projects/<slug>): show the project's real URL instead.

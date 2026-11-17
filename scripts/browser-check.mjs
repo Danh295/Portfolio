@@ -223,7 +223,8 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
       throw new Error("page script failed: " + expression.slice(0, 60));
     return r.result?.result?.value;
   };
-  const sendKey = (type, key) => {
+  // `modifiers`: the CDP bit mask (1 alt, 2 ctrl, 4 meta, 8 shift).
+  const sendKey = (type, key, modifiers = 0) => {
     if (!KEY[key]) throw new Error("no KEY entry for " + JSON.stringify(key));
     const [code, keyCode] = KEY[key];
     return send("Input.dispatchKeyEvent", {
@@ -231,6 +232,7 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
       key,
       code,
       windowsVirtualKeyCode: keyCode,
+      modifiers,
       // Enter carries "\r": without it Chrome doesn't turn the press into a click on a button.
       text:
         type === "keyDown"
@@ -267,11 +269,11 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
       await sleep(wait);
     },
     // Presses `key` (a KEY entry): down, then up. keyDown/keyUp send one half.
-    keyDown: (key) => sendKey("keyDown", key),
-    keyUp: (key) => sendKey("keyUp", key),
-    key: async (key) => {
-      await sendKey("keyDown", key);
-      await sendKey("keyUp", key);
+    keyDown: (key, modifiers) => sendKey("keyDown", key, modifiers),
+    keyUp: (key, modifiers) => sendKey("keyUp", key, modifiers),
+    key: async (key, modifiers) => {
+      await sendKey("keyDown", key, modifiers);
+      await sendKey("keyUp", key, modifiers);
       await sleep(150);
     },
     // A trackpad-like scroll (touch gestures under ~30px get eaten by touch slop).
@@ -2137,6 +2139,67 @@ for (const [label, path, fromList] of [
     );
 }
 
+// A key the page declines is the browser's, and must not drop focus: ↑ on a project page has
+// no job, so a focused [esc] button keeps its focus (it used to be blurred to <body>).
+await run("a declined key keeps focus on a project page (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("projects/crapos/");
+  await tab.evaluate(`document.querySelector('[data-key="Escape"]').focus()`);
+  const at = () =>
+    tab.evaluate(`document.activeElement.dataset.key ?? document.activeElement.tagName`);
+  const before = await at();
+  await tab.key("ArrowUp");
+  await tab.key("ArrowDown");
+  const after = await at();
+  check("focus stays on the back button after ↑ and ↓", before === "Escape" && after === "Escape", {
+    before,
+    after,
+  });
+});
+
+// Shift+Tab is the browser's inside the embedded shell (Tab completes): it leaves the prompt
+// backwards instead of being swallowed.
+await run("Shift+Tab leaves the embedded shell's prompt (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  await tab.key("`");
+  await sleep(500);
+  const inPrompt = () =>
+    tab.evaluate(
+      `document.activeElement === document.querySelector('[aria-label="embedded shell"] input')`,
+    );
+  const before = await inPrompt();
+  await tab.key("Tab");
+  const afterTab = await inPrompt();
+  await tab.key("Tab", 8);
+  const afterShift = await inPrompt();
+  check("Tab keeps the prompt, Shift+Tab leaves it", before && afterTab && !afterShift, {
+    before,
+    afterTab,
+    afterShift,
+  });
+});
+
+// An address that names a project beats the terminal mode the session last used (the boot
+// script and hydration both), for the real path and for the old #projects/<slug> link.
+for (const path of ["projects/crapos/", "#projects/crapos"])
+  await run(
+    `${path} opens in the gui though the session is in terminal mode (1291×808)`,
+    DESKTOP,
+    async (tab) => {
+      await tab.go("projects/recall/");
+      await tab.evaluate(`sessionStorage.setItem("danny-mode", "term")`);
+      await tab.go(path);
+      const st = await tab.evaluate(`({ mode: document.querySelector("[data-mode]")?.dataset.mode,
+      title: document.querySelector("[data-detail-title]")?.textContent.trim() ?? null,
+      hidden: document.documentElement.classList.contains("boot-term"),
+      path: location.pathname })`);
+      check(
+        "the project shows in the gui",
+        st.mode === "gui" && !!st.title && !st.hidden && st.path.endsWith("/projects/crapos/"),
+        st,
+      );
+    },
+  );
+
 // Back/Forward still put the list back where it was, with focus on the row that was opened.
 await run(
   "Back and Forward restore the list position and the row (1291×808)",
@@ -3167,6 +3230,22 @@ await run("intro (1291×808)", DESKTOP, async (tab) => {
     "the heading types in after it",
     (await tab.evaluate(H1_TEXT)) === (await tab.evaluate(H1_FULL)),
   );
+});
+
+// Tab belongs to the intro too: it must not move focus to the page underneath, where it
+// would sit unseen behind the cover.
+await run("Tab during the intro focuses nothing underneath (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("", 700);
+  const playing = await tab.evaluate("!!document.documentElement.dataset.loading");
+  await tab.key("Tab");
+  await tab.key("Tab", 8);
+  const at = await tab.evaluate(
+    `document.activeElement === document.body ? "body" : document.activeElement.tagName`,
+  );
+  check("the intro is playing and focus is still on the body", playing && at === "body", {
+    playing,
+    at,
+  });
 });
 
 await run("intro skipped with Enter (1291×808)", DESKTOP, async (tab) => {

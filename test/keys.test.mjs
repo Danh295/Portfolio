@@ -164,10 +164,11 @@ test("j/k and arrows drop focus a click left on a button, then act", () => {
   assert.equal(route({ key: "t", onButton: true }).blur, undefined);
   assert.equal(route({ key: "j", onButton: true, keysOn: false }), null, "keys off: j is inert");
   assert.equal(route({ key: "ArrowDown", onButton: true, keysOn: false }).blur, true);
-  // on a deep-linked page with no project index, ←/→ still drop the stale focus
-  assert.deepEqual(route({ key: "ArrowLeft", view: "x", viewIdx: -1, onButton: true }), {
-    blur: true,
-  });
+  // A key the router declines keeps focus: ↑/↓ on a project page and ←/→ on a deep-linked one
+  // with no project index (the browser keeps them), so they must not drop a focused button.
+  assert.equal(route({ key: "ArrowUp", view: "x", viewIdx: 2, onButton: true }), null);
+  assert.equal(route({ key: "ArrowDown", view: "x", viewIdx: 2, onButton: true }), null);
+  assert.equal(route({ key: "ArrowLeft", view: "x", viewIdx: -1, onButton: true }), null);
 });
 
 test("egg selected: Enter/Space play it (once), unless a link or button was reached with Tab", () => {

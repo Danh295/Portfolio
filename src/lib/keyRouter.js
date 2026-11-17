@@ -136,8 +136,10 @@ function gui(f) {
   }
   // Moving the selection drops focus a click left on a button, so Enter/Space then act on
   // the selection rather than that button.
-  const blur = !!KEYS[key]?.nav && (f.keysOn || key.length > 1) && f.onButton;
+  // A key the table declines (null: the browser keeps it, e.g. ↑ on a project page) leaves
+  // focus where it is.
   const d = table(f, tabbed);
+  const blur = !!d && !!KEYS[key]?.nav && (f.keysOn || key.length > 1) && f.onButton;
   return blur ? { ...d, blur: true } : d;
 }
 

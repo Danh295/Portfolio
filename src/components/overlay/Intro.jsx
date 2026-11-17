@@ -135,6 +135,7 @@ export default function Intro({ rootRef }) {
     const onKey = (e) => {
       if (done || e.metaKey || e.ctrlKey) return;
       e.stopImmediatePropagation();
+      if (e.key === "Tab") e.preventDefault(); // focus would land on the page under the cover
       if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         skip();
