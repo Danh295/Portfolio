@@ -121,8 +121,13 @@ html.locked body {
 html.locked {
   touch-action: pinch-zoom;
 }
-html.locked [data-mode="gui"] nav,
-html.locked [data-mode="gui"] footer {
+/* An open popup (components/overlay/Popup.jsx) locks the page too, so the wheel and touch
+   can't scroll it behind the scrim; the scrollbar's width stays reserved so nothing shifts. */
+html.popup-lock {
+  scrollbar-gutter: stable;
+}
+html.locked:not(.popup-lock) [data-mode="gui"] nav,
+html.locked:not(.popup-lock) [data-mode="gui"] footer {
   visibility: hidden;
 }
 

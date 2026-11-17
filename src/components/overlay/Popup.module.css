@@ -7,6 +7,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
+  overscroll-behavior: contain;
 }
 
 /* Width comes from each popup (className), its height cap from --popup-max-h. The body
@@ -58,6 +59,7 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .foot {

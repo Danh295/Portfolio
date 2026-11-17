@@ -7,6 +7,11 @@
 // `scrollPageTo` are `scrollY`, the document's furthest scroll and `scrollTo` for a page that is
 // either scrolled or locked. DOM-touching, so not with the pure libs.
 
+// Who holds the lock: the shells (keyboard up, terminal mode) and an open popup. The page stays
+// locked while any holds it; `html.popup-lock` is set while a popup does, so the gui's bars
+// stay visible behind the scrim (the shells' lock hides them, globals.css).
+const holders = new Set();
+
 let lockedY = null; // the scroll position the locked page is shifted to; null while unlocked
 let lockedInner = 0; // the layout viewport's height when the lock began, before a keyboard shrank it
 
@@ -18,9 +23,13 @@ function shiftTo(y) {
 
 const locked = () => lockedY !== null && document.documentElement.classList.contains("locked");
 
-/** Lock or unlock the page. Idempotent. */
-export function setPageLocked(on) {
+/** Lock or unlock the page for `holder` ("shell" or "popup"). Idempotent. */
+export function setPageLocked(on, holder = "shell") {
   const root = document.documentElement;
+  if (on) holders.add(holder);
+  else holders.delete(holder);
+  root.classList.toggle("popup-lock", holders.has("popup"));
+  on = holders.size > 0;
   if (on === root.classList.contains("locked")) return;
   if (on) {
     // Read both before the class goes on: a fixed body makes `scrollY` read 0.

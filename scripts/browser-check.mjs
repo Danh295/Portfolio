@@ -2200,6 +2200,61 @@ for (const path of ["projects/crapos/", "#projects/crapos"])
     },
   );
 
+// A popup holds the page still: a wheel over its scrim moved the page behind it (it only looked
+// inert), and Tab left the dialog for the browser's own chrome and came back in.
+await run("a popup locks the page and keeps Tab inside (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  const wheel = async () => {
+    await tab.send("Input.dispatchMouseEvent", {
+      type: "mouseWheel",
+      x: 40,
+      y: 400,
+      deltaX: 0,
+      deltaY: 500,
+    });
+    await sleep(500);
+  };
+  const y = () => tab.evaluate("Math.round(scrollY)");
+  await wheel();
+  const free = await y();
+  check("the page scrolls by wheel with no popup open", free > 100, { free });
+  await tab.evaluate("scrollTo(0, 0)");
+  await sleep(300);
+  await tab.key("?");
+  await sleep(400);
+  const locked = await tab.evaluate(`document.documentElement.classList.contains("locked")`);
+  const barsShown = await tab.evaluate(
+    `getComputedStyle(document.querySelector("nav")).visibility === "visible"`,
+  );
+  const before = await y();
+  await wheel();
+  const after = await y();
+  check("the page is locked under the popup, and its bars stay visible", locked && barsShown, {
+    locked,
+    barsShown,
+  });
+  check("a wheel over the scrim doesn't scroll the page", after === before, { before, after });
+  // Tab and Shift+Tab (8 = shift) wrap inside the dialog, however many times.
+  const inside = () => tab.evaluate(`!!document.activeElement.closest('[role="dialog"]')`);
+  let stayed = true;
+  for (let i = 0; i < 6; i++) {
+    await tab.key("Tab");
+    stayed = stayed && (await inside());
+  }
+  const forward = stayed;
+  await tab.evaluate(`document.querySelector('[role="dialog"]').focus()`);
+  for (let i = 0; i < 3; i++) {
+    await tab.key("Tab", 8);
+    stayed = stayed && (await inside());
+  }
+  check("Tab and Shift+Tab stay in the dialog", forward && stayed, { forward, stayed });
+  await tab.key("Escape");
+  await sleep(400);
+  const unlocked = await tab.evaluate(`!document.documentElement.classList.contains("locked")`);
+  await wheel();
+  check("closing it unlocks the page", unlocked && (await y()) > 100, { unlocked });
+});
+
 // Back/Forward still put the list back where it was, with focus on the row that was opened.
 await run(
   "Back and Forward restore the list position and the row (1291×808)",
