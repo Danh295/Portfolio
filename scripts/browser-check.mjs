@@ -2200,6 +2200,44 @@ for (const path of ["projects/crapos/", "#projects/crapos"])
     },
   );
 
+// The boot script's "is this a project?" uses the real slugs, as the app does: a mistyped or
+// removed one with the terminal saved hides the gui (boot-term) until the terminal mounts, instead
+// of flashing the gui first. The boot script is read from the page and run with a fake address.
+await run(
+  "the boot script treats only real project slugs as projects (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#home");
+    await tab.evaluate(`sessionStorage.setItem("danny-mode", "term")`);
+    const boot = (hash, path = "/Portfolio/") =>
+      tab.evaluate(`(() => {
+      const src = [...document.scripts].map((s) => s.textContent).find((t) => t.includes("IS_PROJECT"));
+      const h = document.documentElement;
+      h.classList.remove("boot-term");
+      new Function("location", src)({ pathname: ${JSON.stringify(path)}, hash: ${JSON.stringify(hash)}, search: "" });
+      const on = h.classList.contains("boot-term");
+      h.classList.remove("boot-term");
+      return on;
+    })()`);
+    const slug = await tab.evaluate(
+      `document.querySelector("[data-row]").getAttribute("href").split("/").filter(Boolean).pop()`,
+    );
+    check(
+      "a mistyped #projects/<slug> hides the gui for the terminal",
+      (await boot("#projects/nope")) === true,
+    );
+    check(
+      "a mistyped project path does too",
+      (await boot("", "/Portfolio/projects/nope/")) === true,
+    );
+    check("a real slug does not", (await boot(`#projects/${slug}`)) === false, { slug });
+    check(
+      "a real project path does not",
+      (await boot("", `/Portfolio/projects/${slug}/`)) === false,
+    );
+  },
+);
+
 // A popup holds the page still: a wheel over its scrim moved the page behind it (it only looked
 // inert), and Tab left the dialog for the browser's own chrome and came back in.
 await run("a popup holds the page still and keeps Tab inside (1291×808)", DESKTOP, async (tab) => {

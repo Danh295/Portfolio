@@ -2,6 +2,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { site } from "@/config/site";
 import { ui } from "@/config/ui";
+import { isProjectAddress } from "@/lib/bootProject";
+import { projects } from "@/data/projects";
 
 // Mirrors introPlan() in src/lib/intro.js: boot intro, not yet seen this session, and not a
 // deep link (a #hash goes straight to its section).
@@ -116,15 +118,15 @@ const FX =
 // - Theme: the visitor's saved choice, else their OS setting (useTheme keeps it in sync).
 // - Mode: a reload returns to terminal mode if that's where the visitor was this session
 //   (App reads sessionStorage too); html.boot-term hides the gui until the terminal mounts.
-//   An address naming a project (/projects/<slug>/, an old #projects/<slug>) opens that
-//   project in the gui instead (App does the same).
+//   An address naming a real project (/projects/<slug>/, an old #projects/<slug>; an unknown
+//   slug doesn't count, as in parsePath) opens that project in the gui instead (App does the same).
 // - Type-in: html.fx (see FX above).
 // - Intro: on a visit where the boot intro will play, cover the page (html.boot-intro)
 //   from the very first frame, so the homepage doesn't flash before the intro mounts.
 // - A reload starts on the hero: drop the #section / #projects/<slug> hash pushed while
 //   browsing, and turn off browser scroll restoration (the app drives scrolling). Fresh
 //   visits keep their hash, so /#projects links and the redirect stubs still work.
-const BOOT = `try{if(localStorage.getItem("danny-keys")==="off")document.documentElement.dataset.keys="off"}catch(e){}try{var d=document.documentElement,t=localStorage.getItem("danny-theme");if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";d.dataset.theme=t;document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.content=t==="dark"?"#121211":"#F3F2EE"})}catch(e){}try{if(sessionStorage.getItem("danny-mode")==="term"&&!/\\/projects\\/[^/]+\\/?$/.test(location.pathname)&&!/^#\\/?projects\\/./.test(location.hash))document.documentElement.classList.add("boot-term")}catch(e){}try{history.scrollRestoration="manual";var n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="reload"&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}${FX}${INTRO_COVER}`;
+const BOOT = `var IS_PROJECT=${String(isProjectAddress)};try{if(localStorage.getItem("danny-keys")==="off")document.documentElement.dataset.keys="off"}catch(e){}try{var d=document.documentElement,t=localStorage.getItem("danny-theme");if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";d.dataset.theme=t;document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.content=t==="dark"?"#121211":"#F3F2EE"})}catch(e){}try{if(sessionStorage.getItem("danny-mode")==="term"&&!IS_PROJECT(${JSON.stringify(projects.map((p) => p.slug))},location.pathname,location.hash))document.documentElement.classList.add("boot-term")}catch(e){}try{history.scrollRestoration="manual";var n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="reload"&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}${FX}${INTRO_COVER}`;
 
 // Who the site is about, for search engines (schema.org Person).
 const PERSON = {
