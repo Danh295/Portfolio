@@ -158,3 +158,19 @@
     inset: -10px 0;
   }
 }
+
+/* The smallest phones (320px): the nav wraps to rows 6px apart, and each control's 14px reach
+   is covered by its neighbour row's, which left ~/danny (top row) 18px to tap. Rows 8px apart
+   with a 4px reach each give every control its row pitch (25px), over WCAG 2.5.8's 24px; the
+   browser check's `~/danny reaches 24px+` case measures it. */
+@media (max-width: 340px) {
+  .inner {
+    row-gap: 8px;
+  }
+
+  .home::before,
+  .link::before,
+  .menu::before {
+    inset: -4px 0;
+  }
+}

@@ -4271,6 +4271,31 @@ for (const [label, view] of [
   });
 }
 
+// WCAG 2.5.8 (24px): the phone nav's ~/danny, which has the least reach, is hit over a 24px+
+// column at its centre (counted by elementFromPoint down the column, so a neighbour's tap area
+// overlapping it counts against it). The wider the row wraps, the less it gets.
+for (const w of [390, 360, 320]) {
+  await run(
+    `~/danny reaches 24px+ on a phone (${w}×568, touch)`,
+    { width: w, height: 568, mobile: true },
+    async (tab) => {
+      await tab.go("#home");
+      await tab.hash("#projects");
+      await tab.go("#projects");
+      const hit = await tab.evaluate(`(() => {
+        const el = [...document.querySelectorAll("nav a, nav button")].find((b) => b.textContent.includes("~/danny"));
+        if (!el) return null;
+        const r = el.getBoundingClientRect(), cx = Math.round(r.left + r.width / 2);
+        let n = 0;
+        for (let y = Math.round(r.top) - 40; y < r.bottom + 40; y++)
+          if (document.elementFromPoint(cx, y)?.closest("a, button") === el) n++;
+        return { n, height: Math.round(r.height), rows: new Set([...document.querySelectorAll("nav a, nav button")].map((b) => Math.round(b.getBoundingClientRect().top))).size };
+      })()`);
+      check(`its tap column is at least 24px tall`, hit && hit.n >= 24, hit);
+    },
+  );
+}
+
 /* ---------- done ---------- */
 
 ws.close();
