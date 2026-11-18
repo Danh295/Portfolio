@@ -132,6 +132,11 @@
     gap: 16px 20px;
   }
 
+  /* The action buttons wrap inside their group too: the same 16px between their rows. */
+  .actions {
+    gap: 16px 8px;
+  }
+
   .bar button::before,
   .bar a::before {
     content: "";

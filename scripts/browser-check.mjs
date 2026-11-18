@@ -3179,6 +3179,33 @@ await run(
   },
 );
 
+// On a phone each control's tap area reaches 8px past it (a ::before), so two rows of controls
+// need 16px between them or a tap in one row's area lands on the other row's control.
+await run(
+  "resume page: the toolbar's wrapped rows keep their tap areas apart (320×568, touch)",
+  { width: 320, height: 568, mobile: true },
+  async (tab) => {
+    await tab.go("resume/", 4000);
+    const t = await tab.evaluate(`(() => {
+      const els = [...document.querySelectorAll("header button, header a")];
+      const rs = els.map((el) => el.getBoundingClientRect());
+      const clash = [];
+      for (let i = 0; i < rs.length; i++)
+        for (let j = i + 1; j < rs.length; j++) {
+          const a = rs[i], b = rs[j];
+          const sameRow = a.top < b.bottom && b.top < a.bottom;
+          const across = a.left - 6 < b.right + 6 && b.left - 6 < a.right + 6;
+          const gap = Math.max(b.top - a.bottom, a.top - b.bottom);
+          if (!sameRow && across && gap < 16)
+            clash.push([els[i].innerText.trim().slice(0, 12), els[j].innerText.trim().slice(0, 12), Math.round(gap)]);
+        }
+      return { controls: els.length, clash };
+    })()`);
+    check("there are several controls", t.controls >= 5, t);
+    check("no tap area reaches a control on another row", t.clash.length === 0, t);
+  },
+);
+
 // Esc leaves. A tab the app opened (it has an opener) closes itself, which lands back on the app's
 // tab; where the browser won't close it, or the visitor came straight here, it goes home in place.
 await run(
