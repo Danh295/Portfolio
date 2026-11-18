@@ -275,7 +275,7 @@ export default function App({ initialView = null }) {
         : document.querySelector(
             [
               '[data-row="' + stop + '"]',
-              '[data-exprow="' + stop + '"] > button',
+              '[data-exprow="' + stop + '"] button',
               '[data-skillrow="' + stop + '"]',
             ][sec - 1],
           );
@@ -1150,45 +1150,47 @@ export default function App({ initialView = null }) {
             )}
           </>
         ) : (
-          <Isolate
-            fallback={
-              <Fallback
-                what="terminal mode"
-                action={{ label: "back to gui", onClick: () => switchMode("gui") }}
+          <main className={styles.termMain}>
+            <Isolate
+              fallback={
+                <Fallback
+                  what="terminal mode"
+                  action={{ label: "back to gui", onClick: () => switchMode("gui") }}
+                />
+              }
+            >
+              <Terminal
+                session={sessions.term}
+                bodyRef={termBodyRef}
+                inputRef={termInputRef}
+                vim={vim}
+                vimRef={vimRef}
+                spark={spark}
+                eggHandlers={egg.handlers}
+                eggPreRef={termPreRef}
+                eggFxRef={termFxRef}
+                eggStatusRef={termStatusRef}
+                eggFrameRef={termFrameRef}
+                eggTouch={{
+                  held: egg.held,
+                  stage: egg.view.stage,
+                  enter: egg.view.enter,
+                  prompt: egg.view.prompt,
+                  play: egg.crack,
+                  quit: quitEgg,
+                  release: egg.release,
+                }}
+                running={termEggRunning}
+                pressedTab={pressedTab}
+                keysOn={keysOn}
+                onShortcut={typeRun}
+                onRun={(c) => run("term", c)}
+                onInput={setTermInput}
+                onKey={(e) => shellKey("term", e)}
+                onExit={toGui}
               />
-            }
-          >
-            <Terminal
-              session={sessions.term}
-              bodyRef={termBodyRef}
-              inputRef={termInputRef}
-              vim={vim}
-              vimRef={vimRef}
-              spark={spark}
-              eggHandlers={egg.handlers}
-              eggPreRef={termPreRef}
-              eggFxRef={termFxRef}
-              eggStatusRef={termStatusRef}
-              eggFrameRef={termFrameRef}
-              eggTouch={{
-                held: egg.held,
-                stage: egg.view.stage,
-                enter: egg.view.enter,
-                prompt: egg.view.prompt,
-                play: egg.crack,
-                quit: quitEgg,
-                release: egg.release,
-              }}
-              running={termEggRunning}
-              pressedTab={pressedTab}
-              keysOn={keysOn}
-              onShortcut={typeRun}
-              onRun={(c) => run("term", c)}
-              onInput={setTermInput}
-              onKey={(e) => shellKey("term", e)}
-              onExit={toGui}
-            />
-          </Isolate>
+            </Isolate>
+          </main>
         )}
       </div>
       <Tooltip />

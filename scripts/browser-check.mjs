@@ -4584,6 +4584,58 @@ for (const [label, view, mobile] of [
   );
 }
 
+// Document structure for assistive tech: the hero's h1 is the first heading (its frame label is a
+// decoration), the experience rows are an accordion (a button inside a heading that controls its
+// region), and terminal mode has a main landmark holding the shell.
+await run("headings, accordion and landmarks (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  const heads = await tab.evaluate(
+    `[...document.querySelectorAll("h1, h2, h3")].slice(0, 3).map((h) => h.tagName)`,
+  );
+  const named = await tab.evaluate(
+    `document.querySelector("section#home")?.getAttribute("aria-labelledby") && document.getElementById(document.querySelector("section#home").getAttribute("aria-labelledby"))?.getAttribute("aria-label")`,
+  );
+  check(
+    "the first heading is the h1, and the hero section is still named",
+    heads[0] === "H1" && named === "~/danny",
+    { heads, named },
+  );
+  await tab.evaluate(`document.getElementById("experience").scrollIntoView()`);
+  await sleep(500);
+  const closed =
+    await tab.evaluate(`(() => { const b = document.querySelector('[data-exprow="0"] button');
+    return { inHeading: b?.parentElement.tagName, expanded: b?.getAttribute("aria-expanded"), controls: b?.getAttribute("aria-controls") }; })()`);
+  await tab.click(`document.querySelector('[data-exprow="0"] button')`);
+  await sleep(400);
+  const open =
+    await tab.evaluate(`(() => { const b = document.querySelector('[data-exprow="0"] button'), r = document.getElementById(b?.getAttribute("aria-controls") ?? "");
+    return { expanded: b?.getAttribute("aria-expanded"), role: r?.getAttribute("role"), named: r?.getAttribute("aria-labelledby") === b?.id, text: r?.innerText.length > 0 }; })()`);
+  check(
+    "each experience row is a button in a heading that, opened, controls a named region",
+    closed.inHeading === "H3" &&
+      closed.expanded === "false" &&
+      !closed.controls &&
+      open.expanded === "true" &&
+      open.role === "region" &&
+      open.named &&
+      open.text,
+    { closed, open },
+  );
+  await tab.key("`");
+  await sleep(400);
+  await tab.send("Input.insertText", { text: "./app --mode terminal" });
+  await tab.key("Enter");
+  await sleep(1200);
+  const term = await tab.evaluate(
+    `(() => { const m = document.querySelectorAll("main"); return { mains: m.length, holdsInput: !!m[0]?.querySelector("input, textarea") }; })()`,
+  );
+  check(
+    "terminal mode has one main landmark holding its prompt",
+    term.mains === 1 && term.holdsInput,
+    term,
+  );
+});
+
 /* ---------- done ---------- */
 
 ws.close();

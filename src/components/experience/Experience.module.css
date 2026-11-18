@@ -156,3 +156,9 @@
     gap: 8px 12px;
   }
 }
+
+/* The row's button sits in a heading (an accordion's header): it looks as it did. */
+.rowHead {
+  margin: 0;
+  font: inherit;
+}

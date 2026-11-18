@@ -21,7 +21,8 @@ function FxText({ text, trigger, active, onStart }) {
  * 1px --fg box with a label sitting on its top border: ┤ [1] ~/projects ├
  * `prefix` is static, `title` gets the heading effect. The active frame's label shows a
  * blinking cursor while the header itself is selected (`caret`); it goes away when an
- * element inside the section is selected. The hero puts its cursor on the h1 instead.
+ * element inside the section is selected. The hero puts its cursor on the h1 instead, and
+ * passes `heading={false}`: its label is not a heading.
  * With the "active" title effect, everything else in the frame types in too, top to
  * bottom, the moment the header starts typing (once per page load). Until then the frame
  * is `data-fx="pending"`: its text is in the DOM (screen readers, find-in-page and
@@ -37,6 +38,7 @@ export default function SectionFrame({
   right,
   active,
   caret = true,
+  heading = true,
   className = "",
   children,
   ...rest
@@ -68,6 +70,10 @@ export default function SectionFrame({
     [],
   );
 
+  // The hero's label is a decoration for the page's h1 below it, not a heading: a heading
+  // before the h1 puts "~/danny" first in a screen reader's heading list. The section keeps it
+  // as its name (aria-labelledby), and it stays the focus target a jump lands on.
+  const Label = heading ? "h2" : "div";
   return (
     <Tag
       ref={frameRef}
@@ -81,7 +87,7 @@ export default function SectionFrame({
       {/* The label is the section's heading (screen readers skip the ┤ ├ decoration). */}
       {/* Named by its title: the typed text may still be blank, and the [1] key hint
           isn't part of the name. */}
-      <h2
+      <Label
         ref={labelRef}
         id={id ? id + "-label" : undefined}
         aria-label={title}
@@ -100,7 +106,7 @@ export default function SectionFrame({
           )}
         </span>{" "}
         <span aria-hidden="true">├</span>
-      </h2>
+      </Label>
       {right && <span className={styles.right}>{right}</span>}
       {children}
     </Tag>

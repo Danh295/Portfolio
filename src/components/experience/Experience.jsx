@@ -25,33 +25,42 @@ export default function Experience({ expSel, expOpen, active, onToggle }) {
           open = expOpen === i;
         return (
           <div key={e.company + e.title} data-exprow={i} className={styles.item}>
-            <button
-              type="button"
-              onClick={() => onToggle(i)}
-              aria-expanded={open}
-              aria-current={sel ? "true" : undefined}
-              className={sel ? styles.rowOn : styles.row}
-            >
-              {/* Spans, not divs/p: a button may only hold phrasing content (they're grid
+            <h3 className={styles.rowHead}>
+              <button
+                type="button"
+                id={"exp-" + i}
+                onClick={() => onToggle(i)}
+                aria-expanded={open}
+                aria-controls={open ? "exp-" + i + "-details" : undefined}
+                aria-current={sel ? "true" : undefined}
+                className={sel ? styles.rowOn : styles.row}
+              >
+                {/* Spans, not divs/p: a button may only hold phrasing content (they're grid
                   items, so they lay out as blocks anyway). */}
-              <span className={styles.dateCol}>
-                <span className={styles.faded}>{e.date}</span>
-                {e.now && <span className={sel ? styles.nowOn : styles.now}>● now</span>}
-              </span>
-              <span className={styles.titleCol}>
-                <span className={styles.title}>{e.title}</span>
-                <span className={styles.company}>
-                  <span className={styles.raw}>{e.company}</span> · {e.loc}
+                <span className={styles.dateCol}>
+                  <span className={styles.faded}>{e.date}</span>
+                  {e.now && <span className={sel ? styles.nowOn : styles.now}>● now</span>}
                 </span>
-              </span>
-              <span className={styles.summary}>{e.summary}</span>
-              <span className={styles.caret}>{open ? "−" : "+"}</span>
-              <span className="sr-only">
-                {", role " + (i + 1) + " of " + experienceEntries.length}
-              </span>
-            </button>
+                <span className={styles.titleCol}>
+                  <span className={styles.title}>{e.title}</span>
+                  <span className={styles.company}>
+                    <span className={styles.raw}>{e.company}</span> · {e.loc}
+                  </span>
+                </span>
+                <span className={styles.summary}>{e.summary}</span>
+                <span className={styles.caret}>{open ? "−" : "+"}</span>
+                <span className="sr-only">
+                  {", role " + (i + 1) + " of " + experienceEntries.length}
+                </span>
+              </button>
+            </h3>
             {open && (
-              <div className={styles.details}>
+              <div
+                id={"exp-" + i + "-details"}
+                role="region"
+                aria-labelledby={"exp-" + i}
+                className={styles.details}
+              >
                 <span className={styles.detailsKey}>details/</span>
                 <div className={styles.detailList}>
                   {e.details.map((d, j) => (

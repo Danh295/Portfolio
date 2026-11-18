@@ -30,6 +30,11 @@
   padding-bottom: 24px;
 }
 
+/* Terminal mode's landmark: it wraps the fixed-position terminal and takes no space. */
+.termMain {
+  display: contents;
+}
+
 .foot {
   padding-top: 28px;
   font-size: 12px;

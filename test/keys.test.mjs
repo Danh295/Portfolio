@@ -306,12 +306,12 @@ test("pressing a stop flashes its element", () => {
   assert.equal(flash({ heroSel: "more" }), '[data-key="m"]');
   assert.equal(flash({ heroSel: "rules" }), '[data-key="i"]');
   assert.equal(flash({ activeSec: 1, sel: 0 }), '[data-row="0"]');
-  assert.equal(flash({ activeSec: 2, expSel: 1 }), '[data-exprow="1"] > button');
+  assert.equal(flash({ activeSec: 2, expSel: 1 }), '[data-exprow="1"] button');
   assert.deepEqual(route({ key: " ", activeSec: 2, expSel: 1, expOpen: 1 }).i, -1, "folds");
 });
 
 // The selectors the router flashes name attributes the JSX renders: a rename on either
-// side fails here. (Only the attribute is checked: the experience row's "> button" is
+// side fails here. (Only the attribute is checked: the experience row's button, inside its heading, is
 // structure, which the browser check covers.)
 test("the flashed stops are rendered with the attributes the router names", () => {
   const src = (f) => readFileSync(new URL("../src/components/" + f, import.meta.url), "utf8");
