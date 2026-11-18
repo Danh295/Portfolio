@@ -33,6 +33,7 @@ import { isPhone } from "@/lib/egg/screen";
 import { scrollPageTo } from "@/lib/pageLock";
 import { alignTarget, focusQuiet, freeNav, holdNav, keepAligned, parseLocation } from "@/lib/nav";
 import { parsePath, projUrl } from "@/lib/urls";
+import { applyHead, pageHead } from "@/lib/pageHead";
 import { useOnChange } from "@/lib/useOnChange";
 import { BARS_MEASURED } from "@/lib/bars";
 import { useProjectHistory } from "@/lib/useProjectHistory";
@@ -850,8 +851,7 @@ export default function App({ initialView = null }) {
   }, []);
 
   useEffect(() => {
-    const p = view && projects.find((x) => x.slug === view);
-    document.title = p ? p.title + " | " + site.name : site.title;
+    applyHead(document, pageHead(view));
   }, [view]);
 
   const fade = (el) => {

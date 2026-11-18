@@ -4158,6 +4158,65 @@ await run("the cursor follows the pointer capability (gui, 1291×808)", DESKTOP,
   );
 });
 
+/* ---------- hardening batch ---------- */
+
+// The head a page carries right now, and the head of the built file at its address (what a
+// crawler gets there): moving around inside the app must leave the two equal.
+const HEAD_LIVE = `(d => ({
+  pathname: location.pathname,
+  title: d.title,
+  canonical: d.querySelector('link[rel="canonical"]')?.href,
+  description: d.querySelector('meta[name="description"]')?.content,
+  ogTitle: d.querySelector('meta[property="og:title"]')?.content,
+  ogDescription: d.querySelector('meta[property="og:description"]')?.content,
+  ogUrl: d.querySelector('meta[property="og:url"]')?.content,
+  twTitle: d.querySelector('meta[name="twitter:title"]')?.content,
+  twDescription: d.querySelector('meta[name="twitter:description"]')?.content,
+}))(document)`;
+const HEAD_BUILT = `fetch(location.pathname).then(r => r.text()).then(t => {
+  const d = new DOMParser().parseFromString(t, "text/html");
+  return ${HEAD_LIVE.replace("location.pathname,", "location.pathname,").replace("(document)", "(d)")};
+})`;
+const headMatches = async (tab) => {
+  const live = await tab.evaluate(HEAD_LIVE),
+    built = await tab.evaluate(HEAD_BUILT);
+  return { same: JSON.stringify(live) === JSON.stringify(built), live, built };
+};
+
+await run("the head follows the route (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#projects");
+  await tab.gesture(120);
+  await sleep(600);
+  const home = await headMatches(tab);
+  check("home: the head is the built home page's", home.same, home);
+  await tab.click(`document.querySelector('[data-row="1"]')`, 30);
+  await sleep(1200);
+  const opened = await headMatches(tab);
+  check(
+    "opened from the list: pathname, title, canonical, description, og and twitter match the page",
+    opened.same &&
+      /\/projects\//.test(opened.live.pathname) &&
+      opened.live.canonical !== home.live.canonical,
+    opened,
+  );
+  await tab.key("ArrowRight");
+  await sleep(1200);
+  const stepped = await headMatches(tab);
+  check(
+    "stepped to the next project: the head moved with it",
+    stepped.same && stepped.live.pathname !== opened.live.pathname,
+    stepped,
+  );
+  await tab.key("Escape");
+  await sleep(1500);
+  const back = await headMatches(tab);
+  check(
+    "back on the list: the head is home's again",
+    back.same && back.live.canonical === home.live.canonical && back.live.title === home.live.title,
+    back,
+  );
+});
+
 /* ---------- done ---------- */
 
 ws.close();

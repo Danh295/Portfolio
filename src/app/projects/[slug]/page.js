@@ -1,7 +1,7 @@
 import App from "@/components/App";
 import { site } from "@/config/site";
 import { projects } from "@/data/projects";
-import { projPath } from "@/lib/urls";
+import { pageHead } from "@/lib/pageHead";
 
 // One pre-rendered page per project, so each can be indexed and shared:
 // /Portfolio/projects/<slug>/. It's the same app, opened on that project; moving around
@@ -14,22 +14,20 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const p = projects.find((x) => x.slug === slug);
-  const url = site.url + projPath(slug);
-  const title = `${p.title} | ${site.name}`;
+  const { title, description, url } = pageHead(slug);
   return {
     title,
-    description: p.purpose,
+    description,
     alternates: { canonical: url },
     openGraph: {
       type: "article",
       url,
       title,
-      description: p.purpose,
+      description,
       siteName: site.name,
       images: [site.ogImage],
     },
-    twitter: { card: "summary_large_image", title, description: p.purpose, images: [site.ogImage] },
+    twitter: { card: "summary_large_image", title, description, images: [site.ogImage] },
   };
 }
 
