@@ -1,29 +1,35 @@
 // Build-time GitHub snapshot, so visitors never call the GitHub API (no rate limits,
 // fully static pages). Runs before `next build` and `next dev` (package.json).
 //
-// Writes src/data/github.generated.json (gitignored):
-//   { syncedAt, user, repos: { "owner/name": { pushedAt, stars, language, url } },
+// Writes src/data/github.generated.json (gitignored), atomically (a temp file, then a rename):
+//   { user, attemptedAt, reposAt, activityAt,
+//     repos: { "owner/name": { pushedAt, stars, language, url, syncedAt } },
 //     activity: { kind: "contributions" | "pushes", weeks: [12 numbers] } | null }
+// `attemptedAt` is the last run, whatever came of it. `reposAt` (the oldest repo record's
+// `syncedAt`) and `activityAt` are when each was last really fetched; a record kept from the
+// cache keeps its old time, so the UI and `--if-stale` only call fetched data "synced".
 //
-// - Repos are the GitHub links found in src/data/projects.js.
+// - Repos are the GitHub links in src/data/projects.js, read as data (src/lib/githubUrl.mjs).
 // - Activity uses the GraphQL contribution calendar when GITHUB_TOKEN is set (CI), and
 //   falls back to counting public PushEvents otherwise. Both are bucketed the same way:
 //   12 rolling 7-day windows ending now (oldest first), so no bar is a partial week.
 // - In CI the Pages workflow restores the previous snapshot from the actions cache first,
-//   so "keep the previous snapshot" works there too.
+//   so "keep the previous snapshot" works there too. A cached file is checked before it is
+//   reused (sanitizeSnapshot): what isn't valid is dropped.
 // - Never fails the build: on errors the previous snapshot is kept (or an empty one
 //   written), and the UI hides whatever is missing. Never fakes data. A repo GitHub says
 //   is gone (404) is dropped instead of kept forever.
 //
 // Usage: node scripts/sync-github.mjs [--if-stale]   (--if-stale: skip if < 6h old)
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { buckets, dayItems, mergeRepos, reposIn } from "./github-snapshot.mjs";
+import { readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { buckets, dayItems, isFresh, mergeSnapshot, sanitizeSnapshot } from "./github-snapshot.mjs";
+import { linkedRepos } from "../src/lib/githubUrl.mjs";
+import { loadProjects } from "./load-projects.mjs";
 
 const USER = "Danh295";
 const OUT = new URL("../src/data/github.generated.json", import.meta.url);
-const PROJECTS = new URL("../src/data/projects.js", import.meta.url);
-const STALE_MS = 6 * 60 * 60 * 1000;
+const TMP = new URL("../src/data/github.generated.json.tmp", import.meta.url);
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const TIMEOUT_MS = 10_000;
 
@@ -34,15 +40,29 @@ const headers = {
   ...(token ? { Authorization: `Bearer ${token}` } : {}),
 };
 
+// The cached snapshot if it is a usable one, else null (missing, unreadable, malformed).
 const readSnapshot = () => {
   try {
-    return JSON.parse(readFileSync(OUT, "utf8"));
+    return sanitizeSnapshot(JSON.parse(readFileSync(OUT, "utf8")), USER);
   } catch {
     return null;
   }
 };
 
-const write = (snap) => writeFileSync(OUT, JSON.stringify(snap, null, 2) + "\n");
+// Write beside the file, then rename over it: a crash leaves the old snapshot, never half of one.
+const write = (snap) => {
+  try {
+    writeFileSync(TMP, JSON.stringify(snap, null, 2) + "\n");
+    renameSync(TMP, OUT);
+  } catch (e) {
+    try {
+      unlinkSync(TMP);
+    } catch {
+      // nothing to remove
+    }
+    throw e;
+  }
+};
 
 async function api(path, init = {}) {
   const r = await fetch("https://api.github.com" + path, {
@@ -53,9 +73,6 @@ async function api(path, init = {}) {
   if (!r.ok) throw Object.assign(new Error(`${path}: ${r.status}`), { status: r.status });
   return r.json();
 }
-
-// "owner/name" for every GitHub repo linked from a project.
-const projectRepos = () => reposIn(readFileSync(PROJECTS, "utf8"), USER);
 
 async function repoInfo(full) {
   const r = await api(`/repos/${full}`);
@@ -99,56 +116,57 @@ async function pushes() {
 
 async function main() {
   const prev = readSnapshot();
-  if (process.argv.includes("--if-stale") && prev?.syncedAt) {
-    if (Date.now() - Date.parse(prev.syncedAt) < STALE_MS) {
-      console.log("github sync: snapshot is fresh, skipping");
-      return;
-    }
+  if (process.argv.includes("--if-stale") && isFresh(prev)) {
+    console.log("github sync: snapshot is fresh, skipping");
+    return;
   }
 
-  const list = projectRepos();
+  const list = linkedRepos(await loadProjects());
   const results = await Promise.allSettled(list.map(repoInfo));
   results.forEach((r, i) => {
     if (r.status === "rejected") console.warn("github sync: " + list[i] + ": " + r.reason.message);
   });
-  const { repos, failed } = mergeRepos(list, results, prev?.repos);
 
-  let activity = null,
-    activityFresh = false;
+  let activity = null;
   try {
     activity = token
       ? { kind: "contributions", weeks: await contributions() }
       : { kind: "pushes", weeks: await pushes() };
-    activityFresh = true;
   } catch (e) {
     console.warn("github sync: activity: " + e.message);
     if (token) {
       try {
         activity = { kind: "pushes", weeks: await pushes() };
-        activityFresh = true;
       } catch {
-        // fall through to the previous snapshot
+        // fall through to the previous snapshot's activity
       }
     }
-    activity = activity || prev?.activity || null;
   }
 
-  // Only move the timestamp when something was actually fetched just now.
-  const fresh = results.some((r) => r.status === "fulfilled") || activityFresh;
-  const snap = {
-    syncedAt: fresh ? new Date().toISOString() : (prev?.syncedAt ?? null),
-    user: USER,
-    repos,
-    activity,
-  };
+  const snap = mergeSnapshot({ prev, user: USER, list, results, activity });
   write(snap);
+  const failed = results.filter((r) => r.status === "rejected").length;
   console.log(
-    `github sync: ${Object.keys(repos).length} repos, activity ${activity ? activity.kind : "none"}` +
+    `github sync: ${Object.keys(snap.repos).length} repos, activity ` +
+      (activity
+        ? activity.kind + " (fetched)"
+        : snap.activity
+          ? snap.activity.kind + " (kept)"
+          : "none") +
       (failed ? `, ${failed} failed (kept previous unless gone)` : ""),
   );
 }
 
 main().catch((e) => {
   console.warn("github sync failed: " + e.message);
-  if (!existsSync(OUT)) write({ syncedAt: null, user: USER, repos: {}, activity: null });
+  // The build imports this file: it must exist and parse, even if empty.
+  if (!readSnapshot())
+    write({
+      user: USER,
+      attemptedAt: null,
+      reposAt: null,
+      activityAt: null,
+      repos: {},
+      activity: null,
+    });
 });

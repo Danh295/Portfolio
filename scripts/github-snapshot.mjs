@@ -1,15 +1,7 @@
-// The pure parts of sync-github.mjs (no network, no files), so they can be tested.
+// The pure parts of sync-github.mjs and check-repos.mjs (no network, no files), so they can be
+// tested. Which repos a project links is src/lib/githubUrl.mjs.
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-
-/** "owner/name" for every GitHub repo linked from projects.js's source text. */
-export function reposIn(src, user) {
-  const repos = new Set();
-  for (const m of src.matchAll(/github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?["/#?]/g))
-    repos.add(`${m[1]}/${m[2]}`);
-  for (const m of src.matchAll(/repoUrl\("([\w.-]+)"\)/g)) repos.add(`${user}/${m[1]}`);
-  return [...repos];
-}
 
 /** 12 rolling 7-day windows ending `now`, oldest first. `items` are [time ms, count]. */
 export function buckets(items, now = Date.now()) {
@@ -33,22 +25,121 @@ export function dayItems(days, now = Date.now()) {
 
 /**
  * The new `repos` map from one fetch per repo in `list` (Promise.allSettled results, in
- * order). A repo GitHub answers 404 for (deleted, renamed away, private) drops out; any
- * other failure (rate limit, network) keeps its entry from the previous snapshot.
+ * order). A fetched repo gets `syncedAt: now`. A repo GitHub answers 404 for (deleted, renamed
+ * away, private) drops out; any other failure (rate limit, network) keeps its entry, and its
+ * old `syncedAt`, from the previous snapshot.
  */
-export function mergeRepos(list, results, prev = {}) {
+export function mergeRepos(list, results, prev = {}, now = Date.now()) {
   const repos = {};
   let failed = 0;
   results.forEach((r, i) => {
     const full = list[i];
     if (r.status === "fulfilled") {
-      repos[full] = r.value;
+      repos[full] = { ...r.value, syncedAt: new Date(now).toISOString() };
       return;
     }
     failed++;
     if (r.reason?.status !== 404 && prev?.[full]) repos[full] = prev[full];
   });
   return { repos, failed };
+}
+
+const isObj = (x) => x !== null && typeof x === "object" && !Array.isArray(x);
+const isTime = (x) => typeof x === "string" && Number.isFinite(Date.parse(x));
+const timeOr = (x) => (isTime(x) ? x : null);
+const goodRepo = (r) =>
+  isObj(r) &&
+  typeof r.url === "string" &&
+  Number.isFinite(r.stars) &&
+  (r.pushedAt == null || isTime(r.pushedAt));
+const goodActivity = (a) =>
+  isObj(a) &&
+  (a.kind === "contributions" || a.kind === "pushes") &&
+  Array.isArray(a.weeks) &&
+  a.weeks.length === 12 &&
+  a.weeks.every((n) => Number.isFinite(n) && n >= 0);
+
+/**
+ * A cached snapshot (read from a file or the actions cache) made safe to reuse, or null when it
+ * isn't one: not an object, another user's, or without a `repos` map. Inside, a bad repo record,
+ * a bad activity (not 12 finite counts) or a bad time is dropped on its own, so a half-broken
+ * cache still keeps what is good. An old snapshot with one `syncedAt` has no verified times.
+ */
+export function sanitizeSnapshot(raw, user) {
+  if (!isObj(raw) || raw.user !== user || !isObj(raw.repos)) return null;
+  const repos = {};
+  for (const [k, r] of Object.entries(raw.repos))
+    if (goodRepo(r)) repos[k] = { ...r, syncedAt: timeOr(r.syncedAt) };
+  return {
+    user,
+    attemptedAt: timeOr(raw.attemptedAt),
+    reposAt: timeOr(raw.reposAt),
+    activityAt: timeOr(raw.activityAt),
+    repos,
+    activity: goodActivity(raw.activity) ? raw.activity : null,
+  };
+}
+
+/** The oldest `syncedAt` among the records: everything shown is at least this fresh. */
+const oldest = (repos) => {
+  const ts = Object.values(repos).map((r) => Date.parse(r.syncedAt));
+  return ts.length && ts.every(Number.isFinite) ? new Date(Math.min(...ts)).toISOString() : null;
+};
+
+/**
+ * The snapshot to write after a run. `results` are the repo fetches for `list`; `activity` is
+ * what was fetched just now ({ kind, weeks }) or null when it failed, in which case the cached
+ * one stays. Verified times only move for what was really fetched: `reposAt` is the oldest
+ * record (a kept one drags it back), `activityAt` the activity's own fetch; `attemptedAt` is
+ * this run, whatever came of it. `prev` must already be sanitized (or null).
+ */
+export function mergeSnapshot({ prev, user, list, results, activity, now = Date.now() }) {
+  const { repos } = mergeRepos(list, results, prev?.repos, now);
+  const at = new Date(now).toISOString();
+  return {
+    user,
+    attemptedAt: at,
+    reposAt: oldest(repos),
+    activityAt: activity ? at : (prev?.activityAt ?? null),
+    repos,
+    activity: activity ?? prev?.activity ?? null,
+  };
+}
+
+const STALE_MS = 6 * 60 * 60 * 1000;
+const RETRY_MS = 15 * 60 * 1000;
+
+/**
+ * Whether `--if-stale` can skip the sync: both the repos and the activity were verified within
+ * 6 hours, or a run tried within 15 minutes (so a dead network doesn't make every dev start
+ * wait out the timeouts again). A time in the future never counts.
+ */
+export function isFresh(snap, now = Date.now()) {
+  const within = (iso, ms) => {
+    const age = now - Date.parse(iso);
+    return Number.isFinite(age) && age >= 0 && age < ms;
+  };
+  if (!snap) return false;
+  if (within(snap.attemptedAt, RETRY_MS)) return true;
+  return within(snap.reposAt, STALE_MS) && within(snap.activityAt, STALE_MS);
+}
+
+/**
+ * Every page of a GraphQL connection. `fetchPage(cursor)` returns { nodes, hasNextPage,
+ * endCursor }. `complete` is true only when the last page said there was no next one; stopping
+ * at `maxPages`, or a next page with no cursor to follow, leaves it false.
+ */
+export async function collectPages(fetchPage, maxPages = 10) {
+  const nodes = [];
+  let cursor = null;
+  for (let n = 0; n < maxPages; n++) {
+    const page = await fetchPage(cursor);
+    nodes.push(...page.nodes);
+    if (!page.hasNextPage) return { nodes, complete: true };
+    if (!page.endCursor) break;
+    cursor = page.endCursor;
+  }
+  return { nodes, complete: false };
 }
 
 const lower = (s) => s.toLowerCase();
@@ -61,6 +152,8 @@ const lower = (s) => s.toLowerCase();
  * { "owner/name": reason } map of repos chosen to stay off the site (any case; a bare name
  * matches nothing, since it could be a stranger's repo). A renamed repo counts as linked under
  * its new name. Ignoring only filters `missing`: a repo the site links is still checked.
+ * `complete: false` (a list GitHub paged past what was read) is never ok: a scan that missed
+ * part of a list can't say nothing is missing.
  */
 export function repoDrift({
   linked = [],
@@ -68,6 +161,7 @@ export function repoDrift({
   contributed = [],
   resolved = {},
   ignore = {},
+  complete = true,
 }) {
   const shown = new Set(linked.map(lower));
   const renamed = [],
@@ -95,8 +189,9 @@ export function repoDrift({
       unlinked.set(key, full_name);
   }
   const missing = [...unlinked.values()];
-  const ok = !missing.length && !renamed.length && !archived.length && !gone.length;
-  return { missing, renamed, archived, gone, ok };
+  const incomplete = !complete;
+  const ok = !missing.length && !renamed.length && !archived.length && !gone.length && complete;
+  return { missing, renamed, archived, gone, incomplete, ok };
 }
 
 /** The lines the repo check prints for a `repoDrift` result: one per kind, saying what to do. */
@@ -115,5 +210,10 @@ export function driftReport(d) {
     );
   if (d.gone.length)
     lines.push(`gone (404: deleted or made private): ${d.gone.join(", ")} (remove its link)`);
+  if (d.incomplete)
+    lines.push(
+      "incomplete: not every page of the contributed repos was read, so a repo may be missing " +
+        "from this check (raise the page limit in scripts/check-repos.mjs)",
+    );
   return lines;
 }

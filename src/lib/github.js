@@ -2,6 +2,7 @@
 // never hit the GitHub API. Anything missing from the snapshot is simply not shown.
 import snapshot from "@/data/github.generated.json";
 import { pad } from "./format";
+import { findRepo, parseGithubRepo } from "./githubUrl.mjs";
 
 const BARS = "▁▂▃▄▅▆▇█";
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
@@ -21,7 +22,9 @@ export function fmtDate(iso) {
 export const fmtStamp = (iso) =>
   `${fmtDate(iso)} · ${pad(new Date(iso).getUTCHours())}:${pad(new Date(iso).getUTCMinutes())} UTC`;
 
-export const syncedAt = snapshot.syncedAt;
+// When the repo records were last really fetched from GitHub (the oldest one), not when a sync
+// last ran: null when unknown, and the UI then says nothing.
+export const syncedAt = snapshot.reposAt ?? null;
 
 // "git log · 12w" sparkline, or null when the last sync had no activity data.
 export const spark = snapshot.activity
@@ -30,18 +33,19 @@ export const spark = snapshot.activity
       tip:
         snapshot.activity.weeks.reduce((a, b) => a + b, 0) +
         (snapshot.activity.kind === "contributions" ? " contributions" : " pushes") +
-        " in the last 12 weeks · synced " +
-        fmtDate(snapshot.syncedAt),
+        " in the last 12 weeks" +
+        (snapshot.activityAt ? " · synced " + fmtDate(snapshot.activityAt) : ""),
     }
   : null;
 
 /** Snapshot data for a project's GitHub link: { full, pushedAt, stars, language, url } | null. */
 export function repoFor(project) {
-  const link = (project.links || []).find((l) => /github\.com\/[^/]+\/[^/]+/.test(l.href));
-  if (!link) return null;
-  const [, owner, name] = link.href.match(/github\.com\/([^/]+)\/([^/?#]+)/);
-  const info = snapshot.repos[`${owner}/${name.replace(/\.git$/, "")}`];
-  return info ? { full: `${owner}/${name}`, ...info } : null;
+  for (const l of project.links || []) {
+    const r = parseGithubRepo(l.href);
+    const info = r && findRepo(snapshot.repos, r.key);
+    if (info) return { full: r.key, ...info };
+  }
+  return null;
 }
 
 /** How many of `projects` have a synced repo. */

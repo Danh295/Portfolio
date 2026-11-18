@@ -8,19 +8,21 @@
 //   repositoriesContributedTo, which needs a token; without GITHUB_TOKEN this half is skipped
 //   with a notice). GitHub's docs only say "recently"; one run showed about the last year, so
 //   a repo that drops out of the list is not drift (a per-run observation, not a guarantee).
-//   It asks for the first 100 repos, with no paging.
+//   It pages through them (100 at a time, up to 10 pages); a list it could not read to the end
+//   is reported as incomplete and fails the run, since the repos it missed could be the drift.
 // - Repos chosen to stay off the site go in the "ignore" map of scripts/repo-check.json
 //   ("owner/name": reason). The decision logic is the pure repoDrift in github-snapshot.mjs.
 //
 // Usage: node scripts/check-repos.mjs   (GITHUB_TOKEN=... for the contributed half)
 
 import { readFileSync } from "node:fs";
-import { driftReport, repoDrift, reposIn } from "./github-snapshot.mjs";
+import { collectPages, driftReport, repoDrift } from "./github-snapshot.mjs";
+import { linkedRepos } from "../src/lib/githubUrl.mjs";
+import { loadProjects } from "./load-projects.mjs";
 
 const { user: USER, ignore } = JSON.parse(
   readFileSync(new URL("./repo-check.json", import.meta.url), "utf8"),
 );
-const PROJECTS = new URL("../src/data/projects.js", import.meta.url);
 const TIMEOUT_MS = 10_000;
 
 const token = process.env.GITHUB_TOKEN;
@@ -71,30 +73,32 @@ async function ownedRepos() {
 }
 
 async function contributedRepos() {
-  const q = `query($login:String!){user(login:$login){repositoriesContributedTo(first:100,
-    privacy:PUBLIC, includeUserRepositories:false,
+  const q = `query($login:String!,$after:String){user(login:$login){repositoriesContributedTo(
+    first:100, after:$after, privacy:PUBLIC, includeUserRepositories:false,
     contributionTypes:[COMMIT,PULL_REQUEST,PULL_REQUEST_REVIEW,ISSUE])
-    {pageInfo{hasNextPage} nodes{nameWithOwner isFork}}}}`;
+    {pageInfo{hasNextPage endCursor} nodes{nameWithOwner isFork}}}}`;
   // If the token isn't allowed to read this, say so: the failure would otherwise look like drift.
   const why = "the list of repos you contributed to could not be read (is the token allowed to?)";
-  let r;
-  try {
-    r = await api("/graphql", {
-      method: "POST",
-      body: JSON.stringify({ query: q, variables: { login: USER } }),
-    });
-  } catch (e) {
-    throw new Error(`${why}: ${e.message}`);
-  }
-  const list = r.data?.user?.repositoriesContributedTo;
-  const nodes = list?.nodes;
-  if (r.errors?.length || !nodes)
-    throw new Error(`${why}: ${r.errors?.[0]?.message ?? "no repositories in the reply"}`);
-  if (list.pageInfo?.hasNextPage)
-    console.warn(
-      "repo check: you contributed to more than 100 repos; only the first 100 are checked",
-    );
-  return nodes.map((n) => ({ full_name: n.nameWithOwner, fork: n.isFork }));
+  const { nodes, complete } = await collectPages(async (after) => {
+    let r;
+    try {
+      r = await api("/graphql", {
+        method: "POST",
+        body: JSON.stringify({ query: q, variables: { login: USER, after } }),
+      });
+    } catch (e) {
+      throw new Error(`${why}: ${e.message}`);
+    }
+    const list = r.data?.user?.repositoriesContributedTo;
+    if (r.errors?.length || !list?.nodes)
+      throw new Error(`${why}: ${r.errors?.[0]?.message ?? "no repositories in the reply"}`);
+    return {
+      nodes: list.nodes.filter(Boolean),
+      hasNextPage: Boolean(list.pageInfo?.hasNextPage),
+      endCursor: list.pageInfo?.endCursor,
+    };
+  });
+  return { repos: nodes.map((n) => ({ full_name: n.nameWithOwner, fork: n.isFork })), complete };
 }
 
 // GitHub follows a renamed repo's old name to the new one, so full_name shows the rename.
@@ -109,15 +113,22 @@ async function resolve(full) {
 }
 
 async function main() {
-  const linked = reposIn(readFileSync(PROJECTS, "utf8"), USER);
-  const [owned, contributed, answers] = await Promise.all([
+  const linked = linkedRepos(await loadProjects());
+  const [owned, contribution, answers] = await Promise.all([
     ownedRepos(),
-    token ? contributedRepos() : [],
+    token ? contributedRepos() : { repos: [], complete: true },
     Promise.all(linked.map(resolve)),
   ]);
   if (!token) console.warn("repo check: no GITHUB_TOKEN, so repos you contributed to are skipped");
   const resolved = Object.fromEntries(linked.map((full, i) => [full, answers[i]]));
-  const drift = repoDrift({ linked, owned, contributed, resolved, ignore });
+  const drift = repoDrift({
+    linked,
+    owned,
+    contributed: contribution.repos,
+    resolved,
+    ignore,
+    complete: contribution.complete,
+  });
   if (drift.ok) {
     console.log(`repo check: ${linked.length} linked repos, nothing missing or changed`);
     return;
