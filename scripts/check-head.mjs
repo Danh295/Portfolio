@@ -1,7 +1,7 @@
 // Head-tag check: reads the built HTML in out/ the way a crawler does (no browser) and fails on
 // a head that tells crawlers or link previews the wrong thing. Run after `npm run build`; CI runs
 // it right after `next build`, so a bad head turns main red and nothing deploys.
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { copyProblems, duplicateProblems, routeProblems } from "./head-rules.mjs";
 import { loadProjects } from "./load-projects.mjs";
@@ -166,6 +166,39 @@ for (const file of NOINDEX) {
     robots,
   );
 }
+
+// Project media: the exported page names its pictures (so a crawler and a visitor without script
+// get them), and every file it names is in the build. The pages that have media are pinned by
+// name, so a build that quietly stops rendering them can't pass by having nothing to check.
+const WITH_MEDIA = ["crapos", "anifriend", "operaid"];
+for (const slug of readdirSync(join(OUT, "projects"))) {
+  const file = join("projects", slug, "index.html");
+  if (!statSync(join(OUT, "projects", slug)).isDirectory() || !existsSync(join(OUT, file)))
+    continue;
+  const html = readFileSync(join(OUT, file), "utf8");
+  const urls = [...new Set(html.match(/\/Portfolio\/media\/[^"\s,]+/g) ?? [])];
+  if (WITH_MEDIA.includes(slug))
+    check(
+      `${file}: names its pictures (avif and webp)`,
+      urls.some((u) => u.endsWith(".avif")) && urls.some((u) => u.endsWith(".webp")),
+      urls,
+    );
+  const missing = urls.filter((u) => !existsSync(join(OUT, u.replace(/^\/Portfolio\//, ""))));
+  check(`${file}: every media file it names is in the build`, missing.length === 0, missing);
+  if (urls.length) {
+    const img = html.match(/<img\b[^>]*>/g)?.find((t) => t.includes("/media/")) ?? "";
+    check(
+      `${file}: the picture has its width and height (no layout shift)`,
+      /\bwidth="\d+"/.test(img) && /\bheight="\d+"/.test(img),
+      img,
+    );
+  }
+}
+check(
+  "the pages with media are all pages of the build",
+  WITH_MEDIA.every((s) => existsSync(join(OUT, "projects", s, "index.html"))),
+  WITH_MEDIA,
+);
 
 console.log(failed ? `\n${failed} check(s) failed` : "\nall head checks passed");
 process.exit(failed ? 1 : 0);

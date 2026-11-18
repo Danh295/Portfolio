@@ -224,8 +224,13 @@ async function openTab({ width, height, mobile = false, reducedMotion = false })
       awaitPromise: true,
       returnByValue: true,
     });
-    if (r.result?.exceptionDetails)
-      throw new Error("page script failed: " + expression.slice(0, 60));
+    if (r.result?.exceptionDetails) {
+      const why =
+        r.result.exceptionDetails.exception?.description ?? r.result.exceptionDetails.text;
+      throw new Error(
+        "page script failed: " + expression.slice(0, 60) + " → " + String(why).split("\n")[0],
+      );
+    }
     return r.result?.result?.value;
   };
   // `modifiers`: the CDP bit mask (1 alt, 2 ctrl, 4 meta, 8 shift).
@@ -4674,6 +4679,264 @@ await run(
     );
   },
 );
+
+/* ---------- project media ---------- */
+
+// A project's pictures sit under its bullets behind an ASCII cover (a canvas over the <picture>)
+// that hover, keyboard focus or a tap uncovers, in random cells and in steps; the picture then
+// stays. The cover's cleared share is read off the canvas: alpha 0 is an uncovered cell.
+const MEDIA_BTN = `document.querySelector('section[aria-label="media"] button')`;
+const COVER = `(() => {
+  const b = ${MEDIA_BTN}, c = b.querySelector("canvas"), img = b.querySelector("img");
+  const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+  let clear = 0, ink = 0;
+  const r0 = d[0], g0 = d[1], b0 = d[2];
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] === 0) clear++;
+    else if (Math.abs(d[i] - r0) + Math.abs(d[i + 1] - g0) + Math.abs(d[i + 2] - b0) > 120) ink++;
+  }
+  return {
+    phase: b.dataset.phase,
+    frac: +(clear / (d.length / 4)).toFixed(2),
+    ink,
+    imgOpacity: getComputedStyle(img).opacity,
+    coverShown: getComputedStyle(c).display !== "none",
+    alt: img.alt,
+  };
+})()`;
+// The distinct cleared shares seen over `ms` (a glide shows many, a stepped reveal a few).
+const SEEN = (ms) => `(async () => {
+  const seen = new Set(), t0 = performance.now();
+  const read = () => {
+    const c = ${MEDIA_BTN}.querySelector("canvas");
+    const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+    let clear = 0;
+    for (let i = 3; i < d.length; i += 4) if (d[i] === 0) clear++;
+    return (clear / (d.length / 4)).toFixed(1);
+  };
+  while (performance.now() - t0 < ${ms}) { seen.add(read()); await new Promise((r) => setTimeout(r, 25)); }
+  return [...seen];
+})()`;
+const mediaPage = async (tab, slug = "crapos") => {
+  await tab.go(`projects/${slug}/`, 3500);
+  await tab.evaluate(`${MEDIA_BTN}.scrollIntoView({ block: "center" })`);
+  await sleep(700);
+};
+
+await run(
+  "project media: the ASCII cover hides the picture until it is focused, then it stays (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await mediaPage(tab);
+    const before = await tab.evaluate(COVER);
+    check(
+      "premise: the cover is drawn (ink, nothing uncovered) and the picture is hidden",
+      before.phase === "idle" &&
+        before.ink > 200 &&
+        before.frac === 0 &&
+        before.imgOpacity === "0" &&
+        before.coverShown,
+      before,
+    );
+    check("the picture has alt text", before.alt.length > 10, before);
+    await tab.evaluate(`${MEDIA_BTN}.focus()`);
+    await sleep(1400);
+    const after = await tab.evaluate(COVER);
+    check(
+      "keyboard focus uncovers the picture: it shows and the cover is gone",
+      after.phase === "done" && after.imgOpacity === "1" && !after.coverShown,
+      after,
+    );
+    await tab.evaluate(`document.activeElement.blur()`);
+    await sleep(300);
+    const later = await tab.evaluate(COVER);
+    check(
+      "and it stays uncovered once focus leaves",
+      later.phase === "done" && !later.coverShown,
+      later,
+    );
+  },
+);
+
+await run(
+  "project media: a mouse over the picture uncovers it (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await mediaPage(tab);
+    const before = await tab.evaluate(COVER);
+    const at = await tab.evaluate(
+      `(() => { const r = ${MEDIA_BTN}.getBoundingClientRect(); return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }; })()`,
+    );
+    await tab.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 1, y: 1 });
+    await tab.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...at });
+    await sleep(1400);
+    const after = await tab.evaluate(COVER);
+    check(
+      "hovering uncovers it",
+      before.phase === "idle" && after.phase === "done" && after.imgOpacity === "1",
+      { before, after },
+    );
+  },
+);
+
+await run(
+  "project media: the reveal goes in steps, not a glide (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await mediaPage(tab);
+    await tab.evaluate(`${MEDIA_BTN}.focus()`);
+    const seen = JSON.parse(await tab.evaluate(`${SEEN(1500)}.then(JSON.stringify)`));
+    const mid = seen.filter((s) => s !== "0.0" && s !== "1.0");
+    check(
+      "it passes through a few partial states (6 steps, at most 5 between)",
+      mid.length >= 1 && mid.length <= 6,
+      { seen },
+    );
+  },
+);
+
+await run(
+  "project media: under reduced motion the reveal is three coarse steps (1291×808, reduced motion)",
+  REDUCED,
+  async (tab) => {
+    await mediaPage(tab);
+    await tab.evaluate(`${MEDIA_BTN}.focus()`);
+    const seen = JSON.parse(await tab.evaluate(`${SEEN(1500)}.then(JSON.stringify)`));
+    const mid = seen.filter((s) => s !== "0.0" && s !== "1.0");
+    const end = await tab.evaluate(COVER);
+    check("at most two partial states between covered and uncovered", mid.length <= 3, { seen });
+    check("and it still ends uncovered", end.phase === "done" && end.imgOpacity === "1", end);
+  },
+);
+
+await run(
+  "project media: a project with two pictures shows a lead and a row, on a phone each full width (390×844, touch)",
+  { ...PHONE, mobile: true },
+  async (tab) => {
+    await mediaPage(tab, "anifriend");
+    const st = await tab.evaluate(`(() => {
+      const bs = [...document.querySelectorAll('section[aria-label="media"] button')];
+      const w = document.querySelector('[data-page]')?.getBoundingClientRect().width ?? innerWidth;
+      return { n: bs.length, widths: bs.map((b) => Math.round(b.getBoundingClientRect().width)),
+        over: document.documentElement.scrollWidth - innerWidth };
+    })()`);
+    check("two pictures", st.n === 2, st);
+    check(
+      "each is as wide as the other on a phone (one column)",
+      st.widths[0] === st.widths[1],
+      st,
+    );
+    check("and the page doesn't scroll sideways", st.over <= 0, st);
+    await tab.tap(`${MEDIA_BTN}`);
+    await sleep(1400);
+    const after = await tab.evaluate(COVER);
+    check(
+      "a tap uncovers the first one",
+      after.phase === "done" && after.imgOpacity === "1",
+      after,
+    );
+  },
+);
+
+await run(
+  "project media: a private project shows the locked message and why, with nothing to open (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("projects/ppeo-scan/", 3500);
+    await tab.evaluate(
+      `document.querySelector('section[aria-label="media"]').scrollIntoView({ block: "center" })`,
+    );
+    await sleep(1500); // it scrambles once when scrolled into view, then locks
+    const st = await tab.evaluate(`(() => {
+      const s = document.querySelector('section[aria-label="media"]');
+      return { buttons: s.querySelectorAll("button").length, imgs: s.querySelectorAll("img").length,
+        label: s.querySelector('[role="img"]')?.getAttribute("aria-label"),
+        text: s.querySelector("pre")?.textContent ?? "", cap: s.querySelector("figcaption")?.textContent ?? "" };
+    })()`);
+    check("no button and no image", st.buttons === 0 && st.imgs === 0, st);
+    check(
+      "it settles on the locked message",
+      st.text.includes("[ access denied: proprietary ]"),
+      st,
+    );
+    check(
+      "with its reason shown",
+      /city of waterloo/.test(st.cap) && st.label === "access denied: proprietary",
+      st,
+    );
+  },
+);
+
+await run(
+  "project media: under reduced motion the private placeholder is locked at once (1291×808, reduced motion)",
+  REDUCED,
+  async (tab) => {
+    await tab.go("projects/ppeo-scan/", 3500);
+    const text = await tab.evaluate(
+      `document.querySelector('section[aria-label="media"] pre').textContent`,
+    );
+    check("locked with no scramble", text.includes("[ access denied: proprietary ]"), { text });
+  },
+);
+
+await run(
+  "project media: with scripts off there is no cover and the picture shows",
+  DESKTOP,
+  async (tab) => {
+    await tab.send("Emulation.setScriptExecutionDisabled", { value: true });
+    await tab.go("projects/crapos/", 2500);
+    const st = await tab.evaluate(`(() => { const b = ${MEDIA_BTN}; return b ? {
+      img: getComputedStyle(b.querySelector("img")).opacity,
+      cover: getComputedStyle(b.querySelector("canvas")).display, scripting: matchMedia("(scripting: none)").matches } : null; })()`);
+    await tab.send("Emulation.setScriptExecutionDisabled", { value: false });
+    check("the media is in the static page", !!st, st);
+    check(
+      "the picture is visible and the cover is not",
+      st?.img === "1" && st?.cover === "none",
+      st,
+    );
+  },
+);
+
+// `cat` in the full terminal prints the same pictures as static ASCII, fitted to the line.
+for (const [label, size] of [
+  ["1291×808", DESKTOP],
+  ["390×844, touch", { ...PHONE, mobile: true }],
+]) {
+  await run(
+    `terminal: cat a project prints its picture as ASCII, fitted to the width (${label})`,
+    size,
+    async (tab) => {
+      await openTerm(tab);
+      await tab.evaluate(`document.querySelector('${TERM} input').focus()`);
+      await tab.send("Input.insertText", { text: "cat crapos" });
+      await tab.key("Enter");
+      await sleep(1500);
+      const st = await tab.evaluate(`(() => {
+      const box = document.querySelector('${TERM} div[role="img"]');
+      if (!box) return null;
+      const pre = box.querySelector("pre"), lines = pre.textContent.split("\\n");
+      const px = parseFloat(getComputedStyle(pre).fontSize);
+      return { label: box.getAttribute("aria-label"), rows: lines.length, cols: Math.max(...lines.map((l) => l.length)),
+        fit: Math.floor(box.parentElement.clientWidth / (px * 0.6)), over: pre.scrollWidth - pre.clientWidth,
+        cap: box.parentElement.textContent.includes("crapos booting"), ink: /[#%@*+=]/.test(pre.textContent) };
+    })()`);
+      check("the picture is printed", !!st && st.label.length > 10 && st.rows > 5 && st.ink, st);
+      check(
+        "it fits the line (no sideways scroll, no wider than the screen allows)",
+        !!st && st.cols <= st.fit && st.over <= 0,
+        st,
+      );
+      check("with its caption", !!st && st.cap, st);
+      if (size.width < 600)
+        check(
+          "a phone gets fewer columns than the 100 a desktop can use",
+          !!st && st.cols < 70,
+          st,
+        );
+    },
+  );
+}
 
 /* ---------- done ---------- */
 

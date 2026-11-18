@@ -44,10 +44,11 @@ export default function ArtLine({ mediaKey, alt, caption }) {
 
   return (
     <div ref={boxRef} className={styles.art}>
+      {/* The role sits on a wrapper: the custom cursor treats `pre[role="img"]` as the egg. */}
       {grid && cols > 0 && (
-        <pre role="img" aria-label={alt}>
-          {gridRows(grid, cols).join("\n")}
-        </pre>
+        <div role="img" aria-label={alt}>
+          <pre aria-hidden="true">{gridRows(grid, cols).join("\n")}</pre>
+        </div>
       )}
       <div className={styles.cap}>{caption}</div>
     </div>
