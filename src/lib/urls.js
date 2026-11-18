@@ -6,6 +6,12 @@ import { site } from "@/config/site";
 import { projects } from "@/data/projects";
 
 export const SECTION_IDS = ["home", "projects", "experience", "skills"];
+/** The header's links: every section but home, numbered as its key (1 to 3). */
+export const NAV_SECTIONS = SECTION_IDS.slice(1).map((label, i) => ({
+  n: i + 1,
+  label,
+  tip: "jump to " + label,
+}));
 
 const HOME_URL = site.basePath + "/";
 export const secUrl = (n) => HOME_URL + "#" + SECTION_IDS[n];

@@ -124,3 +124,17 @@ test("projectRowName: number, title, category, org, year and the row's place", (
     "the number shown on the row, when a filter changes its place",
   );
 });
+
+// ARCH-03: the header's links come from SECTION_IDS, so a renamed or added section can't leave
+// the nav behind. Each link's number is its section index and its key.
+test("NAV_SECTIONS: every section but home, numbered as its index", async () => {
+  const { NAV_SECTIONS, SECTION_IDS } = await import("@/lib/urls");
+  assert.deepEqual(
+    NAV_SECTIONS.map((s) => s.label),
+    SECTION_IDS.slice(1),
+  );
+  NAV_SECTIONS.forEach((s) => {
+    assert.equal(SECTION_IDS[s.n], s.label);
+    assert.equal(s.tip, "jump to " + s.label);
+  });
+});

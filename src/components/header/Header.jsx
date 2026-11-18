@@ -1,13 +1,7 @@
 import styles from "./Header.module.css";
 import Hint from "@/components/Hint";
 import { inApp } from "@/lib/linkClick";
-import { secUrl } from "@/lib/urls";
-
-const SECTIONS = [
-  { n: 1, label: "projects", tip: "jump to projects" },
-  { n: 2, label: "experience", tip: "jump to experience" },
-  { n: 3, label: "skills", tip: "jump to skills" },
-];
+import { NAV_SECTIONS, secUrl } from "@/lib/urls";
 
 export default function Header({
   navRef,
@@ -39,7 +33,7 @@ export default function Header({
           ~/danny
         </a>
         <div className={styles.links}>
-          {SECTIONS.map((s) => (
+          {NAV_SECTIONS.map((s) => (
             <a
               key={s.n}
               href={secUrl(s.n)}

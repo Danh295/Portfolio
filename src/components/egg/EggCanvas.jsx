@@ -8,17 +8,10 @@ const FRAME_STYLE = { "--egg-font": EGG_FONT_PX + "px", "--egg-h": EGG_PX + "px"
  * The ASCII frame: a base <pre> the game loop writes into, plus an FX layer for the
  * coloured glyphs. Both are filled imperatively — no React children.
  */
-export default function EggCanvas({ preRef, fxRef, handlers, tip, label }) {
+export default function EggCanvas({ preRef, fxRef, handlers, label }) {
   return (
     <div className={styles.wrap} style={FRAME_STYLE}>
-      <pre
-        ref={preRef}
-        className={styles.pre}
-        data-tip={tip}
-        role="img"
-        aria-label={label}
-        {...handlers}
-      />
+      <pre ref={preRef} className={styles.pre} role="img" aria-label={label} {...handlers} />
       <div ref={fxRef} className={styles.fx} aria-hidden="true" />
     </div>
   );

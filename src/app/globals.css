@@ -158,10 +158,7 @@ textarea,
 select,
 code,
 kbd,
-samp,
-input,
-textarea,
-select {
+samp {
   font-size: inherit;
 }
 
