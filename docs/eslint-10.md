@@ -1,10 +1,12 @@
-# ESLint 10 workarounds
+# ESLint 10
 
-Read before touching `eslint.config.mjs`, bumping `eslint`, `eslint-config-next` or the lint plugins, or when lint crashes after an upgrade. Moved from CLAUDE.md unchanged.
+Read before touching `eslint.config.mjs`, bumping `eslint`, `eslint-config-next` or the lint plugins, or when lint crashes after an upgrade.
 
-`eslint.config.mjs` carries two workarounds, because `eslint-config-next` 16.3.8 and its plugins (`eslint-plugin-react` 7.37.5, `import` 2.32.0, `jsx-a11y` 6.10.2) don't declare ESLint 10 support yet:
+`eslint-config-next` 16.4.5 declares `eslint >=9` as its peer range, and `eslint.config.mjs` no longer carries the two workarounds it needed while the plugins lagged ESLint 10 (removed 2026-11-18):
 
-- JS/JSX files use ESLint's own parser (`espree`, a direct devDependency), because Next's bundled Babel parser crashes on ESLint 10.
-- `settings.react.version` is pinned, because `eslint-plugin-react` autodetects it through `context.getFilename()`, which ESLint 10 removed.
+- JS/JSX files used ESLint's own parser (`espree`, then a direct devDependency) because Next's bundled Babel parser crashed on ESLint 10 ("scopeManager.addGlobals is not a function"). Next's parser works now.
+- `settings.react.version` was pinned because `eslint-plugin-react` autodetected the version through `context.getFilename()`, which ESLint 10 removed. The autodetect works now (eslint-plugin-react 7.37.5).
 
-Remove both once those packages release ESLint 10 support (check `npm view eslint-config-next peerDependencies` and the plugins' peer ranges). A plugin that starts calling another removed API fails loudly (a crash on lint), not silently.
+Checked on removal: `npm run lint` is clean, and a scratch file with `setState` in an effect body, `Date.now()` in render and an undefined name failed with `react-hooks/purity` and `no-undef` (the React Compiler rules and `no-undef` still run).
+
+If a lint plugin starts calling another removed ESLint API, lint fails loudly (a crash), not silently. Re-add a workaround only then, and write it here with the error it fixes.

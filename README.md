@@ -17,7 +17,7 @@ npm run build         # static export to out/
 npm run sync          # refresh the build-time GitHub snapshot
 ```
 
-Needs Node 22 or newer (CI uses the version in `.nvmrc`). Content lives in `src/data/` and `src/config/`; there is no CMS.
+Needs Node 22.13 or newer (CI uses the version in `.nvmrc`). Content lives in `src/data/` and `src/config/`; there is no CMS.
 
 ## Layout
 

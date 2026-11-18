@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13"
   },
   "scripts": {
     "dev": "next dev",
@@ -29,7 +29,6 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^10.15.0",
     "eslint-config-next": "^16.4.5",
-    "espree": "^11.2.0",
     "prettier": "^3.9.9"
   },
   "homepage": "https://danh295.github.io/Portfolio/"
