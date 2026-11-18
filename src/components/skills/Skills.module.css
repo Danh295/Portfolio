@@ -78,6 +78,9 @@
   border: 1px solid var(--line);
   font-size: 13px;
   line-height: 1.6;
+  /* Capped to the room between the bars by fit() in Skills.jsx; the list scrolls inside. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 [data-up] > .panel {

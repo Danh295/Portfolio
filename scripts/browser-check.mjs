@@ -4217,6 +4217,60 @@ await run("the head follows the route (1291×808)", DESKTOP, async (tab) => {
   );
 });
 
+// The skill panel never runs under the bars: capped to the room between them, scrolled inside,
+// the focused option brought into view, and refitted when the window resizes. Git's list is the
+// longest (it counts every item).
+const PANEL_FIT = `(() => { const p = ${PANEL}; if (!p) return null;
+  const r = p.getBoundingClientRect(), cs = getComputedStyle(document.documentElement),
+    nav = parseFloat(cs.getPropertyValue("--nav-h")) || 58, bar = parseFloat(cs.getPropertyValue("--bar-h")) || 44;
+  const a = document.activeElement, ar = a && a.closest("[data-skill-panel]") ? a.getBoundingClientRect() : null;
+  return { top: Math.round(r.top), bottom: Math.round(r.bottom), nav, barTop: innerHeight - bar,
+    clipped: p.scrollHeight > p.clientHeight, scrolled: Math.round(p.scrollTop),
+    inside: r.top >= nav - 1 && r.bottom <= innerHeight - bar + 1,
+    focusInView: ar ? ar.top >= r.top - 1 && ar.bottom <= r.bottom + 1 : null, buttons: p.querySelectorAll("button").length };
+})()`;
+for (const [label, view] of [
+  ["800×450", { width: 800, height: 450 }],
+  ["1291×808", DESKTOP],
+]) {
+  await run(`skills panel stays between the bars, Git (${label})`, view, async (tab) => {
+    await tab.go("#skills");
+    await tab.key("Tab"); // keyboard modality, so a script focus counts as :focus-visible
+    await tab.evaluate(
+      `${SKILL("Git")}.scrollIntoView({ block: "center" }); ${SKILL("Git")}.focus()`,
+    );
+    await sleep(800);
+    const open = await tab.evaluate(PANEL_FIT);
+    check(
+      "Git's panel is open and between the bars",
+      open && open.inside && open.buttons > 8,
+      open,
+    );
+    if (view.height < 600)
+      check("it is taller than its room, so it scrolls inside", open && open.clipped, open);
+    await tab.key("Tab");
+    for (let i = 0; i < 12; i++) await tab.key("Tab");
+    const deep = await tab.evaluate(PANEL_FIT);
+    check(
+      "tabbing down the panel keeps the focused option in view, inside the bars",
+      deep && deep.inside && deep.focusInView === true,
+      deep,
+    );
+    if (view.height < 600) {
+      // The window shrinks: the panel refits instead of keeping its old size.
+      await tab.send("Emulation.setDeviceMetricsOverride", {
+        width: 800,
+        height: 380,
+        deviceScaleFactor: 1,
+        mobile: false,
+      });
+      await sleep(700);
+      const small = await tab.evaluate(PANEL_FIT);
+      check("after the window shrinks it is still between the bars", small && small.inside, small);
+    }
+  });
+}
+
 /* ---------- done ---------- */
 
 ws.close();

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildItems, buildSkills } from "@/lib/skills";
+import { buildItems, buildSkills, panelFit, PANEL_MIN } from "@/lib/skills";
 
 const project = (slug, tags) => ({ slug, title: slug.replace("-", " "), tags });
 const job = (company, tags, extra = {}) => ({ company, tags, ...extra });
@@ -137,4 +137,22 @@ test("a skill used only in a course has no projects to jump to", () => {
   });
   assert.deepEqual(x.uses.projects, []);
   assert.equal(x.uses.courses.length, 1);
+});
+
+test("panelFit: under the row when it fits, uncapped", () => {
+  assert.deepEqual(panelFit({ need: 200, below: 300, above: 100 }), { up: false, maxHeight: null });
+});
+
+test("panelFit: above when it doesn't fit below and there is more room there", () => {
+  assert.deepEqual(panelFit({ need: 200, below: 120, above: 400 }), { up: true, maxHeight: null });
+});
+
+test("panelFit: taller than either side is capped to the roomier one", () => {
+  assert.deepEqual(panelFit({ need: 400, below: 120, above: 250.7 }), { up: true, maxHeight: 250 });
+  assert.deepEqual(panelFit({ need: 400, below: 300, above: 100 }), { up: false, maxHeight: 300 });
+});
+
+test("panelFit: a cramped window keeps a few options, and a negative gap doesn't break it", () => {
+  assert.equal(panelFit({ need: 400, below: -20, above: 30 }).maxHeight, PANEL_MIN);
+  assert.equal(panelFit({ need: 50, below: -20, above: -30 }).maxHeight, null);
 });

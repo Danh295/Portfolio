@@ -118,3 +118,17 @@ export function buildSkills(stack, sources) {
     }),
   }));
 }
+
+/** Fewest pixels the skill panel is squeezed to, so a cramped window still shows a few options. */
+export const PANEL_MIN = 96;
+
+/**
+ * Where the skill panel goes, from its full height (`need`) and the room under and over its row
+ * between the bars: below, or above when it doesn't fit below and there's more room above. A panel
+ * taller than the room it gets is capped to it (`maxHeight`, scrolled inside), never under a bar.
+ */
+export function panelFit({ need, below, above }) {
+  const up = need > below && above > below;
+  const room = Math.max(up ? above : below, PANEL_MIN);
+  return { up, maxHeight: need > room ? Math.floor(room) : null };
+}

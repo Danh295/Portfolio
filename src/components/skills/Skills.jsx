@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import SectionFrame from "@/components/frame/SectionFrame";
 import Hint, { KeyLabel } from "@/components/Hint";
+import { panelFit } from "@/lib/skills";
 import styles from "./Skills.module.css";
 
 // "ieso (Oracle Database), acme": names with the tag they counted through, for the muted line.
@@ -10,25 +11,35 @@ const names = (items) =>
   items.map((it) => it.name + (it.via.length ? " (" + it.via.join(", ") + ")" : "")).join(", ");
 
 // Puts the panel where it fits: under its row, or above when the bars would cover it and
-// there's more room there. Measured from the real panel, on mount and again once a jump's
-// scroll has settled (the row moves with the page, the bars don't). Returns the cleanup.
+// there's more room there, and capped to that room (scrolling inside) when it is taller than
+// either side (panelFit). Measured from the real panel, on mount, again once a jump's scroll
+// has settled (the row moves with the page, the bars don't) and when the window resizes.
+// Returns the cleanup.
 function fit(panel) {
   const row = panel.parentElement,
     css = getComputedStyle(document.documentElement),
     bar = parseFloat(css.getPropertyValue("--bar-h")) || 44,
     nav = parseFloat(css.getPropertyValue("--nav-h")) || 58;
   const place = () => {
-    const r = row.getBoundingClientRect(),
-      below = window.innerHeight - bar - 8 - r.bottom,
-      above = r.top - nav - 8;
-    row.toggleAttribute("data-up", panel.offsetHeight > below && above > below);
+    const r = row.getBoundingClientRect();
+    // Its full height whatever cap it has now: the content plus the border it sits in.
+    const need = panel.scrollHeight + panel.offsetHeight - panel.clientHeight;
+    const { up, maxHeight } = panelFit({
+      need,
+      below: window.innerHeight - bar - 8 - r.bottom,
+      above: r.top - nav - 8,
+    });
+    row.toggleAttribute("data-up", up);
+    panel.style.maxHeight = maxHeight === null ? "" : maxHeight + "px";
   };
   place();
   const t = setTimeout(place, 450);
   window.addEventListener("scrollend", place);
+  window.addEventListener("resize", place);
   return () => {
     clearTimeout(t);
     window.removeEventListener("scrollend", place);
+    window.removeEventListener("resize", place);
     row.removeAttribute("data-up");
   };
 }
