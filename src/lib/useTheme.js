@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
+import { isDark, themeKeyChanged } from "./themePref";
 
 // Theme lives on <html data-theme>, which switches the five CSS tokens in globals.css.
 // Before first paint, the inline script in app/layout.js sets it from the visitor's saved
@@ -30,19 +31,26 @@ function subscribe(cb) {
   // The pre-paint script can run before Next adds <meta name="theme-color">: sync it now.
   syncThemeColor(read());
   const mq = window.matchMedia(OS_LIGHT);
-  const onOs = () => {
+  // The OS changed, or another tab saved (or cleared) the choice: apply what the saved choice
+  // and the OS now say. A choice made in this tab applies itself (setDark), so no event here.
+  const refresh = () => {
     let saved = null;
     try {
       saved = localStorage.getItem(KEY);
     } catch {
       // storage blocked: follow the OS
     }
-    if (saved !== "dark" && saved !== "light") apply(!mq.matches);
+    apply(isDark(saved, mq.matches));
   };
-  mq.addEventListener("change", onOs);
+  const onStorage = (e) => {
+    if (themeKeyChanged(e.key, KEY)) refresh();
+  };
+  mq.addEventListener("change", refresh);
+  window.addEventListener("storage", onStorage);
   return () => {
     listeners.delete(cb);
-    mq.removeEventListener("change", onOs);
+    mq.removeEventListener("change", refresh);
+    window.removeEventListener("storage", onStorage);
   };
 }
 
@@ -61,4 +69,9 @@ export function useTheme() {
   }, []);
   const toggle = useCallback(() => setDark(!read()), [setDark]);
   return [dark, setDark, toggle];
+}
+
+/** The pages with no toggle (the resume, the 404) call this to follow the OS and other tabs. */
+export function useThemeFollow() {
+  useTheme();
 }

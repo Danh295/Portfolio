@@ -4296,6 +4296,52 @@ for (const w of [390, 360, 320]) {
   );
 }
 
+// The resume and the 404 have no theme toggle: they follow the OS while no choice is saved, and
+// another tab saving one (a `storage` event). Home keeps doing both.
+const THEME = `document.documentElement.dataset.theme`;
+const osScheme = (tab, value) =>
+  tab.send("Emulation.setEmulatedMedia", {
+    features: [{ name: "prefers-color-scheme", value }],
+  });
+for (const [name, path] of [
+  ["resume page", "resume/"],
+  ["404 page", "no-such-page/"],
+]) {
+  await run(`the ${name} follows the OS and other tabs' theme (1291×808)`, DESKTOP, async (tab) => {
+    await osScheme(tab, "dark");
+    await tab.go(path, 3500);
+    const start = await tab.evaluate(THEME);
+    // Another tab saves light: this one gets a storage event, not the write.
+    await tab.evaluate(`localStorage.setItem("danny-theme", "light");
+      dispatchEvent(new StorageEvent("storage", { key: "danny-theme", newValue: "light" }))`);
+    await sleep(300);
+    check(
+      "a theme saved in another tab applies",
+      start === "dark" && (await tab.evaluate(THEME)) === "light",
+      { start, theme: await tab.evaluate(THEME) },
+    );
+    await osScheme(tab, "light");
+    await osScheme(tab, "dark");
+    await sleep(300);
+    check("a saved choice beats an OS change", (await tab.evaluate(THEME)) === "light", {
+      theme: await tab.evaluate(THEME),
+    });
+    // Cleared there: back to following the OS (dark now).
+    await tab.evaluate(
+      `localStorage.clear(); dispatchEvent(new StorageEvent("storage", { key: null }))`,
+    );
+    await sleep(300);
+    check("a cleared choice follows the OS again", (await tab.evaluate(THEME)) === "dark", {
+      theme: await tab.evaluate(THEME),
+    });
+    await osScheme(tab, "light");
+    await sleep(400);
+    check("and an OS change then applies", (await tab.evaluate(THEME)) === "light", {
+      theme: await tab.evaluate(THEME),
+    });
+  });
+}
+
 /* ---------- done ---------- */
 
 ws.close();

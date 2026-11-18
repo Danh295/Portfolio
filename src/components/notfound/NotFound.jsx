@@ -7,6 +7,7 @@ import { site } from "@/config/site";
 import RollingEgg from "./RollingEgg";
 import { KeyLabel } from "@/components/Hint";
 import KeysToggle from "@/components/KeysToggle";
+import { useThemeFollow } from "@/lib/useTheme";
 import styles from "./NotFound.module.css";
 
 const noopSubscribe = () => () => {};
@@ -29,6 +30,7 @@ function shellPath() {
 
 /** The 404 page: a failed `cd` in the site's shell voice, over a rolling egg. */
 export default function NotFound() {
+  useThemeFollow();
   const router = useRouter();
   // The exported 404.html is served for every unknown URL, so the path can only come
   // from the browser; "" on the server and during hydration.

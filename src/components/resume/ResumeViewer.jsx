@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { site } from "@/config/site";
 import Hint, { KeyLabel } from "@/components/Hint";
 import { useKeysPref } from "@/lib/useKeysPref";
+import { useThemeFollow } from "@/lib/useTheme";
 import { PRESSABLE, pressFx } from "@/lib/pressFx";
 import { isTouch } from "@/lib/egg/screen";
 import { FOLLOW, fitZoom, stepZoom, zoomFor, zoomLabel } from "@/lib/resumeView";
@@ -87,6 +88,7 @@ const topLeft = (el) => {
 
 /** The resume page: the PDF drawn with pdf.js, with the controls of a basic PDF reader. */
 export default function ResumeViewer() {
+  useThemeFollow();
   const [keysOn] = useKeysPref();
   const router = useRouter();
   const stageRef = useRef(null),
