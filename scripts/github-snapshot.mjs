@@ -123,7 +123,10 @@ const RETRY_MS = 15 * 60 * 1000;
  * 6 hours, or a run tried within 15 minutes (so a dead network doesn't make every dev start
  * wait out the timeouts again). A time in the future never counts. When `linked` (the repos the
  * projects link now) is given and the cached repos are a different set (any case), the 15-minute
- * rule doesn't apply: a new link must be fetched, not waited out. The 6 hour rule is unchanged.
+ * rule doesn't apply, so a changed link set isn't skipped on a recent attempt alone. The 6 hour
+ * rule is unchanged: a link added within 6 hours of a verified sync waits for `--if-stale` to
+ * pass that mark, or for a plain `npm run sync`. A linked repo GitHub never returns (a 404, or a
+ * new one whose fetch failed) keeps the sets different, so that sync skips the 15-minute rule.
  */
 export function isFresh(snap, now = Date.now(), linked = null) {
   const within = (iso, ms) => {
