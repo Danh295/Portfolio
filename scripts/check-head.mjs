@@ -1,8 +1,9 @@
 // Head-tag check: reads the built HTML in out/ the way a crawler does (no browser) and fails on
 // a head that tells crawlers or link previews the wrong thing. Run after `npm run build`; CI runs
 // it right after `next build`, so a bad head turns main red and nothing deploys.
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { copyProblems, duplicateProblems, routeProblems } from "./head-rules.mjs";
 
 const OUT = new URL("../out/", import.meta.url).pathname;
 if (!existsSync(join(OUT, "index.html"))) {
@@ -100,6 +101,38 @@ for (const url of INDEXABLE) {
       { src, size },
     );
   }
+}
+
+// Routes and copy (rules in head-rules.mjs, pinned by test/headRules.test.mjs): the sitemap is the
+// exact set of routes (home, the resume, one page per project in the data, found here by reading
+// the data file's slugs, not through the app), each has an exported file, and every page's title
+// and description agree with its og and twitter tags and with no other page's.
+{
+  const slugs = [
+    ...readFileSync(new URL("../src/data/projects.js", import.meta.url), "utf8").matchAll(
+      /^\s*slug:\s*"([^"]+)"/gm,
+    ),
+  ].map((m) => m[1]);
+  const projectsDir = join(OUT, "projects");
+  const exported = readdirSync(projectsDir, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && existsSync(join(projectsDir, d.name, "index.html")))
+    .map((d) => d.name);
+  const routes = routeProblems({ sitemap: INDEXABLE, slugs, exported, origin: ORIGIN });
+  check("the sitemap is exactly the site's routes, each exported", routes.length === 0, routes);
+  const pages = {};
+  for (const url of INDEXABLE) {
+    const file = fileOf(url);
+    if (!existsSync(join(OUT, file))) continue;
+    const title = readFileSync(join(OUT, file), "utf8").match(/<title>([^<]*)<\/title>/)?.[1];
+    const tags = head(file);
+    const meta = (key, attr = "name") =>
+      tags.find((t) => t.tag === "meta" && t[attr] === key)?.content;
+    const problems = copyProblems({ title, meta });
+    check(`${file}: title and description agree with og and twitter`, !problems.length, problems);
+    pages[url] = { title, description: meta("description") };
+  }
+  const dupes = duplicateProblems(pages);
+  check("no two pages share a title or a description", dupes.length === 0, dupes);
 }
 
 // Pages that must stay out of the index: the old section URLs (they redirect home) and the 404.
