@@ -4,6 +4,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { copyProblems, duplicateProblems, routeProblems } from "./head-rules.mjs";
+import { loadProjects } from "./load-projects.mjs";
 
 const OUT = new URL("../out/", import.meta.url).pathname;
 if (!existsSync(join(OUT, "index.html"))) {
@@ -105,14 +106,10 @@ for (const url of INDEXABLE) {
 
 // Routes and copy (rules in head-rules.mjs, pinned by test/headRules.test.mjs): the sitemap is the
 // exact set of routes (home, the resume, one page per project in the data, found here by reading
-// the data file's slugs, not through the app), each has an exported file, and every page's title
+// the data through the one loader the sync uses, not through the app), each has an exported file, and every page's title
 // and description agree with its og and twitter tags and with no other page's.
 {
-  const slugs = [
-    ...readFileSync(new URL("../src/data/projects.js", import.meta.url), "utf8").matchAll(
-      /^\s*slug:\s*"([^"]+)"/gm,
-    ),
-  ].map((m) => m[1]);
+  const slugs = (await loadProjects()).map((p) => p.slug);
   const projectsDir = join(OUT, "projects");
   const exported = readdirSync(projectsDir, { withFileTypes: true })
     .filter((d) => d.isDirectory() && existsSync(join(projectsDir, d.name, "index.html")))
