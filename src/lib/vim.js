@@ -367,6 +367,17 @@ function runCmd(S, raw) {
   return { state: { ...base, msg: "E492: Not an editor command: " + cmd } };
 }
 
+/**
+ * What the system clipboard said to a yank: `base` is the message the yank left (so a "3 lines
+ * yanked" stays), `ok` whether the write went through. Applied only while that message is still
+ * showing, so a note arriving after the next key doesn't overwrite what that key said.
+ */
+export function clipNote(S, base, ok) {
+  if (S.msg !== base) return S;
+  const note = ok ? "copied to clipboard" : "clipboard unavailable";
+  return { ...S, msg: base ? base + "; " + note : note };
+}
+
 /* ---------- keys ---------- */
 
 const INSERT_KEYS = new Set(["i", "a", "o", "I", "A", "O", "s", "S", "c", "C", "R"]);

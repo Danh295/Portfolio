@@ -56,6 +56,7 @@ const KEY = {
   g: ["KeyG", 71],
   r: ["KeyR", 82],
   h: ["KeyH", 72],
+  y: ["KeyY", 89],
 };
 // Page-side expressions: the nav button whose label includes `label`; the hero's heading
 // as typed so far, and in full (its aria-label, src/data/home.js `heading`).
@@ -4338,6 +4339,48 @@ for (const [name, path] of [
     await sleep(400);
     check("and an OS change then applies", (await tab.evaluate(THEME)) === "light", {
       theme: await tab.evaluate(THEME),
+    });
+  });
+}
+
+// vim's `y` in terminal mode says what the system clipboard did: copied, or unavailable (the
+// browser has none, or refuses). The yank itself (register, put) doesn't depend on it.
+for (const [label, setup, want] of [
+  [
+    "no clipboard",
+    `Object.defineProperty(navigator, "clipboard", { value: undefined })`,
+    /clipboard unavailable/,
+  ],
+  [
+    "a clipboard that refuses",
+    `Object.defineProperty(navigator, "clipboard", { value: { writeText: () => Promise.reject(new Error("no")) } })`,
+    /clipboard unavailable/,
+  ],
+  [
+    "a clipboard that accepts",
+    `Object.defineProperty(navigator, "clipboard", { value: { writeText: () => Promise.resolve() } })`,
+    /copied to clipboard/,
+  ],
+]) {
+  await run(`vim yank reports the clipboard: ${label} (1291×808)`, DESKTOP, async (tab) => {
+    await tab.go("#home");
+    await tab.key("`");
+    await sleep(400);
+    await tab.send("Input.insertText", { text: "./app --mode terminal" });
+    await tab.key("Enter");
+    await sleep(1200);
+    await tab.send("Input.insertText", { text: "vim about.txt" });
+    await tab.key("Enter");
+    await sleep(800);
+    await tab.evaluate(setup);
+    const open = await tab.evaluate(`!!document.querySelector("[data-vl]")`);
+    await tab.key("y");
+    await tab.key("y");
+    await sleep(400);
+    const text = await tab.evaluate(`document.body.innerText`);
+    check("vim is open and the status line reports the yank", open && want.test(text), {
+      open,
+      tail: text.slice(-200),
     });
   });
 }

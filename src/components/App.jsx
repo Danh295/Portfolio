@@ -28,7 +28,7 @@ import { useShell } from "@/components/shell/useShell";
 import { useTheme } from "@/lib/useTheme";
 import { useKeysPref } from "@/lib/useKeysPref";
 import { useReducedMotion } from "@/lib/useReducedMotion";
-import { openBuffer, vimKey as vimStep } from "@/lib/vim";
+import { clipNote, openBuffer, vimKey as vimStep } from "@/lib/vim";
 import { isPhone } from "@/lib/egg/screen";
 import { scrollPageTo } from "@/lib/pageLock";
 import { alignTarget, focusQuiet, freeNav, holdNav, keepAligned, parseLocation } from "@/lib/nav";
@@ -457,9 +457,26 @@ export default function App({ initialView = null }) {
     if (!r.handled) return;
     e.preventDefault();
     vimReg.current = r.state.reg;
-    if (r.clipboard != null) navigator.clipboard?.writeText(r.clipboard).catch(() => {});
     if (r.theme) setDark(r.theme === "dark");
     setVim(r.quit ? null : r.state);
+    if (r.clipboard != null && !r.quit) copyYank(r.clipboard, r.state.msg);
+  };
+
+  // A yank also goes to the system clipboard; the status line says whether it did (there may be
+  // no clipboard, or the browser may refuse). The unnamed register doesn't depend on it.
+  const copyYank = (text, base) => {
+    const note = (ok) => setVim((s) => s && clipNote(s, base, ok));
+    try {
+      const w = navigator.clipboard?.writeText(text);
+      if (w)
+        w.then(
+          () => note(true),
+          () => note(false),
+        );
+      else Promise.resolve().then(() => note(false));
+    } catch {
+      Promise.resolve().then(() => note(false));
+    }
   };
 
   // The facts of one keydown for the key router (src/lib/keyRouter.js decides): the key,

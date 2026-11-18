@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { openBuffer, vimKey } from "@/lib/vim";
+import { openBuffer, vimKey, clipNote } from "@/lib/vim";
 
 const keys = (lines, seq) => {
   let s = openBuffer("a.txt", lines);
@@ -56,4 +56,27 @@ test(":q is refused after an edit, :q! quits", () => {
   let t = openBuffer("a.txt", ["a"]);
   for (const k of ["d", "d", ":", "q", "!"]) t = vimKey(t, k).state;
   assert.equal(vimKey(t, "Enter").quit, true);
+});
+
+test("a yank reports the system clipboard's answer, and keeps the internal register either way", () => {
+  const y = vimKey(openBuffer("a.txt", ["a", "b", "c"]), "y");
+  const r = vimKey(y.state, "y");
+  assert.equal(r.clipboard, "a", "the yank asks the UI to copy its text");
+  const ok = clipNote(r.state, r.state.msg, true);
+  assert.equal(ok.msg, "copied to clipboard");
+  const no = clipNote(r.state, r.state.msg, false);
+  assert.equal(no.msg, "clipboard unavailable");
+  assert.deepEqual(no.reg, r.state.reg, "the register does not depend on the clipboard");
+  assert.deepEqual(no.lines, r.state.lines);
+});
+
+test("a clipboard note keeps a line count message and yields to a later key", () => {
+  let s = openBuffer("a.txt", ["a", "b", "c", "d"]);
+  for (const k of ["3", "y", "y"]) s = vimKey(s, k).state;
+  assert.equal(s.msg, "3 lines yanked");
+  assert.equal(clipNote(s, s.msg, true).msg, "3 lines yanked; copied to clipboard");
+  let later = s;
+  for (const k of [":", "z", "Enter"]) later = vimKey(later, k).state;
+  assert.ok(later.msg.startsWith("E492"), later.msg);
+  assert.equal(clipNote(later, "3 lines yanked", true), later, "a later message wins");
 });
