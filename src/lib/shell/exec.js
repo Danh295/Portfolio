@@ -15,6 +15,7 @@ import { createFs, pstr, resolve } from "./fs.js";
 import { SPEC, ALIAS, USAGE, HELP, CMDS } from "./spec.js";
 import { lc } from "../format.js";
 import { LOCKED } from "../ascii/image.js";
+import { mediaKey } from "../media.js";
 
 const own = (table, key) => (Object.hasOwn(table, key) ? table[key] : undefined);
 
@@ -42,7 +43,7 @@ export function createShell(data) {
     // Pictures last, so the text stays together: a private project says why instead.
     (p.media ?? []).forEach((m) => {
       if (m.private) o.push({ t: "txt", text: LOCKED }, { t: "dim", text: "  " + m.private });
-      else o.push({ t: "art", key: `${p.slug}/${m.file}`, alt: m.alt, caption: m.caption });
+      else o.push({ t: "art", key: mediaKey(p.slug, m.file), alt: m.alt, caption: m.caption });
     });
     return o;
   }

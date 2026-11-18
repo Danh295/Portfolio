@@ -4689,15 +4689,17 @@ const MEDIA_BTN = `document.querySelector('section[aria-label="media"] button')`
 const COVER = `(() => {
   const b = ${MEDIA_BTN}, c = b.querySelector("canvas"), img = b.querySelector("img");
   const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
-  let clear = 0, ink = 0;
+  let clear = 0, ink = 0, minAlpha = 255;
   const r0 = d[0], g0 = d[1], b0 = d[2];
   for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] < minAlpha) minAlpha = d[i + 3];
     if (d[i + 3] === 0) clear++;
     else if (Math.abs(d[i] - r0) + Math.abs(d[i + 1] - g0) + Math.abs(d[i + 2] - b0) > 120) ink++;
   }
   return {
     phase: b.dataset.phase,
     frac: +(clear / (d.length / 4)).toFixed(2),
+    minAlpha,
     ink,
     imgOpacity: getComputedStyle(img).opacity,
     coverShown: getComputedStyle(c).display !== "none",
@@ -4730,11 +4732,13 @@ await run(
     await mediaPage(tab);
     const before = await tab.evaluate(COVER);
     check(
-      "premise: the cover is drawn (ink, nothing uncovered) and the picture is hidden",
+      // The picture's own opacity isn't the test (a CSS fallback shows it after 4s in case the
+      // page never wakes up): it is hidden because the cover over it is opaque everywhere.
+      "premise: the cover is drawn, opaque everywhere (ink, no uncovered cell), over the picture",
       before.phase === "idle" &&
         before.ink > 200 &&
         before.frac === 0 &&
-        before.imgOpacity === "0" &&
+        before.minAlpha === 255 &&
         before.coverShown,
       before,
     );
@@ -4755,6 +4759,38 @@ await run(
       later.phase === "done" && !later.coverShown,
       later,
     );
+    check(
+      "an uncovered picture has nothing left to do: Tab skips it",
+      (await tab.evaluate(`${MEDIA_BTN}.tabIndex`)) === -1,
+    );
+  },
+);
+
+await run(
+  "project media: events piling up start one reveal, and a touch's move uncovers nothing (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await mediaPage(tab);
+    const r = await tab.evaluate(`(() => {
+      const b = ${MEDIA_BTN};
+      let started = 0;
+      const real = window.setInterval.bind(window);
+      window.setInterval = (...a) => { started++; return real(...a); };
+      const move = (type) => b.dispatchEvent(new PointerEvent("pointermove", { pointerType: type, bubbles: true }));
+      move("touch");
+      const afterTouch = b.dataset.phase;
+      move("mouse"); b.focus(); b.click(); move("mouse");
+      return { afterTouch, started };
+    })()`);
+    await sleep(1400);
+    const end = await tab.evaluate(COVER);
+    check(
+      "a touch's move does not uncover it (a tap does, through its click)",
+      r.afterTouch === "idle",
+      r,
+    );
+    check("a mouse move, focus and click in one go start one reveal", r.started === 1, r);
+    check("and it ends uncovered", end.phase === "done" && end.imgOpacity === "1", end);
   },
 );
 
@@ -4864,6 +4900,30 @@ await run(
       /city of waterloo/.test(st.cap) && st.label === "access denied: proprietary",
       st,
     );
+  },
+);
+
+await run(
+  "project media: the private placeholder scrambles as it scrolls into view, then locks (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("projects/ppeo-scan/", 3500);
+    const r = await tab.evaluate(`(async () => {
+      const pre = document.querySelector('section[aria-label="media"] pre');
+      const LOCKED = "[ access denied: proprietary ]";
+      const before = pre.textContent.includes(LOCKED);
+      const seen = [];
+      pre.closest("section").scrollIntoView({ block: "center" });
+      const t0 = performance.now();
+      while (performance.now() - t0 < 1600) {
+        seen.push(pre.textContent.includes(LOCKED));
+        await new Promise((r) => setTimeout(r, 20));
+      }
+      return { before, junk: seen.includes(false), end: seen.at(-1) };
+    })()`);
+    check("premise: it starts locked, as the static page is", r.before, r);
+    check("it shows junk while it scrambles", r.junk, r);
+    check("and ends locked", r.end, r);
   },
 );
 

@@ -7,6 +7,7 @@ import {
   revealOrder,
   revealCount,
   scrambleFrame,
+  seedFrom,
   LOCKED,
 } from "@/lib/ascii/image";
 
@@ -128,4 +129,16 @@ test("scrambleFrame: the same step and seed give the same frame", () => {
 
 test("LOCKED is the line the design settled on", () => {
   assert.equal(LOCKED, "[ access denied: proprietary ]");
+});
+
+test("seedFrom: the same text gives the same seed, keys of one length give different ones", () => {
+  assert.equal(seedFrom("crapos/boot"), seedFrom("crapos/boot"));
+  const keys = ["crapos/boot", "operaid/landing", "anifriend/pipeline"];
+  assert.ok(Number.isInteger(seedFrom(keys[0])));
+  assert.notEqual(seedFrom("ab/cd"), seedFrom("ba/dc"), "same length, different seed");
+  assert.equal(new Set(keys.map(seedFrom)).size, keys.length);
+  assert.notDeepEqual(
+    [...revealOrder(40, seedFrom("ab/cd"))],
+    [...revealOrder(40, seedFrom("ba/dc"))],
+  );
 });

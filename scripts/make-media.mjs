@@ -20,8 +20,10 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } fro
 import { homedir, tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { format } from "prettier";
 import sharp from "sharp";
 import { structureLevels } from "../src/lib/ascii/image.js";
+import { mediaKey } from "../src/lib/media.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCES_DIR = process.env.MEDIA_SRC || join(homedir(), "Documents", "portfolio-media-drafts");
@@ -52,12 +54,17 @@ try {
   for (const { slug, file, from } of SOURCES) {
     const src = join(SOURCES_DIR, from);
     const meta = await sharp(src).metadata();
-    const widths = [
-      ...new Set([...WIDTHS.filter((w) => w < meta.width), Math.min(meta.width, 1600)]),
-    ].sort((a, b) => a - b);
+    // The size as shown: a photo's EXIF orientation 5–8 turns it a quarter, swapping its sides
+    // (every pipeline below starts with .rotate(), which applies it).
+    const turned = meta.orientation >= 5 && meta.orientation <= 8;
+    const width = turned ? meta.height : meta.width,
+      height = turned ? meta.width : meta.height;
+    const widths = [...new Set([...WIDTHS.filter((w) => w < width), Math.min(width, 1600)])].sort(
+      (a, b) => a - b,
+    );
     mkdirSync(join(stage, "public", slug), { recursive: true });
     for (const w of widths) {
-      const img = sharp(src).resize({ width: w, withoutEnlargement: true });
+      const img = sharp(src).rotate().resize({ width: w, withoutEnlargement: true });
       await img
         .clone()
         .webp({ quality: 82 })
@@ -67,26 +74,29 @@ try {
         .avif({ quality: 55 })
         .toFile(join(stage, "public", slug, `${file}-${w}.avif`));
     }
-    const rows = Math.max(4, Math.round(((COLS * meta.height) / meta.width) * CELL));
+    const rows = Math.max(4, Math.round(((COLS * height) / width) * CELL));
     const { data } = await sharp(src)
+      .rotate()
       .flatten({ background: "#000" })
       .greyscale()
       .resize(COLS, rows, { fit: "fill", kernel: "lanczos3" })
       .raw()
       .toBuffer({ resolveWithObject: true });
-    grids[`${slug}/${file}`] = {
-      w: meta.width,
-      h: meta.height,
+    grids[mediaKey(slug, file)] = {
+      w: width,
+      h: height,
       widths,
       cols: COLS,
       rows,
       cells: Array.from(structureLevels(data)).join(""),
     };
     console.log(
-      `${slug}/${file}: ${meta.width}×${meta.height}, widths ${widths.join("+")}, grid ${COLS}×${rows}`,
+      `${slug}/${file}: ${width}×${height}, widths ${widths.join("+")}, grid ${COLS}×${rows}`,
     );
   }
-  writeFileSync(join(stage, "media-grids.json"), JSON.stringify(grids, null, 2) + "\n");
+  // Written as Prettier formats it, so `npm run format:check` stays green without a second step.
+  const json = await format(JSON.stringify(grids), { parser: "json" });
+  writeFileSync(join(stage, "media-grids.json"), json);
 
   // All rendered: replace what is published.
   for (const slug of new Set(SOURCES.map((s) => s.slug))) {

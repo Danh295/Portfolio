@@ -10,11 +10,14 @@ const TYPES = [
   ["image/webp", "webp"],
 ];
 
+/** The key a picture goes by in media-grids.json and on the page: `<project slug>/<file>`. */
+export const mediaKey = (slug, file) => `${slug}/${file}`;
+
 /** `grids` is src/data/media-grids.json; `base` the site's basePath ("" in dev). */
 export function mediaItems(project, grids, base) {
   return (project.media ?? []).map((m) => {
     if (m.private) return { kind: "private", caption: m.private };
-    const key = `${project.slug}/${m.file}`,
+    const key = mediaKey(project.slug, m.file),
       g = grids[key];
     if (!g) throw new Error(`no media grid for ${key} (run scripts/make-media.mjs)`);
     const url = (w, ext) => `${base}/media/${project.slug}/${m.file}-${w}.${ext}`;

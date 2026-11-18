@@ -16,14 +16,21 @@ const MAX_COLS = 100,
  */
 export default function ArtLine({ mediaKey, alt, caption }) {
   const boxRef = useRef(null);
-  const [grid, setGrid] = useState(null);
+  // The grid with the key it was loaded for: a line whose key changed shows nothing until its
+  // own grid arrives, not the previous one.
+  const [loaded, setLoaded] = useState(null);
   const [cols, setCols] = useState(0);
+  const grid = loaded?.key === mediaKey ? loaded.grid : null;
 
   useEffect(() => {
     let live = true;
-    import("@/data/media-grids.json").then((m) => {
-      if (live) setGrid(m.default[mediaKey] ?? null);
-    });
+    import("@/data/media-grids.json")
+      .then((m) => {
+        if (live) setLoaded({ key: mediaKey, grid: m.default[mediaKey] ?? null });
+      })
+      .catch(() => {
+        // The chunk didn't arrive (offline): the caption stands without its picture.
+      });
     return () => {
       live = false;
     };

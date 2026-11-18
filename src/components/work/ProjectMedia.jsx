@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { site } from "@/config/site";
 import grids from "@/data/media-grids.json";
 import { mediaItems } from "@/lib/media";
-import { gridRows, revealOrder, revealCount, scrambleFrame } from "@/lib/ascii/image";
+import { gridRows, revealOrder, revealCount, scrambleFrame, seedFrom } from "@/lib/ascii/image";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import styles from "./ProjectMedia.module.css";
 
@@ -17,7 +17,12 @@ const REVEAL_MS = 600;
 const SCRAMBLE_STEPS = 5,
   SCRAMBLE_MS = 500;
 const PLACEHOLDER_W = 36,
-  PLACEHOLDER_H = 9;
+  PLACEHOLDER_H = 9,
+  PLACEHOLDER_SEED = 5; // the junk is the same every time it plays
+// What a still's picture will be drawn at (the browser picks 800 or 1600 wide from it): the
+// lead is the full column, a row's two stills are about half of it.
+const LEAD_SIZES = "(min-width: 980px) 940px, 100vw",
+  ROW_SIZES = "(min-width: 980px) 460px, (min-width: 760px) 45vw, 100vw";
 
 /**
  * A still, covered by its own ASCII until a visitor hovers it, focuses it or taps it: then the
@@ -25,21 +30,29 @@ const PLACEHOLDER_W = 36,
  * a canvas over the <picture> (one node however many cells); without script (or with
  * `scripting: none`) there is no cover and the picture just shows.
  */
-function Still({ item }) {
+function Still({ item, sizes }) {
   const reduced = useReducedMotion();
   const coverRef = useRef(null);
   const fracRef = useRef(0); // how much of the cover is uncovered (0..1)
   const paintRef = useRef(null);
   const cellsRef = useRef(0);
+  const orderRef = useRef(null);
   const timerRef = useRef(0);
+  const startedRef = useRef(false); // one reveal per still, however many events ask for it
   const [phase, setPhase] = useState("idle"); // idle → revealing → done
-  const { grid } = item;
+  // The grid's parts, not the object: a render that rebuilds the object must not redraw the
+  // cover (and the effect's cleanup must never stop a reveal in progress).
+  const { cols: gridCols, rows: gridRowsN, cells } = item.grid;
+
+  // A reveal in progress stops only when the still goes away.
+  useEffect(() => () => clearInterval(timerRef.current), []);
 
   // Draw the cover, and again when its box or the theme changes (the uncovered share is kept).
   useEffect(() => {
     const el = coverRef.current;
     if (!el) return;
-    const seed = item.key.length * 7919;
+    const grid = { cols: gridCols, rows: gridRowsN, cells };
+    const seed = seedFrom(item.key);
     const paint = () => {
       const W = el.clientWidth,
         H = el.clientHeight;
@@ -67,8 +80,10 @@ function Still({ item }) {
         }
       const n = cols * rows.length;
       cellsRef.current = n;
+      // The shuffle depends only on the cell count: kept between repaints (a resize makes many).
+      if (orderRef.current?.n !== n) orderRef.current = { n, order: revealOrder(n, seed) };
       const gone = Math.round(fracRef.current * n),
-        order = revealOrder(n, seed);
+        order = orderRef.current.order;
       for (let k = 0; k < gone; k++) {
         const i = order[k];
         ctx.clearRect(
@@ -89,12 +104,12 @@ function Still({ item }) {
     return () => {
       ro.disconnect();
       mo.disconnect();
-      clearInterval(timerRef.current);
     };
-  }, [grid, item.key]);
+  }, [gridCols, gridRowsN, cells, item.key]);
 
   const start = () => {
-    if (phase !== "idle") return;
+    if (startedRef.current) return;
+    startedRef.current = true;
     setPhase("revealing");
     const steps = reduced ? 3 : 6,
       cfg = { ms: REVEAL_MS, steps },
@@ -117,22 +132,21 @@ function Still({ item }) {
       type="button"
       className={styles.still}
       data-phase={phase}
-      onPointerEnter={() => {
+      // Once uncovered it has nothing left to do: Tab skips it (a focus it already holds stays).
+      tabIndex={phase === "done" ? -1 : undefined}
+      onPointerMove={(e) => {
+        // A mouse or pen over it (a touch uncovers on its tap, not on the start of a scroll).
         // Keyboard mode (html.kbd) pauses hover: a page scrolling under a resting pointer
-        // doesn't uncover anything.
-        if (!document.documentElement.classList.contains("kbd")) start();
+        // doesn't uncover anything, and the first real move after it counts again.
+        if (e.pointerType !== "touch" && !document.documentElement.classList.contains("kbd"))
+          start();
       }}
       onFocus={start}
       onClick={start}
     >
       <picture>
         {item.sources.map((s) => (
-          <source
-            key={s.type}
-            type={s.type}
-            srcSet={s.srcSet}
-            sizes="(min-width: 980px) 940px, 100vw"
-          />
+          <source key={s.type} type={s.type} srcSet={s.srcSet} sizes={sizes} />
         ))}
         <img
           src={item.src}
@@ -183,7 +197,7 @@ function Private() {
   return (
     <div ref={boxRef} className={styles.private} role="img" aria-label="access denied: proprietary">
       <pre aria-hidden="true">
-        {scrambleFrame(step, SCRAMBLE_STEPS, PLACEHOLDER_W, PLACEHOLDER_H, 5)}
+        {scrambleFrame(step, SCRAMBLE_STEPS, PLACEHOLDER_W, PLACEHOLDER_H, PLACEHOLDER_SEED)}
       </pre>
     </div>
   );
@@ -194,18 +208,18 @@ export default function ProjectMedia({ project }) {
   const items = mediaItems(project, grids, site.basePath);
   if (!items.length) return null;
   const [lead, ...rest] = items;
-  const fig = (item) => (
+  const fig = (item, sizes) => (
     <figure key={item.key ?? "private"} className={styles.fig}>
-      {item.kind === "private" ? <Private /> : <Still item={item} />}
+      {item.kind === "private" ? <Private /> : <Still item={item} sizes={sizes} />}
       <figcaption className={styles.cap}>{item.caption}</figcaption>
     </figure>
   );
   return (
     <section className={styles.media} aria-label="media">
-      {fig(lead)}
+      {fig(lead, LEAD_SIZES)}
       {rest.length > 0 && (
         <div className={styles.row} data-n={rest.length}>
-          {rest.map(fig)}
+          {rest.map((item) => fig(item, ROW_SIZES))}
         </div>
       )}
     </section>

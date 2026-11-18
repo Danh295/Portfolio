@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { mediaItems } from "@/lib/media";
+import { mediaItems, mediaKey } from "@/lib/media";
 import { projects } from "@/data/projects";
 import grids from "@/data/media-grids.json" with { type: "json" };
 
@@ -10,6 +10,16 @@ const G = {
   "p/a": { w: 1600, h: 1000, widths: [800, 1600], cols: 4, rows: 2, cells: "01239876" },
   "p/b": { w: 720, h: 272, widths: [720], cols: 4, rows: 1, cells: "0123" },
 };
+
+test("mediaKey: the one place the slug/file key is made (the grids, the page and the shell use it)", () => {
+  assert.equal(mediaKey("crapos", "boot"), "crapos/boot");
+  const [m] = mediaItems(
+    { slug: "p", media: [{ file: "a", alt: "x", caption: "y" }] },
+    { [mediaKey("p", "a")]: G["p/a"] },
+    "",
+  );
+  assert.equal(m.key, mediaKey("p", "a"));
+});
 
 test("mediaItems: no media field, no items", () => {
   assert.deepEqual(mediaItems({ slug: "p" }, G, "/Portfolio"), []);

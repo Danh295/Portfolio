@@ -168,9 +168,17 @@ for (const file of NOINDEX) {
 }
 
 // Project media: the exported page names its pictures (so a crawler and a visitor without script
-// get them), and every file it names is in the build. The pages that have media are pinned by
-// name, so a build that quietly stops rendering them can't pass by having nothing to check.
-const WITH_MEDIA = ["crapos", "anifriend", "operaid"];
+// get them), and every file it names is in the build. The pages that have media are those with a
+// grid in src/data/media-grids.json (made with the pictures, keyed `<slug>/<file>`), so a build
+// that quietly stops rendering them can't pass by having nothing to check, and a new project
+// with media needs no edit here.
+const WITH_MEDIA = [
+  ...new Set(
+    Object.keys(
+      JSON.parse(readFileSync(new URL("../src/data/media-grids.json", import.meta.url), "utf8")),
+    ).map((key) => key.split("/")[0]),
+  ),
+];
 for (const slug of readdirSync(join(OUT, "projects"))) {
   const file = join("projects", slug, "index.html");
   if (!statSync(join(OUT, "projects", slug)).isDirectory() || !existsSync(join(OUT, file)))
@@ -194,6 +202,7 @@ for (const slug of readdirSync(join(OUT, "projects"))) {
     );
   }
 }
+check("some page has media", WITH_MEDIA.length > 0, WITH_MEDIA);
 check(
   "the pages with media are all pages of the build",
   WITH_MEDIA.every((s) => existsSync(join(OUT, "projects", s, "index.html"))),

@@ -64,6 +64,13 @@ export function gridRows(grid, cols) {
   return out;
 }
 
+/** A number from a text (a media key), so each picture uncovers in its own order. */
+export function seedFrom(text) {
+  let h = 7;
+  for (let i = 0; i < text.length; i++) h = (Math.imul(h, 31) + text.charCodeAt(i)) | 0;
+  return h;
+}
+
 const lcg = (seed) => () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296;
 
 /** The order cells uncover the picture in: a seeded shuffle of 0..n-1 (the same every time). */

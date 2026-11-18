@@ -53,9 +53,19 @@
   height: auto;
 }
 
-/* Until it is uncovered the picture is hidden, so it can't show before the cover is drawn. */
+/* Until it is uncovered the picture is hidden, so it can't show before the cover is drawn. If
+   the page never wakes up (a script that fails after the HTML loaded) the picture shows after
+   4s anyway: a working cover is opaque and sits over it, so this only matters when there is
+   no cover. [inference: not reproduced with a script that fails to hydrate] */
 .still[data-phase="idle"] img {
   opacity: 0;
+  animation: still-fallback 0s linear 4s forwards;
+}
+
+@keyframes still-fallback {
+  to {
+    opacity: 1;
+  }
 }
 
 .cover {
