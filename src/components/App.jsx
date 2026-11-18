@@ -276,7 +276,7 @@ export default function App({ initialView = null }) {
         : document.querySelector(
             [
               '[data-row="' + stop + '"]',
-              '[data-exprow="' + stop + '"] button',
+              '[data-exprow="' + stop + '"] > h3 > button',
               '[data-skillrow="' + stop + '"]',
             ][sec - 1],
           );

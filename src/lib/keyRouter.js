@@ -237,7 +237,7 @@ function selection(f) {
     return { el: `[data-skillrow="${f.skillSel}"]`, act: { do: "enterSkillPanel" } };
   if (f.activeSec === 2 && f.expSel >= 0) {
     const i = f.expOpen === f.expSel ? -1 : f.expSel;
-    return { el: `[data-exprow="${f.expSel}"] button`, act: { do: "setExpOpen", i } };
+    return { el: `[data-exprow="${f.expSel}"] > h3 > button`, act: { do: "setExpOpen", i } };
   }
   return null;
 }
