@@ -105,8 +105,8 @@ for (const url of INDEXABLE) {
 }
 
 // Routes and copy (rules in head-rules.mjs, pinned by test/headRules.test.mjs): the sitemap is the
-// exact set of routes (home, the resume, one page per project in the data, found here by reading
-// the data through the one loader the sync uses, not through the app), each has an exported file, and every page's title
+// exact set of routes (home, the resume, one page per project in the data, read through the same
+// loader the sync uses, not through the app), each has an exported file, and every page's title
 // and description agree with its og and twitter tags and with no other page's.
 {
   const slugs = (await loadProjects()).map((p) => p.slug);

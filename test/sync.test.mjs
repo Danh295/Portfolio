@@ -5,9 +5,11 @@ import {
   dayItems,
   driftReport,
   collectPages,
+  emptySnapshot,
   isFresh,
   mergeRepos,
   mergeSnapshot,
+  repairFor,
   repoDrift,
   sanitizeSnapshot,
 } from "../scripts/github-snapshot.mjs";
@@ -380,4 +382,32 @@ test("repoDrift: an incomplete scan is not ok even with nothing else to report",
   assert.ok(driftReport(d).some((l) => l.startsWith("incomplete")));
   assert.equal(drift({ owned: [] }).incomplete, false);
   assert.equal(drift({ owned: [] }).ok, true);
+});
+
+test("isFresh: a changed set of linked repos skips the 15-minute backoff, not the 6 hour rule", () => {
+  const at = (ms) => new Date(NOW - ms).toISOString();
+  const repo = { url: "u", stars: 1, syncedAt: at(7 * 3600e3) };
+  const tried = { attemptedAt: at(60e3), reposAt: at(7 * 3600e3), activityAt: at(7 * 3600e3) };
+  const snap = { ...tried, repos: { "Me/Thing": repo } };
+  assert.equal(isFresh(snap, NOW), true); // no list: as before
+  assert.equal(isFresh(snap, NOW, ["me/thing"]), true); // same set, any case
+  assert.equal(isFresh(snap, NOW, ["Me/Thing", "Me/New"]), false); // a repo was linked
+  assert.equal(isFresh(snap, NOW, []), false); // a repo was unlinked
+  const verified = { ...snap, reposAt: at(3600e3), activityAt: at(3600e3) };
+  assert.equal(isFresh(verified, NOW, ["Me/Thing", "Me/New"]), true); // verified rule stays
+});
+
+test("repairFor: what a failed sync writes over the file on disk", () => {
+  const good = sanitizeSnapshot(
+    {
+      user: "u",
+      repos: { "a/b": { url: "x", stars: 1, syncedAt: new Date(NOW).toISOString() } },
+    },
+    "u",
+  );
+  assert.equal(repairFor(good, "u"), null, "a clean file is left alone");
+  assert.deepEqual(repairFor(undefined, "u"), emptySnapshot("u"), "missing or unparseable");
+  assert.deepEqual(repairFor({ user: "other", repos: {} }, "u"), emptySnapshot("u"));
+  const dirty = { ...good, repos: { ...good.repos, "a/bad": { stars: "many" } } };
+  assert.deepEqual(repairFor(dirty, "u"), good, "parses but unclean: sanitized, not left as is");
 });

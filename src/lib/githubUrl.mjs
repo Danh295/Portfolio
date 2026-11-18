@@ -29,7 +29,14 @@ export function parseGithubRepo(href) {
   if ((u.protocol !== "https:" && u.protocol !== "http:") || !HOSTS.has(u.hostname)) return null;
   const [owner, rest] = u.pathname.split("/").filter(Boolean);
   const name = rest?.replace(/\.git$/, "");
-  if (!owner || !name || RESERVED.has(owner.toLowerCase()) || !/^[\w.-]+$/.test(owner) || !/^[\w.-]+$/.test(name)) return null;
+  if (
+    !owner ||
+    !name ||
+    RESERVED.has(owner.toLowerCase()) ||
+    !/^[\w.-]+$/.test(owner) ||
+    !/^[\w.-]+$/.test(name)
+  )
+    return null;
   return { owner, name, key: `${owner}/${name}` };
 }
 

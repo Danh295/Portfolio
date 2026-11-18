@@ -23,7 +23,14 @@
 // Usage: node scripts/sync-github.mjs [--if-stale]   (--if-stale: skip if < 6h old)
 
 import { readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
-import { buckets, dayItems, isFresh, mergeSnapshot, sanitizeSnapshot } from "./github-snapshot.mjs";
+import {
+  buckets,
+  dayItems,
+  isFresh,
+  mergeSnapshot,
+  repairFor,
+  sanitizeSnapshot,
+} from "./github-snapshot.mjs";
 import { linkedRepos } from "../src/lib/githubUrl.mjs";
 import { loadProjects } from "./load-projects.mjs";
 
@@ -119,13 +126,13 @@ async function pushes() {
 
 async function main() {
   const { snap: prev, clean } = readSnapshot();
-  if (process.argv.includes("--if-stale") && isFresh(prev)) {
+  const list = linkedRepos(await loadProjects());
+  if (process.argv.includes("--if-stale") && isFresh(prev, Date.now(), list)) {
     if (!clean) write(prev); // a fresh but damaged file is repaired, not left for the build
     console.log("github sync: snapshot is fresh, skipping");
     return;
   }
 
-  const list = linkedRepos(await loadProjects());
   const results = await Promise.allSettled(list.map(repoInfo));
   results.forEach((r, i) => {
     if (r.status === "rejected") console.warn("github sync: " + list[i] + ": " + r.reason.message);
@@ -163,14 +170,13 @@ async function main() {
 
 main().catch((e) => {
   console.warn("github sync failed: " + e.message);
-  // The build imports this file: it must exist and parse, even if empty.
-  if (!readSnapshot().snap)
-    write({
-      user: USER,
-      attemptedAt: null,
-      reposAt: null,
-      activityAt: null,
-      repos: {},
-      activity: null,
-    });
+  // The build imports this file: it must exist and parse, and hold only what is valid.
+  let raw;
+  try {
+    raw = JSON.parse(readFileSync(OUT, "utf8"));
+  } catch {
+    raw = undefined;
+  }
+  const fix = repairFor(raw, USER);
+  if (fix) write(fix);
 });

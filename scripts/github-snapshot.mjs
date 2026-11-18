@@ -44,6 +44,8 @@ export function mergeRepos(list, results, prev = {}, now = Date.now()) {
   return { repos, failed };
 }
 
+const lower = (s) => s.toLowerCase();
+
 const isObj = (x) => x !== null && typeof x === "object" && !Array.isArray(x);
 const isTime = (x) => typeof x === "string" && Number.isFinite(Date.parse(x));
 const timeOr = (x) => (isTime(x) ? x : null);
@@ -107,21 +109,29 @@ export function mergeSnapshot({ prev, user, list, results, activity, now = Date.
   };
 }
 
+const sameRepos = (repos, linked) => {
+  const have = new Set(Object.keys(repos).map(lower)),
+    want = new Set(linked.map(lower));
+  return have.size === want.size && [...want].every((k) => have.has(k));
+};
+
 const STALE_MS = 6 * 60 * 60 * 1000;
 const RETRY_MS = 15 * 60 * 1000;
 
 /**
  * Whether `--if-stale` can skip the sync: both the repos and the activity were verified within
  * 6 hours, or a run tried within 15 minutes (so a dead network doesn't make every dev start
- * wait out the timeouts again). A time in the future never counts.
+ * wait out the timeouts again). A time in the future never counts. When `linked` (the repos the
+ * projects link now) is given and the cached repos are a different set (any case), the 15-minute
+ * rule doesn't apply: a new link must be fetched, not waited out. The 6 hour rule is unchanged.
  */
-export function isFresh(snap, now = Date.now()) {
+export function isFresh(snap, now = Date.now(), linked = null) {
   const within = (iso, ms) => {
     const age = now - Date.parse(iso);
     return Number.isFinite(age) && age >= 0 && age < ms;
   };
   if (!snap) return false;
-  if (within(snap.attemptedAt, RETRY_MS)) return true;
+  if (within(snap.attemptedAt, RETRY_MS) && (!linked || sameRepos(snap.repos, linked))) return true;
   return within(snap.reposAt, STALE_MS) && within(snap.activityAt, STALE_MS);
 }
 
@@ -142,8 +152,6 @@ export async function collectPages(fetchPage, maxPages = 10) {
   }
   return { nodes, complete: false };
 }
-
-const lower = (s) => s.toLowerCase();
 
 /**
  * What the repo check reports. `owned` (the user's public repos) and `contributed` (public
@@ -217,4 +225,26 @@ export function driftReport(d) {
         "from this check (raise the page limit in scripts/check-repos.mjs)",
     );
   return lines;
+}
+
+/** The snapshot the build falls back to when there is nothing usable: no repos, no activity. */
+export const emptySnapshot = (user) => ({
+  user,
+  attemptedAt: null,
+  reposAt: null,
+  activityAt: null,
+  repos: {},
+  activity: null,
+});
+
+/**
+ * What to write when a sync fails early, from the file as parsed (`undefined` when missing or
+ * not JSON): the empty snapshot when nothing in it is usable, its sanitized form when it parses
+ * but isn't clean (a bad record the build would still import), or null when it is already
+ * exactly what sanitizing gives and there is nothing to repair.
+ */
+export function repairFor(raw, user) {
+  const snap = sanitizeSnapshot(raw, user);
+  if (!snap) return emptySnapshot(user);
+  return JSON.stringify(raw) === JSON.stringify(snap) ? null : snap;
 }
