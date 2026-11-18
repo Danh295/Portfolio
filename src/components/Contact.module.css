@@ -1,0 +1,29 @@
+.contact {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 8px;
+}
+
+/* A link (mailto), but plain text for selecting: user-select is on, and it reads as text. */
+.address {
+  color: var(--fg);
+  user-select: text;
+  -webkit-user-select: text;
+  overflow-wrap: anywhere;
+}
+
+.copy {
+  min-height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--mid);
+  font: inherit;
+  cursor: pointer;
+}
+
+:global(html:not(.kbd)) .copy:hover {
+  background: var(--fg);
+  color: var(--bg);
+}

@@ -4521,6 +4521,69 @@ await run(
   },
 );
 
+// The email address is visible text (the bottom bar only had it in a hover tip), selectable, with
+// a copy button that says what happened and the mailto link kept. Compared against the link's own
+// href, so no address is written in this file.
+for (const [label, view, mobile] of [
+  ["1291×808", DESKTOP],
+  ["390×844, touch", PHONE, true],
+]) {
+  await run(
+    `the contact address is visible and copyable (${label})`,
+    { ...view, mobile },
+    async (tab) => {
+      await tab.go("#skills");
+      await tab.evaluate(
+        `document.querySelector("[data-contact-address]")?.scrollIntoView({ block: "center" })`,
+      );
+      await sleep(500);
+      const read = () =>
+        tab.evaluate(`(() => { const a = document.querySelector("[data-contact-address]"), b = document.querySelector("[data-contact-copy]");
+        if (!a || !b) return null;
+        const r = a.getBoundingClientRect(), br = b.getBoundingClientRect();
+        return { text: a.textContent, href: a.getAttribute("href"), select: getComputedStyle(a).userSelect,
+          shown: r.width > 0 && r.bottom <= innerHeight && br.height >= 24, button: b.textContent.trim(), status: document.querySelector("[data-contact-copy] ~ [role=status]")?.textContent ?? "" };
+      })()`);
+      const before = await read();
+      check(
+        "the address shows as text, selectable, and keeps its mailto",
+        before &&
+          before.shown &&
+          before.text.includes("@") &&
+          before.href === "mailto:" + before.text &&
+          before.select !== "none",
+        before,
+      );
+      await tab.evaluate(
+        `window.__copied = null; Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: (t) => { window.__copied = t; return Promise.resolve(); } } })`,
+      );
+      await (mobile ? tab.tap : tab.click)(`document.querySelector("[data-contact-copy]")`);
+      await sleep(300);
+      const done = await read();
+      check(
+        "copy writes the address and says copied",
+        (await tab.evaluate("window.__copied")) === before?.text &&
+          done?.button === "copied" &&
+          /copied/.test(done.status),
+        done,
+      );
+      await sleep(2300);
+      check("the note goes away on its own", (await read())?.button === "copy");
+      await tab.evaluate(
+        `Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined })`,
+      );
+      await (mobile ? tab.tap : tab.click)(`document.querySelector("[data-contact-copy]")`);
+      await sleep(300);
+      const failed = await read();
+      check(
+        "with no clipboard it says the copy failed",
+        /copy failed/.test(failed?.button ?? ""),
+        failed,
+      );
+    },
+  );
+}
+
 /* ---------- done ---------- */
 
 ws.close();

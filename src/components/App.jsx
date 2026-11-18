@@ -12,6 +12,7 @@ import Experience from "@/components/experience/Experience";
 import Skills from "@/components/skills/Skills";
 import MiniShell from "@/components/shell/MiniShell";
 import Isolate from "@/components/Isolate";
+import Contact from "@/components/Contact";
 import Fallback from "@/components/Fallback";
 import Terminal from "@/components/shell/Terminal";
 import Tooltip from "@/components/overlay/Tooltip";
@@ -1067,6 +1068,7 @@ export default function App({ initialView = null }) {
       />
       <div className={styles.foot}>
         <span suppressHydrationWarning>© {YEAR} danny hu · ontario, canada</span>
+        <Contact />
         <KeyLabel>
           [↑/↓] sections<Hint> · [?] all keys · [`] shell</Hint>
         </KeyLabel>
