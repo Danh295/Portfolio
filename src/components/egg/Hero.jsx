@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import SectionFrame from "@/components/frame/SectionFrame";
 import Hint, { KeyLabel, TouchText } from "@/components/Hint";
 import { homeContent } from "@/data/home";
@@ -42,12 +42,21 @@ export default function Hero({
   const rulesUp = view.briefing || rulesOpen;
   // The rules card takes focus while it's up, so screen readers read the rules (and its keys
   // still work: they go to the page's handler). When it goes away and focus has nowhere to be
-  // (the card was the focus), it goes back to what had it, or to the rules chip.
+  // (the card was the focus), it goes back to what had it, or to the rules chip: only when it
+  // was dismissed. Proceeding into the game (the stage moved on since it opened) leaves focus
+  // alone, so Enter/Space still reach the page instead of the chip button. The layout effect
+  // lands before the effect and its cleanup run, so the ref is current in both.
+  const stageNow = useRef(view.stage);
+  useLayoutEffect(() => {
+    stageNow.current = view.stage;
+  }, [view.stage]);
   useEffect(() => {
     if (!rulesUp) return;
-    const from = document.activeElement;
+    const from = document.activeElement,
+      openedAt = stageNow.current;
     rulesRef.current?.focus({ preventScroll: true, focusVisible: false });
     return () => {
+      if (stageNow.current !== openedAt) return;
       if (document.activeElement && document.activeElement !== document.body) return;
       const back =
         from?.isConnected && from !== document.body
