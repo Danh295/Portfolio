@@ -18,7 +18,7 @@ export default function KeysToggle({ className }) {
       aria-label="single-key shortcuts"
       data-action="keys"
     >
-      shortcuts: {on ? "on" : "off"}
+      keys: {on ? "on" : "off"}
     </button>
   );
 }

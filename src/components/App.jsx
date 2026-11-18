@@ -471,7 +471,7 @@ export default function App({ initialView = null }) {
       alt: e.altKey,
       typing: !!ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA"),
       onButton: !!focused?.closest("a, button"),
-      onAppLink: !!focused?.closest("a[data-row], a[data-key]"),
+      onAppLink: !!focused?.closest("a[data-app-link]"),
       onControl,
       tabFocused: onControl && ae === tabFocus.current,
       selectionCollapsed: window.getSelection()?.isCollapsed ?? true,

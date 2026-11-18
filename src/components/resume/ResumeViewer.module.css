@@ -54,6 +54,7 @@
 
 .actions {
   gap: 8px;
+  flex-wrap: wrap; /* five buttons are too wide for a phone's row */
 }
 
 /* Plain controls (leave, the zoom steps, fit): text, as the app's nav links are. */
@@ -76,6 +77,7 @@
 .bar .btn {
   padding: 5px 10px;
   border: 1px solid var(--fg);
+  white-space: nowrap;
 }
 
 /* A key hint inside a control, dimmed like the home page's. */

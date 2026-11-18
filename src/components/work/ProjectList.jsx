@@ -73,6 +73,7 @@ export default function ProjectList({ list, filter, sel, active, listRef, onFilt
               key={p.slug}
               href={projUrl(p.slug)}
               data-row={i}
+              data-app-link=""
               draggable={false}
               aria-current={on ? "true" : undefined}
               aria-label={projectRowName(p, i, list.length)}

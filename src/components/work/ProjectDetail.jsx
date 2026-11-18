@@ -41,6 +41,7 @@ export default function ProjectDetail({ slug, onBack, onOpen }) {
       <div className={styles.nav}>
         <a
           href={secUrl(1)}
+          data-app-link=""
           onClick={inApp(onBack)}
           data-key="Escape"
           data-tip="back to ~/projects"
@@ -51,6 +52,7 @@ export default function ProjectDetail({ slug, onBack, onOpen }) {
         <div className={styles.pn}>
           <a
             href={projUrl(prev.slug)}
+            data-app-link=""
             onClick={inApp(() => onOpen(prev.slug))}
             data-key="ArrowLeft"
             data-tip={prev.title}
@@ -63,6 +65,7 @@ export default function ProjectDetail({ slug, onBack, onOpen }) {
           </a>
           <a
             href={projUrl(next.slug)}
+            data-app-link=""
             onClick={inApp(() => onOpen(next.slug))}
             data-key="ArrowRight"
             data-tip={next.title}

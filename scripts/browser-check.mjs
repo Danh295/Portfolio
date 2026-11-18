@@ -2202,7 +2202,7 @@ for (const path of ["projects/crapos/", "#projects/crapos"])
 
 // A popup holds the page still: a wheel over its scrim moved the page behind it (it only looked
 // inert), and Tab left the dialog for the browser's own chrome and came back in.
-await run("a popup locks the page and keeps Tab inside (1291×808)", DESKTOP, async (tab) => {
+await run("a popup holds the page still and keeps Tab inside (1291×808)", DESKTOP, async (tab) => {
   await tab.go("#home");
   const wheel = async () => {
     await tab.send("Input.dispatchMouseEvent", {
@@ -2215,25 +2215,35 @@ await run("a popup locks the page and keeps Tab inside (1291×808)", DESKTOP, as
     await sleep(500);
   };
   const y = () => tab.evaluate("Math.round(scrollY)");
+  // The bars are sticky/fixed: where they and the page's content sit while a popup is open.
+  const look = () =>
+    tab.evaluate(`({ y: Math.round(scrollY),
+      nav: Math.round(document.querySelector("nav").getBoundingClientRect().top),
+      foot: Math.round(document.querySelector("footer").getBoundingClientRect().bottom),
+      sec: Math.round(document.querySelector('[data-sec="1"]').getBoundingClientRect().top),
+      vis: getComputedStyle(document.querySelector("nav")).visibility,
+      h: innerHeight })`);
   await wheel();
   const free = await y();
   check("the page scrolls by wheel with no popup open", free > 100, { free });
-  await tab.evaluate("scrollTo(0, 0)");
-  await sleep(300);
+  const at = await look();
   await tab.key("?");
   await sleep(400);
-  const locked = await tab.evaluate(`document.documentElement.classList.contains("locked")`);
-  const barsShown = await tab.evaluate(
-    `getComputedStyle(document.querySelector("nav")).visibility === "visible"`,
+  const held = await tab.evaluate(`document.documentElement.classList.contains("popup-lock")`);
+  const under = await look();
+  check(
+    "from a scrolled page, opening a popup moves nothing: the bars stay put, the content too",
+    held &&
+      under.y === at.y &&
+      under.sec === at.sec &&
+      under.nav === 0 &&
+      Math.abs(under.foot - under.h) <= 1 &&
+      under.vis === "visible",
+    { held, at, under },
   );
-  const before = await y();
   await wheel();
-  const after = await y();
-  check("the page is locked under the popup, and its bars stay visible", locked && barsShown, {
-    locked,
-    barsShown,
-  });
-  check("a wheel over the scrim doesn't scroll the page", after === before, { before, after });
+  const after = await look();
+  check("a wheel over the scrim doesn't scroll the page", after.y === under.y, { under, after });
   // Tab and Shift+Tab (8 = shift) wrap inside the dialog, however many times.
   const inside = () => tab.evaluate(`!!document.activeElement.closest('[role="dialog"]')`);
   let stayed = true;
@@ -2250,9 +2260,9 @@ await run("a popup locks the page and keeps Tab inside (1291×808)", DESKTOP, as
   check("Tab and Shift+Tab stay in the dialog", forward && stayed, { forward, stayed });
   await tab.key("Escape");
   await sleep(400);
-  const unlocked = await tab.evaluate(`!document.documentElement.classList.contains("locked")`);
+  const released = await tab.evaluate(`!document.documentElement.classList.contains("popup-lock")`);
   await wheel();
-  check("closing it unlocks the page", unlocked && (await y()) > 100, { unlocked });
+  check("closing it lets the page scroll again", released && (await y()) > under.y, { released });
 });
 
 // A11Y-01: a project row's accessible name while its section types in. The frame blanks its
@@ -2280,8 +2290,15 @@ await run(
     // Focus starts the section (its frame is still waiting), and the focused row is read at once.
     await tab.evaluate(`document.querySelector('[data-row="${last}"]').focus()`);
     const focused = await nameOf(last);
-    const text = await tab.evaluate(`document.querySelector('[data-row="${last}"]').textContent`);
+    const read = () =>
+      tab.evaluate(`({ text: document.querySelector('[data-row="${last}"]').textContent,
+        others: document.querySelector('[data-row="0"]').textContent,
+        started: document.querySelector('[data-sec="1"]').dataset.fx !== "pending" })`);
+    const now = await read();
+    const text = now.text;
     const other = await nameOf(0);
+    await sleep(150);
+    const later = await read();
     const want = (n) =>
       tab.evaluate(`(() => { const r = document.querySelector('[data-row="${n}"]');
       return r.getAttribute("aria-label"); })()`);
@@ -2291,7 +2308,18 @@ await run(
       focused === (await want(last)) && /project \d+ of \d+$/.test(focused ?? ""),
       { focused },
     );
-    check("and its text isn't blanked", text.trim().length > 10, { text });
+    // The premise: the type-in has started and blanked the other rows, so a name from their text
+    // would be spaces; the focused row's own text never was.
+    check(
+      "the type-in had started and was blanking the other rows",
+      now.started && now.others.trim() === "",
+      now,
+    );
+    check(
+      "while the focused row's text was never blanked",
+      text.trim().length > 10 && later.text === text,
+      { text, later: later.text },
+    );
     check("another row has its name while the rows type in", other === (await want(0)), { other });
   },
 );
@@ -2388,6 +2416,25 @@ await run("rows, nav and project buttons are real links (1291×808)", DESKTOP, a
     "Enter on the next link steps to the next project in the app",
     (await tab.evaluate("location.pathname")) !== before &&
       (await tab.evaluate("history.length")) > 1,
+  );
+});
+
+// Space presses only the app's own links: on any other link (the bottom bar's resume, github, mail)
+// it stays the browser's, which does nothing to a link.
+await run("Space on another link isn't pressed (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  await tab.evaluate(`window.__clicks = [];
+    window.addEventListener("click", (e) => { __clicks.push(e.isTrusted); e.preventDefault(); }, true);
+    document.querySelector('footer a[data-key="r"]').focus()`);
+  await tab.key(" ");
+  await sleep(300);
+  const st = await tab.evaluate(
+    `({ clicks: __clicks, on: document.activeElement.dataset.key ?? null })`,
+  );
+  check(
+    "focus was on the resume link and Space made no click on it",
+    st.on === "r" && st.clicks.length === 0,
+    st,
   );
 });
 
@@ -2872,7 +2919,7 @@ await run("resume page can turn the shortcuts off (1291×808)", DESKTOP, async (
     "it turns them off: saved, mirrored, and + no longer zooms",
     off.attr === "off" &&
       off.saved === "off" &&
-      off.label === "shortcuts: off" &&
+      off.label === "keys: off" &&
       (await tab.evaluate(RESUME.zoom)) === z0,
     { off, z0 },
   );

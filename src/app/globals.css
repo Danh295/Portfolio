@@ -121,14 +121,20 @@ html.locked body {
 html.locked {
   touch-action: pinch-zoom;
 }
-/* An open popup (components/overlay/Popup.jsx) locks the page too, so the wheel and touch
-   can't scroll it behind the scrim; the scrollbar's width stays reserved so nothing shifts. */
-html.popup-lock {
-  scrollbar-gutter: stable;
-}
-html.locked:not(.popup-lock) [data-mode="gui"] nav,
-html.locked:not(.popup-lock) [data-mode="gui"] footer {
+html.locked [data-mode="gui"] nav,
+html.locked [data-mode="gui"] footer {
   visibility: hidden;
+}
+
+/* An open popup (components/overlay/Popup.jsx, pageLock.js setPopupLock) holds the page still: no
+   wheel scroll behind the scrim, the scrollbar's width stays reserved so nothing shifts. Not
+   html.locked (a fixed body), which would move the sticky bars. Touch scrolling behind it is an
+   inference from the spec, not tested on a phone (iOS Safari is known to ignore overflow: hidden
+   on the root in places). */
+html.popup-lock {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+  overscroll-behavior: none;
 }
 
 /* No double-tap zoom on controls (it delays a tap, which the timed egg buttons can't

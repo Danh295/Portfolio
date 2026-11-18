@@ -28,6 +28,7 @@ export default function Header({
       <div className={styles.inner}>
         <a
           href={secUrl(0)}
+          data-app-link=""
           onClick={inApp(onHome)}
           data-key="h"
           data-tip="home"
@@ -42,6 +43,7 @@ export default function Header({
             <a
               key={s.n}
               href={secUrl(s.n)}
+              data-app-link=""
               onClick={inApp(() => onSection(s.n))}
               data-key={s.n}
               data-tip={s.tip}
