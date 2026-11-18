@@ -311,8 +311,8 @@ test("pressing a stop flashes its element", () => {
 });
 
 // The selectors the router flashes name attributes the JSX renders: a rename on either
-// side fails here. (Only the attribute is checked: the experience row's button, inside its heading, is
-// structure, which the browser check covers.)
+// side fails here. (Only the attribute is checked: the experience row's button, inside its
+// heading, is structure, which the browser check covers.)
 test("the flashed stops are rendered with the attributes the router names", () => {
   const src = (f) => readFileSync(new URL("../src/components/" + f, import.meta.url), "utf8");
   const stops = [
