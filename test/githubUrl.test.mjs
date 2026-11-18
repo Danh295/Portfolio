@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { findRepo, linkedRepos, parseGithubRepo } from "@/lib/githubUrl.mjs";
+import { canonicalRepo, findRepo, linkedRepos, parseGithubRepo } from "@/lib/githubUrl.mjs";
 import { projects } from "@/data/projects";
 
 const key = (href) => parseGithubRepo(href)?.key ?? null;
@@ -69,4 +69,25 @@ test("findRepo: exact key first, then any case", () => {
   assert.equal(findRepo(repos, "Me/Thing").stars, 1);
   assert.equal(findRepo(repos, "me/thing").stars, 1);
   assert.equal(findRepo(repos, "x/y"), undefined);
+});
+
+test("parseGithubRepo: reserved top-level github.com pages are not repos", () => {
+  for (const r of ["orgs", "sponsors", "features", "topics", "marketplace", "settings", "users"])
+    assert.equal(key(`https://github.com/${r}/acme`), null, r);
+  for (const r of ["login", "about", "pricing", "collections", "explore", "notifications"])
+    assert.equal(key(`https://github.com/${r}/x`), null, r);
+  for (const r of ["issues", "pulls", "search", "enterprise", "apps", "trending", "readme"])
+    assert.equal(key(`https://github.com/${r}/x`), null, r);
+  for (const r of ["security", "site", "customer-stories", "solutions", "resources"])
+    assert.equal(key(`https://github.com/${r}/x`), null, r);
+  assert.equal(key("https://github.com/Orgs/acme"), null);
+  assert.equal(key("https://github.com/orgs-fan/thing"), "orgs-fan/thing");
+  assert.deepEqual(linkedRepos([{ links: [{ href: "https://github.com/sponsors/me" }] }]), []);
+});
+
+test("canonicalRepo: the snapshot's own casing, else the link's", () => {
+  const repos = { "me/thing": { url: "https://github.com/Me/Thing" }, "me/other": { url: "x" } };
+  assert.equal(canonicalRepo(repos, "ME/THING"), "Me/Thing"); // from the record's url
+  assert.equal(canonicalRepo(repos, "ME/OTHER"), "me/other"); // no usable url: the key
+  assert.equal(canonicalRepo(repos, "Me/Nope"), "Me/Nope"); // not in the snapshot: as linked
 });

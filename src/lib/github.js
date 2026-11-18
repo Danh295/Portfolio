@@ -2,7 +2,7 @@
 // never hit the GitHub API. Anything missing from the snapshot is simply not shown.
 import snapshot from "@/data/github.generated.json";
 import { pad } from "./format";
-import { findRepo, parseGithubRepo } from "./githubUrl.mjs";
+import { canonicalRepo, findRepo, parseGithubRepo } from "./githubUrl.mjs";
 
 const BARS = "▁▂▃▄▅▆▇█";
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
@@ -43,7 +43,7 @@ export function repoFor(project) {
   for (const l of project.links || []) {
     const r = parseGithubRepo(l.href);
     const info = r && findRepo(snapshot.repos, r.key);
-    if (info) return { full: r.key, ...info };
+    if (info) return { full: canonicalRepo(snapshot.repos, r.key), ...info };
   }
   return null;
 }
