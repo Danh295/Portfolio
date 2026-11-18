@@ -16,6 +16,14 @@ _Avoid_: card, container
 The detail view for one project, a real pre-rendered URL (`/Portfolio/projects/<slug>/`). It replaces the section list while it's open.
 _Avoid_: modal, detail popup, project route
 
+**Media**:
+The stills under a project's bullets (at most three), each behind its **cover**. A project that can't show anything has a placeholder instead.
+_Avoid_: gallery, screenshots, images (when the whole feature is meant)
+
+**Cover**:
+The ASCII drawn over a still until a visitor hovers, focuses or taps it; it then uncovers the picture in random cells and in steps, and stays uncovered.
+_Avoid_: mask, overlay, decrypt (that is how it looks, not its name)
+
 **Popup**:
 The keys popup, the more… popup or (on a phone) the menu popup, all drawn by one frame (`Popup.jsx`). While one is open it owns the keyboard and the page behind it is inert.
 _Avoid_: modal, dialog, overlay (the overlay folder also holds the intro, cursor and tooltip)
