@@ -1,6 +1,7 @@
 // Pure rules for the egg minigame: clock, grading and stats. No DOM, no timers.
 
 import { pad } from "../format";
+import { count } from "./counter";
 
 /** Clock settings. Everything is in the clock's own unit (seconds or "minutes" shown as m:ss). */
 export function clockConfig(mode = "seconds") {
@@ -75,16 +76,17 @@ export const isNewBest = (cook, best, C) =>
 
 /** Header + rows for the stats panel (eggs cooked on this device). */
 export function statsView(stats, types) {
-  const sum = stats.vals.reduce((x, y) => x + y, 0),
+  const vals = types.map((_, i) => count(stats.vals[i])),
+    sum = vals.reduce((x, y) => x + y, 0),
     tot = sum || 1;
   return {
     head: sum.toLocaleString() + (sum === 1 ? " egg" : " eggs") + " cooked on this device",
     rows: types.map((x, i) => {
-      const f = Math.round((stats.vals[i] / tot) * 10);
+      const f = Math.round((vals[i] / tot) * 10);
       return {
         name: (x === stats.you ? "› " : "  ") + x,
         bar: "■".repeat(f) + "□".repeat(10 - f),
-        n: String(stats.vals[i]),
+        n: String(vals[i]),
       };
     }),
   };

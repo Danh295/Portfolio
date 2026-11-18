@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { clockConfig, gradeEgg, statsView, paintDue } from "@/lib/egg/game";
+import { countEgg, readBest, count } from "@/lib/egg/counter";
 import { rollPeriod, rollPose, restTime, nextStop, dwell } from "@/lib/egg/roll";
 
 test("gradeEgg boundaries (seconds)", () => {
@@ -95,4 +96,66 @@ test("paintDue: 30 paints a second live and 15 at rest, whatever the display's r
     assert.ok(Math.abs(count(true) - 15) <= 2, hz + "Hz at rest: " + count(true));
   }
   assert.equal(paintDue(100, 0, true), true, "the first frame paints");
+});
+
+// Storage is the visitor's to edit: counts and best times are cleaned where they are read.
+const withStorage = (data, fn) => {
+  const prev = globalThis.localStorage;
+  globalThis.localStorage = {
+    getItem: (k) => (k in data ? data[k] : null),
+    setItem: (k, v) => void (data[k] = String(v)),
+  };
+  try {
+    return fn();
+  } finally {
+    globalThis.localStorage = prev;
+  }
+};
+
+test("egg counts: tampered storage becomes finite non-negative integers", () => {
+  assert.equal(count(-1), 0);
+  assert.equal(count(2.7), 2);
+  assert.equal(count("3"), 0, "a string is not a count");
+  assert.equal(count(NaN), 0);
+  assert.equal(count(Infinity), 0);
+  assert.equal(count(null), 0);
+  assert.equal(count(5), 5);
+  const types = ["perfect", "jammy", "firm"];
+  const r = withStorage({ "danny-egg-local": '{"perfect":-1,"jammy":"x"}' }, () =>
+    countEgg("firm", types),
+  );
+  assert.deepEqual(r.vals, [0, 0, 1]);
+  const bad = withStorage({ "danny-egg-local": "[1,2]" }, () => countEgg("jammy", types));
+  assert.deepEqual(bad.vals, [0, 1, 0]);
+});
+
+test("statsView: negative or odd counts never throw", () => {
+  const types = ["perfect", "jammy", "firm"];
+  const v = statsView({ vals: [-1, 1, 0], you: "jammy" }, types);
+  assert.equal(v.head, "1 egg cooked on this device");
+  assert.ok(v.rows.every((r) => r.bar.length === 10));
+  assert.doesNotThrow(() => statsView({ vals: [NaN, Infinity, 2.5], you: "x" }, types));
+  assert.doesNotThrow(() => statsView({ vals: [1], you: "x" }, types), "short vals");
+});
+
+test("readBest: a stored best time is a finite non-negative number per clock mode", () => {
+  const sec = clockConfig("seconds"),
+    min = clockConfig("minutes");
+  const data = { "danny-egg-best-sec": "6.4", "danny-egg-best-min": "-5" };
+  assert.equal(
+    withStorage(data, () => readBest(sec)),
+    6.4,
+  );
+  assert.equal(
+    withStorage(data, () => readBest(min)),
+    null,
+    "negative",
+  );
+  for (const bad of ["abc", "", "NaN", "Infinity"]) {
+    assert.equal(
+      withStorage({ "danny-egg-best-sec": bad }, () => readBest(sec)),
+      null,
+      bad,
+    );
+  }
 });
