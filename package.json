@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "babel-plugin-react-compiler": "^1.0.0",
-    "eslint": "^10.11.0",
+    "eslint": "^10.15.0",
     "eslint-config-next": "^16.4.5",
     "espree": "^11.2.0",
     "prettier": "^3.9.9"
