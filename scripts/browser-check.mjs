@@ -55,6 +55,7 @@ const KEY = {
   0: ["Digit0", 48],
   g: ["KeyG", 71],
   r: ["KeyR", 82],
+  h: ["KeyH", 72],
 };
 // Page-side expressions: the nav button whose label includes `label`; the hero's heading
 // as typed so far, and in full (its aria-label, src/data/home.js `heading`).
@@ -2138,6 +2139,34 @@ for (const [label, path, fromList] of [
       },
     );
 }
+
+// Leaving a project for the top of the page (h, 1, the ~/danny link) has a heading to focus too:
+// the hero's. And a plain click on a nav link used to keep focus on the link itself; it lands on
+// the target section's heading, as the keys do.
+for (const [how, act] of [
+  ["h", (tab) => tab.key("h")],
+  ["a click on ~/danny", (tab) => tab.click(`document.querySelector('nav [data-key="h"]')`, 30)],
+  ["a click on ~/projects", (tab) => tab.click(`document.querySelector('nav [data-key="1"]')`, 30)],
+  ["a click on ~/skills", (tab) => tab.click(`document.querySelector('nav [data-key="3"]')`, 30)],
+])
+  await run(`${how} from a project focuses the target heading (1291×808)`, DESKTOP, async (tab) => {
+    await tab.go("projects/crapos/");
+    await act(tab);
+    await sleep(1800);
+    const st = await tab.evaluate(`(() => { const a = document.activeElement;
+        return { tag: a.tagName, head: a.hasAttribute("data-head"),
+          sec: a.closest("[data-sec]")?.dataset.sec ?? "-", path: location.pathname + location.hash }; })()`);
+    const want = how.includes("projects")
+      ? { tag: "H2", sec: "1" }
+      : how.includes("skills")
+        ? { tag: "H2", sec: "3" }
+        : { tag: "H1", head: true };
+    check(
+      "focus is on the target section's heading",
+      st.tag === want.tag && (want.sec ? st.sec === want.sec : st.head),
+      st,
+    );
+  });
 
 // A key the page declines is the browser's, and must not drop focus: ↑ on a project page has
 // no job, so a focused [esc] button keeps its focus (it used to be blurred to <body>).

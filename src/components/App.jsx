@@ -191,6 +191,9 @@ export default function App({ initialView = null }) {
   // Then, once the list is back: scroll there (a restored position's scroll event lets the
   // spy pick the active section) and move focus, which was on the page that is gone, where
   // the plan says (land.focus): that project's row, or the target section's heading.
+  // A section's heading: the focus target of a jump (the hero's h1 for section 0).
+  const headOf = (n) =>
+    document.querySelector(n === 0 ? "[data-head]" : '[data-sec="' + n + '"] h2');
   const landOnList = (land, prevSlug) => {
     const park =
       land.sec === 0 && parkOnLand.current > 0 && performance.now() - parkOnLand.current < 2000;
@@ -200,10 +203,13 @@ export default function App({ initialView = null }) {
     // A project outside the current filter has no row: fall back to the selected one.
     const row = list.findIndex((p) => p.slug === prevSlug);
     const focusRow = row >= 0 ? row : sel;
-    if (document.activeElement !== document.body) {
+    // Focus is on the page that is gone (body), or, for a jump, on the nav link that was
+    // clicked: the target section's heading takes it. Anywhere else it went on purpose.
+    const at = document.activeElement;
+    const head = land.focus === "head";
+    if (at !== document.body && !(head && at?.closest("nav"))) {
       // focus already went somewhere on purpose
-    } else if (land.focus === "head")
-      focusQuiet(document.querySelector('[data-sec="' + (land.sec ?? 1) + '"] h2'));
+    } else if (head) focusQuiet(headOf(land.sec ?? 1));
     else if (focusRow >= 0) focusQuiet(document.querySelector('[data-row="' + focusRow + '"]'));
   };
 

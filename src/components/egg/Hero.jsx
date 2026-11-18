@@ -87,6 +87,8 @@ export default function Hero({
           <span className={styles.prompt}>{homeContent.prompt}</span>
           <h1
             ref={h1}
+            data-head=""
+            tabIndex={-1}
             className={headOn ? `${styles.h1} ${styles.caret}` : styles.h1}
             aria-label={homeContent.heading}
             data-fx={headPlayed ? undefined : "pending"}
