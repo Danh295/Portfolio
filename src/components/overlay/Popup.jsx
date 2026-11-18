@@ -10,11 +10,12 @@ import styles from "./Popup.module.css";
 // row) replaces one popup with another in a single render (the page behind stays inert), so the
 // element is recorded when the first one opens and kept across it. (Editing this file while a popup
 // is open resets these in dev; focus then falls to the page on close.)
-const TABBABLE = 'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 let openCount = 0,
   returnTo = null,
   restorePending = false;
+
+const TABBABLE = 'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 /**
  * The frame the popups (keys, more…, the phone's menu) share: the scrim (a click on it closes), the
