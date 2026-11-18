@@ -2288,13 +2288,15 @@ await run(
     await tab.send("Accessibility.enable");
     const last = await tab.evaluate(`document.querySelectorAll("[data-row]").length - 1`);
     // Focus starts the section (its frame is still waiting), and the focused row is read at once.
-    await tab.evaluate(`document.querySelector('[data-row="${last}"]').focus()`);
-    const focused = await nameOf(last);
-    const read = () =>
-      tab.evaluate(`({ text: document.querySelector('[data-row="${last}"]').textContent,
+    const snap = `({ text: document.querySelector('[data-row="${last}"]').textContent,
         others: document.querySelector('[data-row="0"]').textContent,
-        started: document.querySelector('[data-sec="1"]').dataset.fx !== "pending" })`);
-    const now = await read();
+        started: document.querySelector('[data-sec="1"]').dataset.fx !== "pending" })`;
+    // Focus and the first read share one task, so the other rows can't have typed back in yet.
+    const now = await tab.evaluate(
+      `(() => { document.querySelector('[data-row="${last}"]').focus(); return ${snap}; })()`,
+    );
+    const focused = await nameOf(last);
+    const read = () => tab.evaluate(snap);
     const text = now.text;
     const other = await nameOf(0);
     await sleep(150);
@@ -2317,7 +2319,9 @@ await run(
     );
     check(
       "while the focused row's text was never blanked",
-      text.trim().length > 10 && later.text === text,
+      text.trim().length > 10 &&
+        // the trailing arrow turns into ↲ once the row is selected: compare the rest
+        later.text.slice(0, -1) === text.slice(0, -1),
       { text, later: later.text },
     );
     check("another row has its name while the rows type in", other === (await want(0)), { other });
