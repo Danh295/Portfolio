@@ -2310,6 +2310,15 @@ await run(
       focused === (await want(last)) && /project \d+ of \d+$/.test(focused ?? ""),
       { focused },
     );
+    // WCAG 2.5.3: the name starts with the row's visible number and carries its title.
+    const shownTitle = await tab.evaluate(
+      `document.querySelector('[data-row="${last}"] span:nth-child(2)').textContent`,
+    );
+    check(
+      "and it starts with the row's visible number and contains its title",
+      focused.startsWith(text.slice(0, 2) + " ") && focused.includes(shownTitle),
+      { focused, text, shownTitle },
+    );
     // The premise: the type-in has started and blanked the other rows, so a name from their text
     // would be spaces; the focused row's own text never was.
     check(

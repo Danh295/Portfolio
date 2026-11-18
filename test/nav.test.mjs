@@ -113,9 +113,14 @@ test("the hero's stops are read out by name; everything else reads nothing", () 
 });
 
 // A11Y-01: a project row's name is fixed text, never read from the text the type-in blanks.
-test("projectRowName: title, category, org, year and the row's place", () => {
+test("projectRowName: number, title, category, org, year and the row's place", () => {
   assert.equal(
     projectRowName({ title: "recall", category: "web", org: "personal", year: 2026 }, 1, 10),
-    "recall, web, personal, 2026, project 2 of 10",
+    "02 recall web personal 2026, project 2 of 10",
+  );
+  assert.equal(
+    projectRowName({ title: "recall", category: "web", org: "personal", year: 2026 }, 0, 3, "07"),
+    "07 recall web personal 2026, project 1 of 3",
+    "the number shown on the row, when a filter changes its place",
   );
 });

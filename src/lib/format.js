@@ -5,10 +5,12 @@ export const pad = (n) => String(n).padStart(2, "0");
 
 /**
  * A project row's accessible name: fixed text (the row's visible text is blanked while its
- * section types in, and a name taken from it read as spaces), with its place in the list.
+ * section types in, and a name taken from it read as spaces), with its place in the list. It
+ * carries the row's visible text (its number, title, category, org and year) so the name contains
+ * what is on screen (WCAG 2.5.3); `no` is the number shown on the row.
  */
-export const projectRowName = (p, i, n) =>
-  `${p.title}, ${p.category}, ${p.org}, ${p.year}, project ${i + 1} of ${n}`;
+export const projectRowName = (p, i, n, no = pad(i + 1)) =>
+  `${no} ${p.title} ${p.category} ${p.org} ${p.year}, project ${i + 1} of ${n}`;
 
 /** Lowercase any value. */
 export const lc = (s) => String(s).toLowerCase();

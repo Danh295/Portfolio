@@ -76,7 +76,7 @@ export default function ProjectList({ list, filter, sel, active, listRef, onFilt
               data-app-link=""
               draggable={false}
               aria-current={on ? "true" : undefined}
-              aria-label={projectRowName(p, i, list.length)}
+              aria-label={projectRowName(p, i, list.length, pad(projects.indexOf(p) + 1))}
               onClick={inApp(() => onOpen(p.slug))}
               data-tip={p.purpose}
               className={on ? styles.rowOn : styles.row}
