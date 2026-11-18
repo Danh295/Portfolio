@@ -58,6 +58,8 @@ const KEY = {
   h: ["KeyH", 72],
   y: ["KeyY", 89],
   f: ["KeyF", 70],
+  i: ["KeyI", 73],
+  x: ["KeyX", 88],
 };
 // Page-side expressions: the nav button whose label includes `label`; the hero's heading
 // as typed so far, and in full (its aria-label, src/data/home.js `heading`).
@@ -4451,6 +4453,70 @@ await run(
         /\/resume\/$/.test(page.links[1][1]) &&
         /^mailto:/.test(page.links[2][1]),
       page,
+    );
+  },
+);
+
+// The egg's rules card is a dialog with real buttons (proceed, close), its trigger points at it,
+// its "any key" line names the keys that really proceed (Tab doesn't), and dismissing it hands
+// focus back (to the rules chip, which opened it).
+const RULES = `document.querySelector('[role="dialog"][aria-label="how to play"]')`;
+const RULES_STATE = `(() => { const d = ${RULES}, chip = document.querySelector('[data-key="i"]');
+  return { open: !!d, id: d?.id ?? null, buttons: d ? [...d.querySelectorAll("button")].map((b) => b.textContent.trim()) : [],
+    go: d?.querySelector("div:last-child")?.innerText ?? null,
+    chip: chip ? { controls: chip.getAttribute("aria-controls"), expanded: chip.getAttribute("aria-expanded") } : null,
+    focusOnChip: !!chip && document.activeElement === chip, focusInCard: !!d && d.contains(document.activeElement) || document.activeElement === d };
+})()`;
+await run(
+  "the egg's rules card has buttons, a linked trigger and returns focus (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#home");
+    await tab.click(`document.querySelector("[data-egg]")`);
+    await sleep(500);
+    const first = await tab.evaluate(RULES_STATE);
+    check(
+      "the first-round card offers proceed and close buttons, and its keys line is true",
+      first.open &&
+        first.id === "egg-rules" &&
+        first.buttons.join() === "proceed,close" &&
+        /enter, space or any character key to/.test(first.go ?? ""),
+      first,
+    );
+    await tab.key("Tab");
+    check(
+      "Tab does not proceed, as the line says",
+      (await tab.evaluate(RULES_STATE)).open === true,
+    );
+    await tab.key("x");
+    await sleep(500);
+    check("a character key does", (await tab.evaluate(RULES_STATE)).open === false);
+    await tab.evaluate(`document.activeElement.blur()`);
+    await tab.key("i");
+    await sleep(300);
+    const opened = await tab.evaluate(RULES_STATE);
+    check(
+      "the rules chip points at the card it opened",
+      opened.open &&
+        opened.buttons.join() === "close" &&
+        opened.chip?.controls === "egg-rules" &&
+        opened.chip.expanded === "true" &&
+        opened.focusInCard,
+      opened,
+    );
+    await tab.key("Escape");
+    await sleep(300);
+    const esc = await tab.evaluate(RULES_STATE);
+    check("Esc closes it and focus goes back to the chip", !esc.open && esc.focusOnChip, esc);
+    await tab.click(`document.querySelector('[data-key="i"]')`);
+    await sleep(300);
+    await tab.click(`${RULES}.querySelector("button")`);
+    await sleep(300);
+    const closed = await tab.evaluate(RULES_STATE);
+    check(
+      "its close button closes it and focus goes back to the chip",
+      !closed.open && closed.focusOnChip,
+      closed,
     );
   },
 );

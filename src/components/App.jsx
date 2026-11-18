@@ -1016,6 +1016,7 @@ export default function App({ initialView = null }) {
       }}
       announceRef={guiAnnounceRef}
       onSelectEgg={() => selectHero("egg")}
+      onReset={egg.reset}
       onStart={() => {
         selectHero("egg");
         startEgg();

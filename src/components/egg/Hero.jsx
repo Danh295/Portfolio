@@ -27,6 +27,7 @@ export default function Hero({
   onMore,
   onRules,
   onStart,
+  onReset,
   keysOn = true,
 }) {
   // Hero stops: the heading (the section header: blinking cursor), then "more…" and
@@ -39,10 +40,21 @@ export default function Hero({
     stageRef = useRef(null),
     rulesRef = useRef(null);
   const rulesUp = view.briefing || rulesOpen;
-  // The rules card takes focus while it's up, so screen readers read the rules (and its
-  // "any key" still works: keys go to the page's handler).
+  // The rules card takes focus while it's up, so screen readers read the rules (and its keys
+  // still work: they go to the page's handler). When it goes away and focus has nowhere to be
+  // (the card was the focus), it goes back to what had it, or to the rules chip.
   useEffect(() => {
-    if (rulesUp) rulesRef.current?.focus({ preventScroll: true, focusVisible: false });
+    if (!rulesUp) return;
+    const from = document.activeElement;
+    rulesRef.current?.focus({ preventScroll: true, focusVisible: false });
+    return () => {
+      if (document.activeElement && document.activeElement !== document.body) return;
+      const back =
+        from?.isConnected && from !== document.body
+          ? from
+          : document.querySelector('[data-key="i"]');
+      back?.focus({ preventScroll: true });
+    };
   }, [rulesUp]);
   useTextFx(h1, homeContent.heading, "load");
   const headPlayed = usePlayed("load", homeContent.heading);
@@ -187,6 +199,7 @@ export default function Hero({
                     : `${styles.box} ${styles.pressStart}`
                 }
                 data-egg=""
+                aria-haspopup={view.rulesSeen ? undefined : "dialog"}
                 onClick={onStart}
                 onFocus={onSelectEgg}
               >
@@ -205,6 +218,7 @@ export default function Hero({
                 tabIndex={-1}
                 data-clickable=""
                 className={styles.rules}
+                id="egg-rules"
                 role="dialog"
                 aria-label="how to play"
                 onClick={view.briefing ? onStart : onRules}
@@ -220,16 +234,45 @@ export default function Hero({
                   {view.briefing ? (
                     <>
                       <KeyLabel>
-                        {keysOn ? "click or press any key to" : "click or press enter to"}{" "}
+                        {keysOn ? "enter, space or any character key to " : "enter or space to "}
                       </KeyLabel>
-                      <TouchText>tap to </TouchText>
-                      proceed
+                      <button
+                        type="button"
+                        className={styles.rulesBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onStart();
+                        }}
+                      >
+                        proceed
+                      </button>
+                      <span aria-hidden="true"> · </span>
+                      <button
+                        type="button"
+                        className={styles.rulesBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onReset();
+                        }}
+                      >
+                        close
+                      </button>
+                      <KeyLabel> [esc]</KeyLabel>
                     </>
                   ) : (
                     <>
                       <Hint className={styles.pressKey}>[i]</Hint>
-                      <Hint> or</Hint> <KeyLabel>click</KeyLabel>
-                      <TouchText>tap</TouchText> · close
+                      <Hint> or esc to </Hint>
+                      <button
+                        type="button"
+                        className={styles.rulesBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRules();
+                        }}
+                      >
+                        close
+                      </button>
                     </>
                   )}
                 </div>
@@ -241,6 +284,8 @@ export default function Hero({
               type="button"
               onClick={onRules}
               data-key="i"
+              aria-haspopup="dialog"
+              aria-controls={rulesOpen ? "egg-rules" : undefined}
               className={rulesOn ? `${styles.rulesChip} ${styles.rulesChipOn}` : styles.rulesChip}
               aria-current={rulesOn ? "true" : undefined}
               aria-expanded={!!rulesOpen}

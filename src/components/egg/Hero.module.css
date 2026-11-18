@@ -368,6 +368,19 @@
   color: var(--mid);
 }
 
+/* The card's real buttons: text-sized, underlined, 24px to tap. */
+.rulesBtn {
+  min-height: 24px;
+  padding: 0 2px;
+  background: none;
+  border: 0;
+  color: var(--fg);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
 /* The rules, collapsed to a chip in the game viewport's top-right after the first read. */
 .rulesChip {
   position: absolute;
