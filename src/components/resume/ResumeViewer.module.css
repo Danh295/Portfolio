@@ -3,6 +3,13 @@
   font-size: 13px;
 }
 
+/* The page is taller than the window, so a desktop browser draws a classic scrollbar (15px) on the
+   right, which pulls the layout's middle left of the screen's. Reserving the same gutter on both
+   edges keeps the middle where the screen's is (a phone's overlay scrollbar takes no room). */
+:global(html):has(.viewer) {
+  scrollbar-gutter: stable both-edges;
+}
+
 /* The reader's controls, pinned to the top: leave on the left, the file's name in the middle,
    the tools on the right (the split the app's nav has). The two outer columns share what the
    name leaves equally, so the name sits in the middle of the screen. */
@@ -11,7 +18,7 @@
   top: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   grid-template-areas: "leave name tools";
   align-items: center;
   gap: 8px 16px;
@@ -35,6 +42,9 @@
 .tools {
   grid-area: tools;
   justify-self: end;
+  /* Never wider than its column: the column is half of what the name leaves, so a wider row
+     would push the name off the middle (it wraps instead). */
+  max-width: 100%;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
