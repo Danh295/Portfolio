@@ -1,4 +1,5 @@
 import TermEgg from "./TermEgg";
+import ArtLine from "./ArtLine";
 import { promptText } from "@/lib/shell/spec";
 import styles from "./TermLines.module.css";
 
@@ -42,6 +43,8 @@ export default function TermLines({
             {l.text}
           </div>
         );
+      case "art":
+        return <ArtLine key={key} mediaKey={l.key} alt={l.alt} caption={l.caption} />;
       case "hint":
         return (
           <button key={key} type="button" onClick={run} className={styles.hint}>

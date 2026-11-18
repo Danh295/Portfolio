@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import dynamic from "next/dynamic";
 import { projects } from "@/data/projects";
 import { useTextFx } from "@/lib/useTextFx";
 import { pad } from "@/lib/format";
@@ -9,6 +10,10 @@ import { projUrl, secUrl } from "@/lib/urls";
 import { fmtDate, repoFor } from "@/lib/github";
 import { KeyLabel, TouchText } from "@/components/Hint";
 import styles from "./ProjectDetail.module.css";
+
+// The media (and the ASCII grids it carries) is its own chunk: the home page never opens a
+// project, and the exported project pages still render it on the server.
+const ProjectMedia = dynamic(() => import("./ProjectMedia"));
 
 export default function ProjectDetail({ slug, onBack, onOpen }) {
   const h1 = useRef(null);
@@ -137,6 +142,7 @@ export default function ProjectDetail({ slug, onBack, onOpen }) {
             ))}
           </div>
         </div>
+        {p.media?.length > 0 && <ProjectMedia project={p} />}
       </article>
     </div>
   );

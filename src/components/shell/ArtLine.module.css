@@ -1,0 +1,20 @@
+.art {
+  margin: 8px 0;
+  min-width: 0;
+}
+
+/* One line high per row (line-height 1) and the font's 0.6em advance: the same cell shape the
+   grid was made for. */
+.art pre {
+  margin: 0;
+  font: inherit;
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: pre;
+  overflow: hidden;
+}
+
+.cap {
+  margin-top: 4px;
+  color: var(--mid);
+}

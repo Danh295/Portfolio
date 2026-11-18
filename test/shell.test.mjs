@@ -110,3 +110,38 @@ test("histStep: ↓ at the fresh prompt keeps what's typed", () => {
   assert.equal(histStep(HIST, -1, -1), null);
   assert.equal(histStep([], -1, -1), null);
 });
+
+// A project's media in the terminal: `cat` prints a reference to each picture (the line
+// component fits its ASCII to the screen's width) and, for a private project, the locked
+// message. In the embedded shell cat opens the page instead, so it prints neither.
+test("cat a project in the full terminal: its pictures as art lines with their captions", () => {
+  const r = shell.runLine("cat crapos", "term", { cwd: [] });
+  assert.deepEqual(errs(r), []);
+  const art = r.out.filter((l) => l.t === "art");
+  assert.equal(art.length, 1);
+  assert.equal(art[0].key, "crapos/boot");
+  assert.match(art[0].caption, /^[a-z]/);
+  assert.ok(art[0].alt, "the art line carries the picture's alt text");
+  const two = shell.runLine("cat anifriend", "term", { cwd: [] }).out.filter((l) => l.t === "art");
+  assert.deepEqual(
+    two.map((l) => l.key),
+    ["anifriend/companions", "anifriend/pipeline"],
+  );
+});
+
+test("cat a private project prints the locked message and why, not a picture", () => {
+  const out = shell.runLine("cat ppeo", "term", { cwd: [] }).out;
+  assert.ok(!out.some((l) => l.t === "art"));
+  assert.ok(out.some((l) => l.t === "txt" && l.text === "[ access denied: proprietary ]"));
+  assert.ok(out.some((l) => l.t === "dim" && /city of waterloo/.test(l.text)));
+});
+
+test("cat a project without media prints no art", () => {
+  const out = shell.runLine("cat recall", "term", { cwd: [] }).out;
+  assert.ok(!out.some((l) => l.t === "art"));
+});
+
+test("in the embedded shell cat opens the page and prints no art", () => {
+  const out = run("cat crapos").out;
+  assert.ok(!out.some((l) => l.t === "art"));
+});

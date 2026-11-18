@@ -5,13 +5,16 @@
 //   mode "embed" — the mini shell opened with ` in gui mode (`exit` closes it)
 //
 // Output lines are { t, ... } where t is one of:
-//   cmd txt dim hint err h kv help link ls dir file exp bar egg
+//   cmd txt dim hint err h kv help link ls dir file exp bar egg art
+// (art: `{ key, alt, caption }`, a project's picture: the line component loads its ASCII grid and
+// fits it to the screen's width)
 // Effects (fx) tell the UI what to do: { cwd, sec, filter, open, theme, keys, mode, close,
 //   vim, pend, href, egg, sec0, clear }.
 
 import { createFs, pstr, resolve } from "./fs.js";
 import { SPEC, ALIAS, USAGE, HELP, CMDS } from "./spec.js";
 import { lc } from "../format.js";
+import { LOCKED } from "../ascii/image.js";
 
 const own = (table, key) => (Object.hasOwn(table, key) ? table[key] : undefined);
 
@@ -36,6 +39,11 @@ export function createShell(data) {
     p.bullets.forEach((b) => o.push({ t: "dim", text: "  – " + b }));
     o.push({ t: "kv", k: "stack", v: p.tags.join(", ") });
     p.links.forEach((l) => o.push({ t: "link", k: l.label, href: l.href, text: noProto(l.href) }));
+    // Pictures last, so the text stays together: a private project says why instead.
+    (p.media ?? []).forEach((m) => {
+      if (m.private) o.push({ t: "txt", text: LOCKED }, { t: "dim", text: "  " + m.private });
+      else o.push({ t: "art", key: `${p.slug}/${m.file}`, alt: m.alt, caption: m.caption });
+    });
     return o;
   }
 
