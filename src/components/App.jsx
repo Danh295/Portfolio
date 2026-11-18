@@ -11,6 +11,8 @@ import ProjectDetail from "@/components/work/ProjectDetail";
 import Experience from "@/components/experience/Experience";
 import Skills from "@/components/skills/Skills";
 import MiniShell from "@/components/shell/MiniShell";
+import Isolate from "@/components/Isolate";
+import Fallback from "@/components/Fallback";
 import Terminal from "@/components/shell/Terminal";
 import Tooltip from "@/components/overlay/Tooltip";
 import Cursor from "@/components/overlay/Cursor";
@@ -1099,16 +1101,26 @@ export default function App({ initialView = null }) {
               {selName}
             </div>
             {termOpen && (
-              <MiniShell
-                inert={popup}
-                session={sessions.embed}
-                panelRef={embedPanelRef}
-                inputRef={embedInputRef}
-                onRun={(c) => run("embed", c)}
-                onInput={(v) => patchSession("embed", { input: v })}
-                onKey={(e) => shellKey("embed", e)}
-                onClose={() => setTermOpen(false)}
-              />
+              <Isolate
+                fallback={
+                  <Fallback
+                    what="the embedded shell"
+                    floating
+                    action={{ label: "close", onClick: () => setTermOpen(false) }}
+                  />
+                }
+              >
+                <MiniShell
+                  inert={popup}
+                  session={sessions.embed}
+                  panelRef={embedPanelRef}
+                  inputRef={embedInputRef}
+                  onRun={(c) => run("embed", c)}
+                  onInput={(v) => patchSession("embed", { input: v })}
+                  onKey={(e) => shellKey("embed", e)}
+                  onClose={() => setTermOpen(false)}
+                />
+              </Isolate>
             )}
             {menuOpen && (
               <MenuModal
@@ -1135,36 +1147,45 @@ export default function App({ initialView = null }) {
             )}
           </>
         ) : (
-          <Terminal
-            session={sessions.term}
-            bodyRef={termBodyRef}
-            inputRef={termInputRef}
-            vim={vim}
-            vimRef={vimRef}
-            spark={spark}
-            eggHandlers={egg.handlers}
-            eggPreRef={termPreRef}
-            eggFxRef={termFxRef}
-            eggStatusRef={termStatusRef}
-            eggFrameRef={termFrameRef}
-            eggTouch={{
-              held: egg.held,
-              stage: egg.view.stage,
-              enter: egg.view.enter,
-              prompt: egg.view.prompt,
-              play: egg.crack,
-              quit: quitEgg,
-              release: egg.release,
-            }}
-            running={termEggRunning}
-            pressedTab={pressedTab}
-            keysOn={keysOn}
-            onShortcut={typeRun}
-            onRun={(c) => run("term", c)}
-            onInput={setTermInput}
-            onKey={(e) => shellKey("term", e)}
-            onExit={toGui}
-          />
+          <Isolate
+            fallback={
+              <Fallback
+                what="terminal mode"
+                action={{ label: "back to gui", onClick: () => switchMode("gui") }}
+              />
+            }
+          >
+            <Terminal
+              session={sessions.term}
+              bodyRef={termBodyRef}
+              inputRef={termInputRef}
+              vim={vim}
+              vimRef={vimRef}
+              spark={spark}
+              eggHandlers={egg.handlers}
+              eggPreRef={termPreRef}
+              eggFxRef={termFxRef}
+              eggStatusRef={termStatusRef}
+              eggFrameRef={termFrameRef}
+              eggTouch={{
+                held: egg.held,
+                stage: egg.view.stage,
+                enter: egg.view.enter,
+                prompt: egg.view.prompt,
+                play: egg.crack,
+                quit: quitEgg,
+                release: egg.release,
+              }}
+              running={termEggRunning}
+              pressedTab={pressedTab}
+              keysOn={keysOn}
+              onShortcut={typeRun}
+              onRun={(c) => run("term", c)}
+              onInput={setTermInput}
+              onKey={(e) => shellKey("term", e)}
+              onExit={toGui}
+            />
+          </Isolate>
         )}
       </div>
       <Tooltip />

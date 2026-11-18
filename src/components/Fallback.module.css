@@ -1,0 +1,35 @@
+.box,
+.floating {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--mid);
+  font-size: 13px;
+}
+
+.floating {
+  position: fixed;
+  right: 24px;
+  bottom: calc(var(--bar-h, 44px) + 12px);
+  max-width: calc(100vw - 48px);
+  z-index: var(--z-shell);
+}
+
+.action {
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--fg);
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+:global(html:not(.kbd)) .action:hover {
+  background: var(--fg);
+  color: var(--bg);
+}

@@ -57,6 +57,7 @@ const KEY = {
   r: ["KeyR", 82],
   h: ["KeyH", 72],
   y: ["KeyY", 89],
+  f: ["KeyF", 70],
 };
 // Page-side expressions: the nav button whose label includes `label`; the hero's heading
 // as typed so far, and in full (its aria-label, src/data/home.js `heading`).
@@ -4384,6 +4385,75 @@ for (const [label, setup, want] of [
     });
   });
 }
+
+// A render error is contained: the embedded shell has its own boundary (the page stays up and the
+// panel says so, with a close button), and one nothing closer catches lands on the route's
+// error page, which has the way home, the resume and the contact link. The failures are made by
+// poisoning an array method the render uses, since the app has no crash switch. The errors React
+// reports for them are expected, so they are cleared before "no console errors".
+await run("a shell render error stays in the shell (1291×808)", DESKTOP, async (tab) => {
+  await tab.go("#home");
+  await tab.key("`");
+  await sleep(500);
+  await tab.evaluate(`(() => { const j = Array.prototype.join;
+    Array.prototype.join = function (...a) { if (this[0] === "projects" && this.length === 1) throw new Error("boom"); return j.apply(this, a); }; })()`);
+  // The working directory changes, so the panel's heading renders its path and throws.
+  await tab.send("Input.insertText", { text: "cd projects" });
+  await tab.key("Enter");
+  await sleep(500);
+  const state = await tab.evaluate(`({
+    alert: document.querySelector('[role="alert"]')?.textContent ?? null,
+    nav: !!document.querySelector("nav"), main: !!document.querySelector("main"),
+    shell: !!document.querySelector('[aria-label="embedded shell"]'),
+    route: /something went wrong/.test(document.body.innerText) })`);
+  tab.errors.length = 0;
+  check(
+    "the shell is replaced by a notice, and the page behind it is still there",
+    /embedded shell hit an error/.test(state.alert ?? "") &&
+      state.nav &&
+      state.main &&
+      !state.shell &&
+      !state.route,
+    state,
+  );
+  await tab.click(
+    `[...document.querySelectorAll('[role="alert"] button')].find((b) => b.textContent === "close")`,
+  );
+  await sleep(300);
+  check(
+    "its close button puts the notice away",
+    !!state.alert && !(await tab.evaluate(`!!document.querySelector('[role="alert"]')`)),
+  );
+});
+
+await run(
+  "a render error nothing catches reaches the route's error page (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#projects");
+    await tab.evaluate(`(() => { const f = Array.prototype.filter;
+    Array.prototype.filter = function (...a) { if (this[0]?.slug) throw new Error("boom"); return f.apply(this, a); }; })()`);
+    await tab.key("f"); // the folder filter changes, so the project list renders again
+    await sleep(800);
+    const page = await tab.evaluate(`({
+    title: document.querySelector("h1")?.textContent ?? null,
+    links: [...document.querySelectorAll("main a")].map((a) => [a.textContent, a.getAttribute("href")]),
+    retry: !![...document.querySelectorAll("main button")].find((b) => b.textContent === "try again"),
+    nav: !!document.querySelector("nav") })`);
+    tab.errors.length = 0;
+    check(
+      "the page says so and offers home, the resume and contact",
+      page.title === "something went wrong" &&
+        page.retry &&
+        !page.nav &&
+        page.links.length === 3 &&
+        /\/$/.test(page.links[0][1]) &&
+        /\/resume\/$/.test(page.links[1][1]) &&
+        /^mailto:/.test(page.links[2][1]),
+      page,
+    );
+  },
+);
 
 /* ---------- done ---------- */
 

@@ -7,6 +7,8 @@ import { homeContent } from "@/data/home";
 import { usePlayed, useTextFx } from "@/lib/useTextFx";
 import { EGG_PX } from "@/lib/egg/grid";
 import EggCanvas from "./EggCanvas";
+import Isolate from "@/components/Isolate";
+import Fallback from "@/components/Fallback";
 import styles from "./Hero.module.css";
 
 export default function Hero({
@@ -164,12 +166,14 @@ export default function Hero({
         <div ref={stageRef} className={styles.stage}>
           <div className={styles.fit}>
             <div className={styles.scaled}>
-              <EggCanvas
-                preRef={preRef}
-                fxRef={fxRef}
-                handlers={panHandlers}
-                label={"ascii egg minigame: " + view.title}
-              />
+              <Isolate fallback={<Fallback what="the egg minigame" />}>
+                <EggCanvas
+                  preRef={preRef}
+                  fxRef={fxRef}
+                  handlers={panHandlers}
+                  label={"ascii egg minigame: " + view.title}
+                />
+              </Isolate>
             </div>
           </div>
           {/* Overlays over the pot (pointer-events: none, so drags still reach it). */}
