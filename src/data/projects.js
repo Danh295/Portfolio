@@ -40,6 +40,8 @@ export const projects = [
       "HTML/CSS",
     ],
     links: [],
+    // Private: a tool built for the city, so it gets the redacted placeholder (no image).
+    media: [{ private: "an internal tool built for the city of waterloo, so no screenshots" }],
   },
   {
     slug: "ai-room-editor",
@@ -107,6 +109,13 @@ export const projects = [
     ],
     tags: ["x86 Assembly", "NASM", "QEMU", "Python", "Make"],
     links: [{ label: "GitHub", href: repoUrl("CrapOS") }],
+    media: [
+      {
+        file: "boot",
+        alt: "a terminal showing crapos booting, then the help command, the crap command and an unknown command",
+        caption: "crapos booting, then help, crap and an unknown command",
+      },
+    ],
   },
   {
     slug: "portfolio",
@@ -311,6 +320,18 @@ export const projects = [
       { label: "Devpost", href: "https://devpost.com/software/mybbg" },
       { label: "live", href: "https://anifriend.vercel.app/" },
     ],
+    media: [
+      {
+        file: "companions",
+        alt: "anifriend's start screen, titled choose your companion, with cards for arisa, chitose, surprise me and about us",
+        caption: "the companion picker",
+      },
+      {
+        file: "pipeline",
+        alt: "a flow diagram of how a message becomes a spoken, lip-synced reply: chat interface, gemini, elevenlabs, web audio, live2d and pixijs",
+        caption: "how a message becomes a spoken, lip-synced reply",
+      },
+    ],
   },
   {
     slug: "moneybird",
@@ -365,6 +386,13 @@ export const projects = [
     links: [
       { label: "GitHub", href: repoUrl("OperAid") },
       { label: "live", href: "https://generous-cogwheel-353742.framer.app/" },
+    ],
+    media: [
+      {
+        file: "landing",
+        alt: "operaid's landing page: the name, the line helps doctors become efficient, globally, and a mock-up of the app showing an MRI scan beside a sample patient record",
+        caption: "the landing page, with a mock-up of the file viewer",
+      },
     ],
   },
   {
