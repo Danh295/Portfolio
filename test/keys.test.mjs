@@ -306,7 +306,7 @@ test("pressing a stop flashes its element", () => {
   assert.equal(flash({ heroSel: "more" }), '[data-key="m"]');
   assert.equal(flash({ heroSel: "rules" }), '[data-key="i"]');
   assert.equal(flash({ activeSec: 1, sel: 0 }), '[data-row="0"]');
-  assert.equal(flash({ activeSec: 2, expSel: 1 }), '[data-exprow="1"] button');
+  assert.equal(flash({ activeSec: 2, expSel: 1 }), '[data-exprow="1"] > h3 > button');
   assert.deepEqual(route({ key: " ", activeSec: 2, expSel: 1, expOpen: 1 }).i, -1, "folds");
 });
 

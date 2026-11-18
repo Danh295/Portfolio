@@ -11,13 +11,15 @@ import styles from "./Contact.module.css";
  * which a phone never shows). `note` is the copy button's feedback for a moment.
  */
 export default function Contact() {
-  const [note, setNote] = useState(null);
+  // `n` counts copies, so a second copy while the note shows restarts the timer and the live
+  // region re-announces (a note that stays "copied" would change nothing).
+  const [{ note, n }, setState] = useState({ note: null, n: 0 });
 
   useEffect(() => {
-    if (!note) return;
-    const t = setTimeout(() => setNote(null), 2000);
+    if (!n) return;
+    const t = setTimeout(() => setState((s) => ({ ...s, note: null })), 2000);
     return () => clearTimeout(t);
-  }, [note]);
+  }, [n]);
 
   return (
     <span className={styles.contact}>
@@ -29,12 +31,17 @@ export default function Contact() {
         type="button"
         className={styles.copy}
         data-contact-copy=""
-        onClick={async () => setNote((await copyText(site.email, navigator)) ? "copied" : "failed")}
+        onClick={async () => {
+          const ok = await copyText(site.email, navigator);
+          setState((s) => ({ note: ok ? "copied" : "failed", n: s.n + 1 }));
+        }}
       >
         {note === "copied" ? "copied" : note === "failed" ? "copy failed: select it" : "copy"}
       </button>
       <span className="sr-only" role="status">
         {note === "copied" ? "email address copied" : note === "failed" ? "copy failed" : ""}
+        {/* a zero-width mark that flips each copy, so a repeat reads out again */}
+        {note && n % 2 ? "\u200b" : ""}
       </span>
     </span>
   );

@@ -4576,6 +4576,16 @@ for (const [label, view, mobile] of [
           /copied/.test(done.status),
         done,
       );
+      // A second copy while the note shows restarts the 2s timer and re-announces.
+      await sleep(1500);
+      await (mobile ? tab.tap : tab.click)(`document.querySelector("[data-contact-copy]")`);
+      await sleep(1000);
+      const again = await read();
+      check(
+        "a second copy restarts the timer (still showing past the first one's 2s) and re-announces",
+        again?.button === "copied" && again.status !== done?.status,
+        { done, again },
+      );
       await sleep(2300);
       check("the note goes away on its own", (await read())?.button === "copy");
       await tab.evaluate(
@@ -4644,6 +4654,26 @@ await run("headings, accordion and landmarks (1291×808)", DESKTOP, async (tab) 
     term,
   );
 });
+
+// Proceeding into the game must not hand focus to the rules chip (the card's focus-restore is
+// for dismissing it): the chip, a button, would eat Enter/Space, which have to crack the egg.
+await run(
+  "proceeding from the rules card leaves focus off the rules chip (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("#home");
+    await tab.click(`document.querySelector("[data-egg]")`);
+    await sleep(500);
+    await tab.key("x");
+    await sleep(600);
+    const after = await tab.evaluate(RULES_STATE);
+    check(
+      "the card is gone and the chip does not hold focus",
+      !after.open && !after.focusOnChip,
+      after,
+    );
+  },
+);
 
 /* ---------- done ---------- */
 

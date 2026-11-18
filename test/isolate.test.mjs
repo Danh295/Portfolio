@@ -20,3 +20,13 @@ test("a render error flips it to the fallback, and only the fallback", () => {
   assert.equal(b.state.failed, true);
   assert.equal(b.render(), "fallback");
 });
+
+test("a failed boundary hands its fallback a retry that brings the children back", () => {
+  const b = make({ children: "kids", fallback: "fallback" });
+  b.setState = (s) => (b.state = { ...b.state, ...s });
+  b.state = { ...b.state, ...Isolate.getDerivedStateFromError(new Error("boom")) };
+  assert.equal(b.state.error.message, "boom");
+  b.retry();
+  assert.equal(b.state.failed, false);
+  assert.equal(b.render(), "kids");
+});
