@@ -4260,6 +4260,15 @@ for (const [label, view] of [
       deep && deep.inside && deep.focusInView === true,
       deep,
     );
+    // j walks the panel's buttons too (App's stepPanel focuses without scrolling the page).
+    await tab.evaluate(`${PANEL}.scrollTop = 0; ${PANEL}.querySelector("button").focus()`);
+    for (let i = 0; i < 11; i++) await tab.key("j");
+    const walked = await tab.evaluate(PANEL_FIT);
+    check(
+      "j down the panel keeps the focused option in view",
+      walked && walked.inside && walked.focusInView === true,
+      walked,
+    );
     if (view.height < 600) {
       // The window shrinks: the panel refits instead of keeping its old size.
       await tab.send("Emulation.setDeviceMetricsOverride", {
@@ -4627,11 +4636,11 @@ await run("headings, accordion and landmarks (1291×808)", DESKTOP, async (tab) 
   await tab.key("Enter");
   await sleep(1200);
   const term = await tab.evaluate(
-    `(() => { const m = document.querySelectorAll("main"); return { mains: m.length, holdsInput: !!m[0]?.querySelector("input, textarea") }; })()`,
+    `(() => { const m = document.querySelectorAll('main, [role="main"]'); return { mains: m.length, term: m[0]?.dataset.mode, holdsInput: !!m[0]?.querySelector("input, textarea") }; })()`,
   );
   check(
     "terminal mode has one main landmark holding its prompt",
-    term.mains === 1 && term.holdsInput,
+    term.mains === 1 && term.term === "term" && term.holdsInput,
     term,
   );
 });

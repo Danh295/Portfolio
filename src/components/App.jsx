@@ -88,6 +88,7 @@ export default function App({ initialView = null }) {
   const [heroSel, setHeroSel] = useState("head");
   const [rulesOpen, setRulesOpen] = useState(false);
   const [vim, setVim] = useState(null);
+  const yankSeq = useRef(0);
 
   const egg = useEggGame({ clockMode: ui.eggClock, mode });
 
@@ -282,11 +283,17 @@ export default function App({ initialView = null }) {
     focusQuiet(row ?? document.querySelector('[data-sec="' + sec + '"] h2'));
   };
 
+  // Focus a button in the skill panel without scrolling the page; the panel may be capped and
+  // scrolling inside (panelFit), so bring the button into view within it.
+  const focusInPanel = (btn) => {
+    btn?.focus({ preventScroll: true });
+    btn?.scrollIntoView({ block: "nearest" });
+  };
+
   // Into the selected skill's projects: the panel shows already, unless Esc put it away.
   const enterSkillPanel = () => {
     const row = document.querySelector('[data-skillrow="' + skillSel + '"]');
-    const go = () =>
-      row?.querySelector("[data-skill-panel] button")?.focus({ preventScroll: true });
+    const go = () => focusInPanel(row?.querySelector("[data-skill-panel] button"));
     if (row?.querySelector("[data-skill-panel]")) return go();
     setSkillOpen({ name: SKILL_NAMES[skillSel] });
     requestAnimationFrame(go);
@@ -298,7 +305,7 @@ export default function App({ initialView = null }) {
       btns = [...(at?.closest("[data-skill-panel]")?.querySelectorAll("button") ?? [])];
     if (!btns.length) return;
     const i = d.to ? (d.to === "first" ? 0 : btns.length - 1) : btns.indexOf(at) + d.dir;
-    btns[(i + btns.length) % btns.length].focus({ preventScroll: true });
+    focusInPanel(btns[(i + btns.length) % btns.length]);
   };
 
   // Esc with nothing left to close: the selection goes, and focus goes with it (to its
@@ -467,8 +474,10 @@ export default function App({ initialView = null }) {
 
   // A yank also goes to the system clipboard; the status line says whether it did (there may be
   // no clipboard, or the browser may refuse). The unnamed register doesn't depend on it.
+  // An answer for an older yank than the latest is dropped (two yanks can be in flight).
   const copyYank = (text, base) => {
-    const note = (ok) => setVim((s) => s && clipNote(s, base, ok));
+    const seq = ++yankSeq.current;
+    const note = (ok) => seq === yankSeq.current && setVim((s) => s && clipNote(s, base, ok));
     try {
       const w = navigator.clipboard?.writeText(text);
       if (w)
@@ -1079,7 +1088,13 @@ export default function App({ initialView = null }) {
 
   return (
     <>
-      <div ref={rootRef} data-mode={mode} className={styles.root}>
+      {/* Terminal mode has no <main> inside, so its root is the landmark. */}
+      <div
+        ref={rootRef}
+        data-mode={mode}
+        role={mode === "term" ? "main" : undefined}
+        className={styles.root}
+      >
         {mode === "gui" ? (
           <>
             {header}
@@ -1150,47 +1165,45 @@ export default function App({ initialView = null }) {
             )}
           </>
         ) : (
-          <main className={styles.termMain}>
-            <Isolate
-              fallback={
-                <Fallback
-                  what="terminal mode"
-                  action={{ label: "back to gui", onClick: () => switchMode("gui") }}
-                />
-              }
-            >
-              <Terminal
-                session={sessions.term}
-                bodyRef={termBodyRef}
-                inputRef={termInputRef}
-                vim={vim}
-                vimRef={vimRef}
-                spark={spark}
-                eggHandlers={egg.handlers}
-                eggPreRef={termPreRef}
-                eggFxRef={termFxRef}
-                eggStatusRef={termStatusRef}
-                eggFrameRef={termFrameRef}
-                eggTouch={{
-                  held: egg.held,
-                  stage: egg.view.stage,
-                  enter: egg.view.enter,
-                  prompt: egg.view.prompt,
-                  play: egg.crack,
-                  quit: quitEgg,
-                  release: egg.release,
-                }}
-                running={termEggRunning}
-                pressedTab={pressedTab}
-                keysOn={keysOn}
-                onShortcut={typeRun}
-                onRun={(c) => run("term", c)}
-                onInput={setTermInput}
-                onKey={(e) => shellKey("term", e)}
-                onExit={toGui}
+          <Isolate
+            fallback={
+              <Fallback
+                what="terminal mode"
+                action={{ label: "back to gui", onClick: () => switchMode("gui") }}
               />
-            </Isolate>
-          </main>
+            }
+          >
+            <Terminal
+              session={sessions.term}
+              bodyRef={termBodyRef}
+              inputRef={termInputRef}
+              vim={vim}
+              vimRef={vimRef}
+              spark={spark}
+              eggHandlers={egg.handlers}
+              eggPreRef={termPreRef}
+              eggFxRef={termFxRef}
+              eggStatusRef={termStatusRef}
+              eggFrameRef={termFrameRef}
+              eggTouch={{
+                held: egg.held,
+                stage: egg.view.stage,
+                enter: egg.view.enter,
+                prompt: egg.view.prompt,
+                play: egg.crack,
+                quit: quitEgg,
+                release: egg.release,
+              }}
+              running={termEggRunning}
+              pressedTab={pressedTab}
+              keysOn={keysOn}
+              onShortcut={typeRun}
+              onRun={(c) => run("term", c)}
+              onInput={setTermInput}
+              onKey={(e) => shellKey("term", e)}
+              onExit={toGui}
+            />
+          </Isolate>
         )}
       </div>
       <Tooltip />
