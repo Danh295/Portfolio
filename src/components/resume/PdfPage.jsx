@@ -87,7 +87,9 @@ export default function PdfPage({ index, pageInfo, zoom }) {
           // page was left in the middle of: both are expected.
           if (cancelled || e?.name === "RenderingCancelledException") return;
           console.error(e);
-          setFailed(true);
+          // A drawing already on the page (an earlier zoom) stays; the note is for a page
+          // that has never drawn.
+          if (!boxRef.current?.firstChild) setFailed(true);
         }),
       boxRef.current?.firstChild ? REDRAW_DELAY_MS : 0,
     );
