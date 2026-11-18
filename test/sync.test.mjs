@@ -308,6 +308,14 @@ test("sanitizeSnapshot: bad records, activity and times are dropped one by one",
   );
 });
 
+test("sanitizeSnapshot: reposAt comes from the records, not from the file's own claim", () => {
+  const s = sanitizeSnapshot({ ...prevSnap, reposAt: ISO(NOW) }, "me");
+  assert.equal(s.reposAt, ISO(OLD));
+  // a record with no time of its own makes the stamp unknown, not recent
+  const r = { ...prevSnap.repos["me/a"], syncedAt: undefined };
+  assert.equal(sanitizeSnapshot({ ...prevSnap, repos: { "me/a": r } }, "me").reposAt, null);
+});
+
 test("sanitizeSnapshot: an old snapshot with only syncedAt has no verified times", () => {
   const s = sanitizeSnapshot({ syncedAt: ISO(NOW), user: "me", repos: {}, activity: null }, "me");
   assert.equal(s.reposAt, null);

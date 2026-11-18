@@ -59,11 +59,18 @@ const goodActivity = (a) =>
   a.weeks.length === 12 &&
   a.weeks.every((n) => Number.isFinite(n) && n >= 0);
 
+/** The oldest `syncedAt` among the records: everything shown is at least this fresh. */
+const oldest = (repos) => {
+  const ts = Object.values(repos).map((r) => Date.parse(r.syncedAt));
+  return ts.length && ts.every(Number.isFinite) ? new Date(Math.min(...ts)).toISOString() : null;
+};
+
 /**
  * A cached snapshot (read from a file or the actions cache) made safe to reuse, or null when it
  * isn't one: not an object, another user's, or without a `repos` map. Inside, a bad repo record,
  * a bad activity (not 12 finite counts) or a bad time is dropped on its own, so a half-broken
- * cache still keeps what is good. An old snapshot with one `syncedAt` has no verified times.
+ * cache still keeps what is good. `reposAt` is recomputed from the records, never taken from the
+ * file. An old snapshot with one `syncedAt` has no verified times.
  */
 export function sanitizeSnapshot(raw, user) {
   if (!isObj(raw) || raw.user !== user || !isObj(raw.repos)) return null;
@@ -73,18 +80,12 @@ export function sanitizeSnapshot(raw, user) {
   return {
     user,
     attemptedAt: timeOr(raw.attemptedAt),
-    reposAt: timeOr(raw.reposAt),
+    reposAt: oldest(repos), // derived from the records, never trusted from the file
     activityAt: timeOr(raw.activityAt),
     repos,
     activity: goodActivity(raw.activity) ? raw.activity : null,
   };
 }
-
-/** The oldest `syncedAt` among the records: everything shown is at least this fresh. */
-const oldest = (repos) => {
-  const ts = Object.values(repos).map((r) => Date.parse(r.syncedAt));
-  return ts.length && ts.every(Number.isFinite) ? new Date(Math.min(...ts)).toISOString() : null;
-};
 
 /**
  * The snapshot to write after a run. `results` are the repo fetches for `list`; `activity` is

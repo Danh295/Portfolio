@@ -40,12 +40,15 @@ const headers = {
   ...(token ? { Authorization: `Bearer ${token}` } : {}),
 };
 
-// The cached snapshot if it is a usable one, else null (missing, unreadable, malformed).
+// The cached snapshot if it is a usable one, else null (missing, unreadable, malformed), and
+// whether the file on disk is exactly that (the build imports the file, not this copy of it).
 const readSnapshot = () => {
   try {
-    return sanitizeSnapshot(JSON.parse(readFileSync(OUT, "utf8")), USER);
+    const raw = JSON.parse(readFileSync(OUT, "utf8"));
+    const snap = sanitizeSnapshot(raw, USER);
+    return { snap, clean: snap !== null && JSON.stringify(raw) === JSON.stringify(snap) };
   } catch {
-    return null;
+    return { snap: null, clean: false };
   }
 };
 
@@ -115,8 +118,9 @@ async function pushes() {
 }
 
 async function main() {
-  const prev = readSnapshot();
+  const { snap: prev, clean } = readSnapshot();
   if (process.argv.includes("--if-stale") && isFresh(prev)) {
+    if (!clean) write(prev); // a fresh but damaged file is repaired, not left for the build
     console.log("github sync: snapshot is fresh, skipping");
     return;
   }
@@ -160,7 +164,7 @@ async function main() {
 main().catch((e) => {
   console.warn("github sync failed: " + e.message);
   // The build imports this file: it must exist and parse, even if empty.
-  if (!readSnapshot())
+  if (!readSnapshot().snap)
     write({
       user: USER,
       attemptedAt: null,
