@@ -137,9 +137,16 @@ function Still({ item, sizes }) {
       onPointerMove={(e) => {
         // A mouse or pen over it (a touch uncovers on its tap, not on the start of a scroll).
         // Keyboard mode (html.kbd) pauses hover: a page scrolling under a resting pointer
-        // doesn't uncover anything, and the first real move after it counts again.
-        if (e.pointerType !== "touch" && !document.documentElement.classList.contains("kbd"))
-          start();
+        // doesn't uncover anything.
+        if (e.pointerType === "touch") return;
+        const root = document.documentElement,
+          still = e.currentTarget;
+        if (!root.classList.contains("kbd")) return start();
+        // A real mouse move ends keyboard mode, but the window's listener that does it runs
+        // after this one: look again once it has, so the first move after keyboard use counts.
+        requestAnimationFrame(() => {
+          if (!root.classList.contains("kbd") && still.matches(":hover")) start();
+        });
       }}
       onFocus={start}
       onClick={start}
@@ -194,10 +201,13 @@ function Private() {
     };
   }, [reduced]);
 
+  // Reduced motion shows the locked frame whatever step the scramble had reached (turning it on
+  // mid-scramble cancels the timer, which would leave a junk frame up).
+  const shown = reduced ? SCRAMBLE_STEPS : step;
   return (
     <div ref={boxRef} className={styles.private} role="img" aria-label="access denied: proprietary">
       <pre aria-hidden="true">
-        {scrambleFrame(step, SCRAMBLE_STEPS, PLACEHOLDER_W, PLACEHOLDER_H, PLACEHOLDER_SEED)}
+        {scrambleFrame(shown, SCRAMBLE_STEPS, PLACEHOLDER_W, PLACEHOLDER_H, PLACEHOLDER_SEED)}
       </pre>
     </div>
   );

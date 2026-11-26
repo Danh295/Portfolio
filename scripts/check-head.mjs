@@ -172,35 +172,35 @@ for (const file of NOINDEX) {
 // grid in src/data/media-grids.json (made with the pictures, keyed `<slug>/<file>`), so a build
 // that quietly stops rendering them can't pass by having nothing to check, and a new project
 // with media needs no edit here.
-const WITH_MEDIA = [
-  ...new Set(
-    Object.keys(
-      JSON.parse(readFileSync(new URL("../src/data/media-grids.json", import.meta.url), "utf8")),
-    ).map((key) => key.split("/")[0]),
-  ),
-];
+const GRIDS = JSON.parse(
+  readFileSync(new URL("../src/data/media-grids.json", import.meta.url), "utf8"),
+);
+const WITH_MEDIA = [...new Set(Object.keys(GRIDS).map((key) => key.split("/")[0]))];
 for (const slug of readdirSync(join(OUT, "projects"))) {
   const file = join("projects", slug, "index.html");
   if (!statSync(join(OUT, "projects", slug)).isDirectory() || !existsSync(join(OUT, file)))
     continue;
   const html = readFileSync(join(OUT, file), "utf8");
   const urls = [...new Set(html.match(/\/Portfolio\/media\/[^"\s,]+/g) ?? [])];
-  if (WITH_MEDIA.includes(slug))
+  // Each picture the grids say this project has: the page names both formats at every width
+  // (one missing picture can't hide behind another's files), and its <img> carries the size the
+  // grid recorded (no layout shift, and a wrong size is caught).
+  for (const [key, g] of Object.entries(GRIDS).filter(([k]) => k.startsWith(`${slug}/`))) {
+    const pic = key.slice(slug.length + 1);
+    const absent = g.widths
+      .flatMap((w) => ["avif", "webp"].map((ext) => `/Portfolio/media/${slug}/${pic}-${w}.${ext}`))
+      .filter((u) => !urls.includes(u));
+    check(`${key}: the page names both formats at every width`, absent.length === 0, absent);
+    const img =
+      html.match(/<img\b[^>]*>/g)?.find((t) => t.includes(`/media/${slug}/${pic}-`)) ?? "";
     check(
-      `${file}: names its pictures (avif and webp)`,
-      urls.some((u) => u.endsWith(".avif")) && urls.some((u) => u.endsWith(".webp")),
-      urls,
-    );
-  const missing = urls.filter((u) => !existsSync(join(OUT, u.replace(/^\/Portfolio\//, ""))));
-  check(`${file}: every media file it names is in the build`, missing.length === 0, missing);
-  if (urls.length) {
-    const img = html.match(/<img\b[^>]*>/g)?.find((t) => t.includes("/media/")) ?? "";
-    check(
-      `${file}: the picture has its width and height (no layout shift)`,
-      /\bwidth="\d+"/.test(img) && /\bheight="\d+"/.test(img),
+      `${key}: its <img> has the grid's size, ${g.w}×${g.h} (no layout shift)`,
+      img.includes(`width="${g.w}"`) && img.includes(`height="${g.h}"`),
       img,
     );
   }
+  const missing = urls.filter((u) => !existsSync(join(OUT, u.replace(/^\/Portfolio\//, ""))));
+  check(`${file}: every media file it names is in the build`, missing.length === 0, missing);
 }
 check("some page has media", WITH_MEDIA.length > 0, WITH_MEDIA);
 check(

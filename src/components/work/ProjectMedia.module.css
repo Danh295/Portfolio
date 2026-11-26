@@ -102,12 +102,16 @@
   background: var(--bg);
   color: var(--fg);
   overflow: hidden;
+  /* The box is the container the text's size is measured against (below). */
+  container-type: inline-size;
 }
 
 .private pre {
   margin: 0;
   font: inherit;
-  font-size: 13px;
+  /* 13px, or smaller when the box can't hold 36 columns of it: a column is 0.6em wide, so the
+     36-column block is 21.6em across. */
+  font-size: min(13px, calc(100cqw / 21.6));
   line-height: 1.2;
   letter-spacing: 0;
   white-space: pre;

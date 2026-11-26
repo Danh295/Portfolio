@@ -4927,6 +4927,93 @@ await run(
   },
 );
 
+// The placeholder's block is 36 columns wide: on the narrowest phone the font shrinks to fit
+// its box, so the message's brackets aren't clipped (a fixed 13px was ~281px in ~222px).
+await run(
+  "project media: the private placeholder fits its box on the narrowest phone (320×568, touch)",
+  { width: 320, height: 568, mobile: true },
+  async (tab) => {
+    await tab.go("projects/ppeo-scan/", 3500);
+    await tab.evaluate(
+      `document.querySelector('section[aria-label="media"]').scrollIntoView({ block: "center" })`,
+    );
+    await sleep(1500);
+    const st = await tab.evaluate(`(() => {
+      const box = document.querySelector('section[aria-label="media"] [role="img"]');
+      const pre = box.querySelector("pre"), cs = getComputedStyle(box);
+      const inner = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      return { inner: Math.round(inner), pre: Math.round(pre.getBoundingClientRect().width),
+        font: getComputedStyle(pre).fontSize, locked: pre.textContent.includes("[ access denied: proprietary ]") };
+    })()`);
+    check("premise: it is locked and on the narrow screen", st.locked && st.inner < 260, st);
+    check("the text block is no wider than the box's inside", st.pre <= st.inner, st);
+  },
+);
+
+// Keyboard mode (html.kbd) pauses hover, and the window's listener that clears it runs after the
+// still's own: the first real mouse move after keyboard use still has to uncover the picture.
+await run(
+  "project media: the first mouse move after keyboard use uncovers a still (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await mediaPage(tab);
+    const at = await tab.evaluate(
+      `(() => { const r = ${MEDIA_BTN}.getBoundingClientRect(); return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }; })()`,
+    );
+    await tab.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 1, y: 1 });
+    await tab.evaluate(`document.documentElement.classList.add("kbd")`);
+    const before = await tab.evaluate(
+      `({ kbd: document.documentElement.classList.contains("kbd"), phase: ${MEDIA_BTN}.dataset.phase })`,
+    );
+    await tab.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...at });
+    await sleep(1400);
+    const after = await tab.evaluate(
+      `({ kbd: document.documentElement.classList.contains("kbd"), phase: ${MEDIA_BTN}.dataset.phase })`,
+    );
+    check(
+      "premise: keyboard mode was on and the still covered",
+      before.kbd && before.phase === "idle",
+      before,
+    );
+    check(
+      "one real mouse move ends keyboard mode and uncovers it",
+      !after.kbd && after.phase === "done",
+      after,
+    );
+  },
+);
+
+// Turning reduced motion on while the placeholder scrambles settles it on the message (the
+// scramble's timer is cancelled with the preference, so its junk frame must not stay).
+await run(
+  "project media: reduced motion turned on mid-scramble settles the placeholder (1291×808)",
+  DESKTOP,
+  async (tab) => {
+    await tab.go("projects/ppeo-scan/", 3500);
+    const junk = await tab.evaluate(`(async () => {
+      const pre = document.querySelector('section[aria-label="media"] pre');
+      pre.closest("section").scrollIntoView({ block: "center" });
+      const t0 = performance.now();
+      while (performance.now() - t0 < 600) {
+        if (!pre.textContent.includes("[ access denied: proprietary ]")) return true;
+        await new Promise((r) => setTimeout(r, 10));
+      }
+      return false;
+    })()`);
+    await tab.send("Emulation.setEmulatedMedia", {
+      features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+    });
+    await sleep(900);
+    const text = await tab.evaluate(
+      `document.querySelector('section[aria-label="media"] pre').textContent`,
+    );
+    check("premise: the scramble was running when the preference changed", junk);
+    check("and it ends on the locked message", text.includes("[ access denied: proprietary ]"), {
+      text,
+    });
+  },
+);
+
 await run(
   "project media: under reduced motion the private placeholder is locked at once (1291×808, reduced motion)",
   REDUCED,
