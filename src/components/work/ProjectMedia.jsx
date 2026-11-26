@@ -39,6 +39,7 @@ function Still({ item, sizes }) {
   const orderRef = useRef(null);
   const timerRef = useRef(0);
   const startedRef = useRef(false); // one reveal per still, however many events ask for it
+  const lookRef = useRef(false); // a keyboard-mode recheck of the hover is already queued
   const [phase, setPhase] = useState("idle"); // idle → revealing → done
   // The grid's parts, not the object: a render that rebuilds the object must not redraw the
   // cover (and the effect's cleanup must never stop a reveal in progress).
@@ -144,7 +145,10 @@ function Still({ item, sizes }) {
         if (!root.classList.contains("kbd")) return start();
         // A real mouse move ends keyboard mode, but the window's listener that does it runs
         // after this one: look again once it has, so the first move after keyboard use counts.
+        if (lookRef.current) return; // one look per frame, however many moves came
+        lookRef.current = true;
         requestAnimationFrame(() => {
+          lookRef.current = false;
           if (!root.classList.contains("kbd") && still.matches(":hover")) start();
         });
       }}

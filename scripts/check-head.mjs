@@ -191,8 +191,12 @@ for (const slug of readdirSync(join(OUT, "projects"))) {
       .flatMap((w) => ["avif", "webp"].map((ext) => `/Portfolio/media/${slug}/${pic}-${w}.${ext}`))
       .filter((u) => !urls.includes(u));
     check(`${key}: the page names both formats at every width`, absent.length === 0, absent);
+    // The tag naming this picture's own files (`<pic>-<width>.`): a picture named `shot` must
+    // not be matched by `shot-2`'s tag.
     const img =
-      html.match(/<img\b[^>]*>/g)?.find((t) => t.includes(`/media/${slug}/${pic}-`)) ?? "";
+      html
+        .match(/<img\b[^>]*>/g)
+        ?.find((t) => g.widths.some((w) => t.includes(`/media/${slug}/${pic}-${w}.`))) ?? "";
     check(
       `${key}: its <img> has the grid's size, ${g.w}×${g.h} (no layout shift)`,
       img.includes(`width="${g.w}"`) && img.includes(`height="${g.h}"`),
